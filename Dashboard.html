@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Planner – Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="Dashboard.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">📚</div>
+            <span>Study Planner</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">🏠</span> Home
+            </a>
+            <a href="dashboard.html" class="nav-item active">
+                <span class="nav-icon">📊</span> Dashboard
+            </a>
+            <a href="tasks.html" class="nav-item">
+                <span class="nav-icon">✏️</span> Tasks
+            </a>
+            <a href="import.html" class="nav-item">
+                <span class="nav-icon">📂</span> Import
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-pill">
+                <div class="user-avatar">S</div>
+                <div>
+                    <div class="user-name">Student</div>
+                    <div class="user-sub">Spring 2025–26</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <header class="topbar">
+            <div>
+                <h1 class="page-title">Dashboard</h1>
+                <p class="page-sub" id="currentDate"></p>
+            </div>
+            <a href="import.html" class="btn-primary">+ Import Modules</a>
+        </header>
+
+        <div class="alert alert-danger">
+            <span class="alert-dot"></span>
+            <span><strong>1 deadline missed</strong> — CMP-5012B Software Engineering was due 3 days ago and is incomplete.</span>
+            <button class="alert-close" onclick="this.parentElement.style.display='none'">✕</button>
+        </div>
+        <div class="alert alert-warning">
+            <span class="alert-dot"></span>
+            <span><strong>2 deadlines approaching</strong> — work due within the next 7 days.</span>
+            <button class="alert-close" onclick="this.parentElement.style.display='none'">✕</button>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-icon blue">📘</div>
+                <div class="summary-num">4</div>
+                <div class="summary-label">Modules</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon green">✅</div>
+                <div class="summary-num">3</div>
+                <div class="summary-label">Completed</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon amber">⏳</div>
+                <div class="summary-num">4</div>
+                <div class="summary-label">Upcoming</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon red">⚠️</div>
+                <div class="summary-num">1</div>
+                <div class="summary-label">Missed</div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+
+            <section class="card">
+                <div class="card-head">
+                    <h2>Module Progress</h2>
+                    <span class="card-meta">Based on logged study sessions</span>
+                </div>
+                <div class="module-list">
+
+                    <div class="module-row">
+                        <div class="module-top">
+                            <div>
+                                <div class="module-name">CMP-5012B Software Engineering</div>
+                                <div class="module-meta">Coursework · Due 06 Mar 2026</div>
+                            </div>
+                            <span class="pill pill-red">Missed</span>
+                        </div>
+                        <div class="bar-wrap"><div class="bar bar-red" style="width:65%"></div></div>
+                        <div class="bar-labels"><span>65% complete</span><span>13 / 20 hrs</span></div>
+                    </div>
+
+                    <div class="module-row">
+                        <div class="module-top">
+                            <div>
+                                <div class="module-name">CMP-5020B Databases</div>
+                                <div class="module-meta">Coursework · Due 18 Apr 2026</div>
+                            </div>
+                            <span class="pill pill-amber">Due in 7 days</span>
+                        </div>
+                        <div class="bar-wrap"><div class="bar bar-amber" style="width:45%"></div></div>
+                        <div class="bar-labels"><span>45% complete</span><span>9 / 20 hrs</span></div>
+                    </div>
+
+                    <div class="module-row">
+                        <div class="module-top">
+                            <div>
+                                <div class="module-name">CMP-5034A Algorithms</div>
+                                <div class="module-meta">Exam · Due 15 May 2026</div>
+                            </div>
+                            <span class="pill pill-blue">On track</span>
+                        </div>
+                        <div class="bar-wrap"><div class="bar bar-blue" style="width:80%"></div></div>
+                        <div class="bar-labels"><span>80% complete</span><span>16 / 20 hrs</span></div>
+                    </div>
+
+                    <div class="module-row">
+                        <div class="module-top">
+                            <div>
+                                <div class="module-name">CMP-5042B Computer Networks</div>
+                                <div class="module-meta">Coursework · Due 30 Apr 2026</div>
+                            </div>
+                            <span class="pill pill-green">On track</span>
+                        </div>
+                        <div class="bar-wrap"><div class="bar bar-green" style="width:90%"></div></div>
+                        <div class="bar-labels"><span>90% complete</span><span>18 / 20 hrs</span></div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-head">
+                    <h2>Deadlines</h2>
+                    <span class="card-meta">All assessment deadlines</span>
+                </div>
+
+                <div class="tab-row">
+                    <button class="tab active" onclick="showTab('upcoming', this)">Upcoming</button>
+                    <button class="tab" onclick="showTab('completed', this)">Completed</button>
+                    <button class="tab" onclick="showTab('missed', this)">Missed</button>
+                </div>
+
+                <div class="tab-pane" id="tab-upcoming">
+                    <div class="deadline-item">
+                        <div class="dl-dot amber"></div>
+                        <div class="dl-body">
+                            <div class="dl-title">CMP-5020B Databases Coursework</div>
+                            <div class="dl-date">📅 18 Apr 2026 · 7 days left</div>
+                            <div class="dl-bar-row">
+                                <div class="dl-bar-wrap"><div class="dl-bar bar-amber" style="width:45%"></div></div>
+                                <span>45%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="deadline-item">
+                        <div class="dl-dot amber"></div>
+                        <div class="dl-body">
+                            <div class="dl-title">CMP-5042B Networks Coursework</div>
+                            <div class="dl-date">📅 30 Apr 2026 · 19 days left</div>
+                            <div class="dl-bar-row">
+                                <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:90%"></div></div>
+                                <span>90%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="deadline-item">
+                        <div class="dl-dot blue"></div>
+                        <div class="dl-body">
+                            <div class="dl-title">CMP-5034A Algorithms Exam</div>
+                            <div class="dl-date">📅 15 May 2026 · 34 days left</div>
+                            <div class="dl-bar-row">
+                                <div class="dl-bar-wrap"><div class="dl-bar bar-blue" style="width:80%"></div></div>
+                                <span>80%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane hidden" id="tab-completed">
+                    <div class="deadline-item success">
+                        <div class="dl-dot green"></div>
+                        <div class="dl-body">
+                            <div class="dl-title">CMP-5012B SE – Requirements Report</div>
+                            <div class="dl-date">📅 Submitted 06 Mar 2026</div>
+                            <div class="dl-bar-row">
+                                <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:100%"></div></div>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="deadline-item success">
+                        <div class="dl-dot green"></div>
+                        <div class="dl-body">
+                            <div class="dl-title">CMP-5020B Databases – Lab Test</div>
+                            <div class="dl-date">📅 Submitted 14 Feb 2026</div>
+                            <div class="dl-bar-row">
+                                <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:100%"></div></div>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="deadline-item success">
+                        <div class="dl-dot green"></div>
+                        <div class="dl-body">
+                            <div class="dl-title">CMP-5034A Algorithms – Midterm</div>
+                            <div class="dl-date">📅 Submitted 28 Feb 2026</div>
+                            <div class="dl-bar-row">
+                                <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:100%"></div></div>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane hidden" id="tab-missed">
+                    <div class="deadline-item danger">
+                        <div class="dl-dot red"></div>
+                        <div class="dl-body">
+                            <div class="dl-title">CMP-5012B SE – Final Coursework</div>
+                            <div class="dl-date">📅 Due 06 Mar 2026 · 3 days overdue</div>
+                            <div class="dl-bar-row">
+                                <div class="dl-bar-wrap"><div class="dl-bar bar-red" style="width:65%"></div></div>
+                                <span>65%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+
+        <section class="card quick-card">
+            <h2>Quick Actions</h2>
+            <div class="quick-row">
+                <a href="import.html" class="qbtn qbtn-solid">📂 Import Modules</a>
+                <a href="tasks.html" class="qbtn qbtn-solid">✏️ View Tasks</a>
+                <a href="tasks.html" class="qbtn qbtn-outline">➕ Log Study Session</a>
+                <a href="tasks.html" class="qbtn qbtn-outline">🎯 Set New Goal</a>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        document.getElementById('currentDate').textContent =
+            new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+        function showTab(name, btn) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.remove('hidden');
+            btn.classList.add('active');
+        }
+    </script>
+</body>
+</html>
