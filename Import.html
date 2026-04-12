@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Planner – Import</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="Import.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">📚</div>
+            <span>Study Planner</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+            <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+            <a href="tasks.html" class="nav-item"><span class="nav-icon">✏️</span> Tasks</a>
+            <a href="import.html" class="nav-item active"><span class="nav-icon">📂</span> Import</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-pill">
+                <div class="user-avatar">S</div>
+                <div>
+                    <div class="user-name">Student</div>
+                    <div class="user-sub">Spring 2025–26</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="hero">
+            <div class="hero-text">
+                <div class="hero-badge">📂 Module Import</div>
+                <h1>Set up your semester</h1>
+                <p>Upload your UEA module file and we'll build your personalised study profile — deadlines, tasks and all.</p>
+            </div>
+            <div class="hero-art">
+                <div class="art-ring ring-1"></div>
+                <div class="art-ring ring-2"></div>
+                <div class="art-ring ring-3"></div>
+                <div class="art-icon">📄</div>
+            </div>
+        </div>
+
+        <div class="steps-wrap">
+            <div class="step active" id="step-ind-1">
+                <div class="step-circle"><span>1</span></div>
+                <div class="step-label">Name Semester</div>
+            </div>
+            <div class="step-connector" id="conn-1"></div>
+            <div class="step" id="step-ind-2">
+                <div class="step-circle"><span>2</span></div>
+                <div class="step-label">Upload File</div>
+            </div>
+            <div class="step-connector" id="conn-2"></div>
+            <div class="step" id="step-ind-3">
+                <div class="step-circle"><span>3</span></div>
+                <div class="step-label">Preview & Confirm</div>
+            </div>
+        </div>
+
+        <div class="step-content" id="step-1">
+            <div class="card animate-in">
+                <div class="card-icon-header blue">
+                    <div class="card-icon-circle">🗓️</div>
+                    <div>
+                        <h2>Name your semester</h2>
+                        <p>Give this semester a name so you can identify it in your dashboard</p>
+                    </div>
+                </div>
+                <div class="fields-grid">
+                    <div class="field">
+                        <label for="semesterName">Semester name</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">✏️</span>
+                            <input type="text" id="semesterName" placeholder="e.g. Spring Semester 2025–2026" />
+                        </div>
+                        <div class="field-error" id="nameError">⚠ Please enter a semester name before continuing.</div>
+                    </div>
+                    <div class="field">
+                        <label for="semesterYear">Academic year</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">📅</span>
+                            <select id="semesterYear">
+                                <option value="2025-26">2025–2026</option>
+                                <option value="2026-27">2026–2027</option>
+                                <option value="2024-25">2024–2025</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-strip">
+                    <span class="info-icon">💡</span>
+                    <span>You can create multiple semester profiles and switch between them at any time.</span>
+                </div>
+                <div class="btn-row right">
+                    <button class="btn-primary" onclick="goToStep(2)">Continue <span class="btn-arrow">→</span></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="step-content hidden" id="step-2">
+            <div class="card animate-in">
+                <div class="card-icon-header green">
+                    <div class="card-icon-circle">⬆️</div>
+                    <div>
+                        <h2>Upload your semester file</h2>
+                        <p>Upload the CSV file provided by UEA containing your module and deadline information</p>
+                    </div>
+                </div>
+                <div class="alert alert-danger hidden" id="fileError">
+                    <span>⚠️</span>
+                    <span id="fileErrorMsg">Invalid file. Please upload a valid CSV file.</span>
+                </div>
+                <div class="dropzone" id="dropzone"
+                     onclick="document.getElementById('fileInput').click()"
+                     ondragover="handleDragOver(event)"
+                     ondragleave="handleDragLeave(event)"
+                     ondrop="handleDrop(event)">
+                    <div class="dz-content">
+                        <div class="dz-orbit">
+                            <div class="dz-icon">📄</div>
+                            <div class="dz-orbit-ring"></div>
+                        </div>
+                        <div class="dz-title">Drop your CSV file here</div>
+                        <div class="dz-sub">or <span class="dz-link">click to browse your files</span></div>
+                        <div class="dz-badge">.csv files only</div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".csv" style="display:none" onchange="handleFileSelect(event)">
+                </div>
+                <div class="file-card hidden" id="fileSelected">
+                    <div class="file-card-left">
+                        <div class="file-card-icon">📄</div>
+                        <div>
+                            <div class="file-name" id="fileName">modules.csv</div>
+                            <div class="file-size" id="fileSize">12 KB · Ready to import</div>
+                        </div>
+                    </div>
+                    <button class="file-remove-btn" onclick="removeFile()">✕ Remove</button>
+                </div>
+                <div class="format-guide">
+                    <div class="format-guide-header">
+                        <span>📋</span>
+                        <strong>Expected CSV format</strong>
+                        <span class="format-guide-sub">— your file must include these columns</span>
+                    </div>
+                    <div class="format-cols">
+                        <div class="format-col"><code>module_code</code><span>CMP-5012B</span></div>
+                        <div class="format-col"><code>module_name</code><span>Software Engineering</span></div>
+                        <div class="format-col"><code>assessment_type</code><span>Coursework</span></div>
+                        <div class="format-col"><code>deadline</code><span>2026-03-06</span></div>
+                        <div class="format-col"><code>weighting</code><span>90%</span></div>
+                    </div>
+                </div>
+                <div class="btn-row space-between">
+                    <button class="btn-ghost" onclick="goToStep(1)">← Back</button>
+                    <button class="btn-primary" id="uploadBtn" onclick="processFile()" disabled>Preview Import <span class="btn-arrow">→</span></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="step-content hidden" id="step-3">
+            <div class="card animate-in">
+                <div class="card-icon-header amber">
+                    <div class="card-icon-circle">👁️</div>
+                    <div>
+                        <h2>Preview imported modules</h2>
+                        <p>Check everything looks correct before confirming your semester profile</p>
+                    </div>
+                </div>
+                <div class="alert alert-success" id="successAlert">
+                    <span>✅</span>
+                    <span id="successMsg">4 modules successfully parsed from your file.</span>
+                </div>
+                <div class="preview-table-wrap">
+                    <table class="preview-table" id="previewTable">
+                        <thead>
+                            <tr>
+                                <th>Module Code</th>
+                                <th>Module Name</th>
+                                <th>Assessment</th>
+                                <th>Deadline</th>
+                                <th>Weighting</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+                <div class="btn-row space-between">
+                    <button class="btn-ghost" onclick="goToStep(2)">← Back</button>
+                    <button class="btn-primary" onclick="confirmImport()">✓ Confirm &amp; Create Profile</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="step-content hidden" id="step-4">
+            <div class="card success-card animate-in">
+                <div class="success-burst">
+                    <div class="burst-ring r1"></div>
+                    <div class="burst-ring r2"></div>
+                    <div class="success-emoji">🎉</div>
+                </div>
+                <h2>You're all set!</h2>
+                <p>Your semester profile <strong id="confirmedName"></strong> has been created successfully.</p>
+                <div class="success-pills" id="successStats"></div>
+                <div class="btn-row center">
+                    <a href="dashboard.html" class="btn-primary">Go to Dashboard →</a>
+                    <a href="tasks.html" class="btn-ghost">Set Up Tasks →</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let selectedFile = null;
+        let parsedModules = [];
+
+        function goToStep(n) {
+            if (n === 2) {
+                const name = document.getElementById('semesterName').value.trim();
+                if (!name) { document.getElementById('nameError').classList.add('visible'); return; }
+                document.getElementById('nameError').classList.remove('visible');
+            }
+            document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('step-' + n).classList.remove('hidden');
+            const card = document.querySelector('#step-' + n + ' .card');
+            if (card) { card.classList.remove('animate-in'); void card.offsetWidth; card.classList.add('animate-in'); }
+            ['1','2','3'].forEach(i => {
+                const el = document.getElementById('step-ind-' + i);
+                el.classList.remove('active','done');
+                if (parseInt(i) < n)  el.classList.add('done');
+                if (parseInt(i) === n) el.classList.add('active');
+            });
+            ['1','2'].forEach(i => {
+                const c = document.getElementById('conn-' + i);
+                if (c) c.classList.toggle('filled', parseInt(i) < n);
+            });
+        }
+
+        function handleDragOver(e) { e.preventDefault(); document.getElementById('dropzone').classList.add('dragover'); }
+        function handleDragLeave() { document.getElementById('dropzone').classList.remove('dragover'); }
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('dropzone').classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) validateAndSetFile(file);
+        }
+        function handleFileSelect(e) { const file = e.target.files[0]; if (file) validateAndSetFile(file); }
+        function removeFile() {
+            selectedFile = null;
+            document.getElementById('fileSelected').classList.add('hidden');
+            document.getElementById('dropzone').classList.remove('hidden');
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileError').classList.add('hidden');
+        }
+        function validateAndSetFile(file) {
+            const err = document.getElementById('fileError');
+            const msg = document.getElementById('fileErrorMsg');
+            if (!file.name.endsWith('.csv')) { msg.textContent = 'Invalid file type. Please upload a .csv file.'; err.classList.remove('hidden'); return; }
+            if (file.size === 0) { msg.textContent = 'This file is empty. Please upload a valid CSV file.'; err.classList.remove('hidden'); return; }
+            err.classList.add('hidden');
+            selectedFile = file;
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB · Ready to import';
+            document.getElementById('fileSelected').classList.remove('hidden');
+            document.getElementById('dropzone').classList.add('hidden');
+            document.getElementById('uploadBtn').disabled = false;
+        }
+        function processFile() {
+            if (!selectedFile) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rows = e.target.result.trim().split('\n').map(r => r.split(',').map(c => c.trim().replace(/"/g,'')));
+                if (rows.length < 2) { showFileError('File appears to be empty or has no data rows.'); return; }
+                const headers = rows[0].map(h => h.toLowerCase());
+                const required = ['module_code','module_name','assessment_type','deadline','weighting'];
+                const missing = required.filter(h => !headers.includes(h));
+                if (missing.length > 0) { showFileError('Missing columns: ' + missing.join(', ')); return; }
+                parsedModules = rows.slice(1).filter(r => r.length > 1).map(row => ({
+                    code: row[headers.indexOf('module_code')],
+                    name: row[headers.indexOf('module_name')],
+                    assessment: row[headers.indexOf('assessment_type')],
+                    deadline: row[headers.indexOf('deadline')],
+                    weighting: row[headers.indexOf('weighting')]
+                }));
+                buildPreview();
+                goToStep(3);
+            };
+            reader.readAsText(selectedFile);
+        }
+        function showFileError(msg) { document.getElementById('fileErrorMsg').textContent = msg; document.getElementById('fileError').classList.remove('hidden'); }
+        function buildPreview() {
+            const tbody = document.getElementById('previewBody');
+            tbody.innerHTML = '';
+            parsedModules.forEach(m => {
+                const d = new Date(m.deadline);
+                const overdue = d < new Date();
+                const status = overdue ? '<span class="pill pill-red">Overdue</span>' : '<span class="pill pill-green">Upcoming</span>';
+                const dateStr = isNaN(d) ? m.deadline : d.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
+                tbody.innerHTML += `<tr><td><code>${m.code}</code></td><td>${m.name}</td><td><span class="type-tag">${m.assessment}</span></td><td>${dateStr}</td><td>${m.weighting}</td><td>${status}</td></tr>`;
+            });
+            document.getElementById('successMsg').textContent = parsedModules.length + ' module' + (parsedModules.length !== 1 ? 's' : '') + ' successfully parsed from your file.';
+        }
+        function confirmImport() {
+            const name = document.getElementById('semesterName').value.trim();
+            document.getElementById('confirmedName').textContent = '"' + name + '"';
+            document.getElementById('successStats').innerHTML =
+                '<div class="s-pill">📘 ' + parsedModules.length + ' modules imported</div>' +
+                '<div class="s-pill">📅 ' + parsedModules.length + ' deadlines tracked</div>' +
+                '<div class="s-pill">✅ Profile created</div>';
+            // TODO: POST to backend → fetch('/api/import', { method:'POST', body: JSON.stringify({ name, modules: parsedModules }) })
+            document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('step-4').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
