@@ -6,6 +6,7 @@
     <title>Study Planner – Import</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="Import.css">
+    <script src="auth.js"></script>
 </head>
 <body>
     <aside class="sidebar">
@@ -216,6 +217,10 @@
     </main>
 
     <script>
+        if (!isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+
         let selectedFile = null;
         let parsedModules = [];
 
@@ -315,23 +320,16 @@
         }
         function confirmImport() {
             const name = document.getElementById('semesterName').value.trim();
-            const authToken = localStorage.getItem('authToken');
-            
-            if (!authToken) {
-                window.location.href = 'index.html';
-                return;
-            }
             
             const confirmBtn = event.target;
             confirmBtn.disabled = true;
             const originalText = confirmBtn.textContent;
             confirmBtn.textContent = '⏳ Importing...';
             
-            fetch('/api/import/csv', {
+            authenticatedFetch('/api/import/csv', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + authToken
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     name: name,
@@ -339,10 +337,6 @@
                 })
             })
             .then(response => {
-                if (response.status === 401) {
-                    window.location.href = 'index.html';
-                    return;
-                }
                 if (!response.ok) {
                     return response.json().then(data => {
                         throw new Error(data.error || 'Failed to import modules');
