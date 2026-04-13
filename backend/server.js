@@ -4,11 +4,11 @@ const { Pool } = require('pg');
 
 // create connection pool to postgresql database
 const pool = new Pool({
-  host: process.env.db_host,
-  port: process.env.db_port,
-  user: process.env.db_user,
-  password: process.env.db_password,
-  database: process.env.db_name,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
 
 // log successful database connection
@@ -33,7 +33,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // start server on configured port
-const port = process.env.server_port || 3000;
+const port = 3000;
 app.listen(port, () => {
   console.log(`server is running on port ${port}`);
 });
