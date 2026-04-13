@@ -1,0 +1,42 @@
+require('dotenv').config();
+const express = require('express');
+const { Pool } = require('pg');
+
+// create connection pool to postgresql database
+const pool = new Pool({
+  host: process.env.db_host,
+  port: process.env.db_port,
+  user: process.env.db_user,
+  password: process.env.db_password,
+  database: process.env.db_name,
+});
+
+// log successful database connection
+pool.on('connect', () => {
+  console.log('connected to postgresql database');
+});
+
+// log database connection errors
+pool.on('error', (err) => {
+  console.error('unexpected error on idle client', err);
+});
+
+// initialize express app
+const app = express();
+
+// middleware
+app.use(express.json());
+
+// health check route
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// start server on configured port
+const port = process.env.server_port || 3000;
+app.listen(port, () => {
+  console.log(`server is running on port ${port}`);
+});
+
+// export pool for use in other files
+module.exports = { pool, app };
