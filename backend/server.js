@@ -47,6 +47,10 @@ app.use(taskRoutes);
 const sessionRoutes = require('./routes/sessions');
 app.use(sessionRoutes);
 
+// import dashboard routes
+const dashboardRoutes = require('./routes/dashboard');
+app.use(dashboardRoutes);
+
 // health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
