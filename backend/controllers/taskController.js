@@ -4,10 +4,21 @@ const { pool } = require('../server');
 const getTasksByModule = async (req, res) => {
   try {
     const { module_id } = req.query;
+    const userId = req.user.id;
 
     // validate that module_id query parameter is present
     if (!module_id) {
       return res.status(400).json({ message: 'module_id query parameter is required' });
+    }
+
+    // verify module exists and belongs to current user
+    const moduleCheck = await pool.query(
+      'SELECT id FROM modules WHERE id = $1 AND user_id = $2',
+      [module_id, userId]
+    );
+
+    if (moduleCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'module not found or unauthorized' });
     }
 
     // query tasks table for all tasks with matching module_id
@@ -27,6 +38,7 @@ const getTasksByModule = async (req, res) => {
 const createTask = async (req, res) => {
   try {
     const { module_id, title, type, required_hours, dependency_task_id, notes } = req.body;
+    const userId = req.user.id;
 
     // validate required fields are present
     if (!module_id || !title || !type || required_hours === undefined) {
@@ -38,15 +50,25 @@ const createTask = async (req, res) => {
       return res.status(400).json({ message: 'required_hours must be a positive number' });
     }
 
-    // if dependency_task_id is provided validate it exists
+    // verify module exists and belongs to current user
+    const moduleCheck = await pool.query(
+      'SELECT id FROM modules WHERE id = $1 AND user_id = $2',
+      [module_id, userId]
+    );
+
+    if (moduleCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'module not found' });
+    }
+
+    // if dependency_task_id is provided validate it exists in the same module
     if (dependency_task_id) {
       const dependencyResult = await pool.query(
-        'SELECT id FROM tasks WHERE id = $1',
-        [dependency_task_id]
+        'SELECT id FROM tasks WHERE id = $1 AND module_id = $2',
+        [dependency_task_id, module_id]
       );
 
       if (dependencyResult.rows.length === 0) {
-        return res.status(404).json({ message: 'dependency task not found' });
+        return res.status(404).json({ message: 'dependency task not found in this module' });
       }
     }
 
@@ -68,16 +90,17 @@ const updateTask = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, type, required_hours, dependency_task_id, notes } = req.body;
+    const userId = req.user.id;
 
     // validate required_hours is a positive number if provided
     if (required_hours !== undefined && (isNaN(required_hours) || required_hours <= 0)) {
       return res.status(400).json({ message: 'required_hours must be a positive number' });
     }
 
-    // get current task to preserve unmodified fields
+    // get current task and verify ownership by joining with modules
     const currentResult = await pool.query(
-      'SELECT * FROM tasks WHERE id = $1',
-      [id]
+      'SELECT t.* FROM tasks t JOIN modules m ON t.module_id = m.id WHERE t.id = $1 AND m.user_id = $2',
+      [id, userId]
     );
 
     if (currentResult.rows.length === 0) {
@@ -110,11 +133,12 @@ const updateTask = async (req, res) => {
 const deleteTask = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
-    // delete task from tasks table
+    // delete task from tasks table with ownership verification
     const result = await pool.query(
-      'DELETE FROM tasks WHERE id = $1 RETURNING id',
-      [id]
+      'DELETE FROM tasks USING modules WHERE tasks.id = $1 AND tasks.module_id = modules.id AND modules.user_id = $2 RETURNING tasks.id',
+      [id, userId]
     );
 
     // return 404 if task not found
