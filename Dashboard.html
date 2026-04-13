@@ -6,6 +6,7 @@
     <title>Study Planner – Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="Dashboard.css">
+    <script src="auth.js"></script>
 </head>
 <body>
 
@@ -29,10 +30,10 @@
             </a>
         </nav>
         <div class="sidebar-footer">
-            <div class="user-pill">
-                <div class="user-avatar">S</div>
+            <div class="user-pill" onclick="logout()" style="cursor: pointer;" title="Click to logout">
+                <div class="user-avatar" id="userAvatar">S</div>
                 <div>
-                    <div class="user-name">Student</div>
+                    <div class="user-name" id="userName">Student</div>
                     <div class="user-sub">Spring 2025–26</div>
                 </div>
             </div>
@@ -257,8 +258,18 @@
     </main>
 
     <script>
-        document.getElementById('currentDate').textContent =
-            new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        if (!isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+
+        function initializePage() {
+            const username = localStorage.getItem('username') || 'Student';
+            document.getElementById('userName').textContent = username;
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+            
+            document.getElementById('currentDate').textContent =
+                new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        }
 
         function showTab(name, btn) {
             document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
@@ -266,6 +277,8 @@
             document.getElementById('tab-' + name).classList.remove('hidden');
             btn.classList.add('active');
         }
+
+        initializePage();
     </script>
 </body>
 </html>
