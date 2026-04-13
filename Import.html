@@ -315,27 +315,75 @@
         }
         function confirmImport() {
             const name = document.getElementById('semesterName').value.trim();
-            document.getElementById('confirmedName').textContent = '"' + name + '"';
-            const statsContainer = document.getElementById('successStats');
-            statsContainer.innerHTML = '';
-            const stats = [
-                { icon: '📘', label: 'modules imported' },
-                { icon: '📅', label: 'deadlines tracked' },
-                { icon: '✅', label: 'Profile created' }
-            ];
-            stats.forEach((stat, index) => {
-                const div = document.createElement('div');
-                div.className = 's-pill';
-                if (index < 2) {
-                    div.textContent = stat.icon + ' ' + parsedModules.length + ' ' + stat.label;
-                } else {
-                    div.textContent = stat.icon + ' ' + stat.label;
+            const authToken = localStorage.getItem('authToken');
+            
+            if (!authToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            const confirmBtn = event.target;
+            confirmBtn.disabled = true;
+            const originalText = confirmBtn.textContent;
+            confirmBtn.textContent = '⏳ Importing...';
+            
+            fetch('/api/import/csv', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authToken
+                },
+                body: JSON.stringify({
+                    name: name,
+                    modules: parsedModules
+                })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = 'index.html';
+                    return;
                 }
-                statsContainer.appendChild(div);
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to import modules');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('confirmedName').textContent = '"' + name + '"';
+                const statsContainer = document.getElementById('successStats');
+                statsContainer.innerHTML = '';
+                const stats = [
+                    { icon: '📘', label: 'modules imported' },
+                    { icon: '📅', label: 'deadlines tracked' },
+                    { icon: '✅', label: 'Profile created' }
+                ];
+                stats.forEach((stat, index) => {
+                    const div = document.createElement('div');
+                    div.className = 's-pill';
+                    if (index < 2) {
+                        div.textContent = stat.icon + ' ' + parsedModules.length + ' ' + stat.label;
+                    } else {
+                        div.textContent = stat.icon + ' ' + stat.label;
+                    }
+                    statsContainer.appendChild(div);
+                });
+                document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+                document.getElementById('step-4').classList.remove('hidden');
+            })
+            .catch(error => {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = originalText;
+                const errorMsg = error.message || 'Network error. Please check your connection and try again.';
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger';
+                alertDiv.innerHTML = '<span>⚠️</span><span>' + escapeHtml(errorMsg) + '</span>';
+                const step3 = document.getElementById('step-3');
+                const existingAlert = step3.querySelector('.alert-danger');
+                if (existingAlert) existingAlert.remove();
+                step3.insertBefore(alertDiv, step3.querySelector('.preview-table-wrap'));
             });
-            // TODO: POST to backend → fetch('/api/import', { method:'POST', body: JSON.stringify({ name, modules: parsedModules }) })
-            document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById('step-4').classList.remove('hidden');
         }
     </script>
 </body>
