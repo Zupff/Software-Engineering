@@ -31,6 +31,10 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 app.use(authRoutes);
 
+// import import routes
+const importRoutes = require('./routes/import');
+app.use(importRoutes);
+
 // health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
