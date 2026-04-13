@@ -39,6 +39,10 @@ app.use(importRoutes);
 const moduleRoutes = require('./routes/modules');
 app.use(moduleRoutes);
 
+// import task routes
+const taskRoutes = require('./routes/tasks');
+app.use(taskRoutes);
+
 // health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
