@@ -276,6 +276,66 @@
             document.getElementById('dropzone').classList.add('hidden');
             document.getElementById('uploadBtn').disabled = false;
         }
+        function validateCSVRow(row, rowNum, headers) {
+            const code = row[headers.indexOf('module_code')]?.trim() || '';
+            const name = row[headers.indexOf('module_name')]?.trim() || '';
+            const assessment = row[headers.indexOf('assessment_type')]?.trim() || '';
+            const deadline = row[headers.indexOf('deadline')]?.trim() || '';
+            const weighting = row[headers.indexOf('weighting')]?.trim() || '';
+            
+            const errors = [];
+            
+            // Validate module_code: 2-10 alphanumeric characters
+            if (!code) {
+                errors.push(`Row ${rowNum}: module_code is required`);
+            } else if (!/^[a-zA-Z0-9]{2,10}$/.test(code)) {
+                errors.push(`Row ${rowNum}: module_code must be 2-10 alphanumeric characters (got "${code}")`);
+            }
+            
+            // Validate module_name: 1-255 characters
+            if (!name) {
+                errors.push(`Row ${rowNum}: module_name is required`);
+            } else if (name.length > 255) {
+                errors.push(`Row ${rowNum}: module_name must be 1-255 characters (got ${name.length})`);
+            }
+            
+            // Validate assessment_type: must be exam, coursework, or project
+            const validAssessments = ['exam', 'coursework', 'project'];
+            if (!assessment) {
+                errors.push(`Row ${rowNum}: assessment_type is required`);
+            } else if (!validAssessments.includes(assessment.toLowerCase())) {
+                errors.push(`Row ${rowNum}: assessment_type must be exam, coursework, or project (got "${assessment}")`);
+            }
+            
+            // Validate deadline: valid ISO date format YYYY-MM-DD, not in past
+            if (!deadline) {
+                errors.push(`Row ${rowNum}: deadline is required`);
+            } else if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
+                errors.push(`Row ${rowNum}: deadline must be in YYYY-MM-DD format (got "${deadline}")`);
+            } else {
+                const deadlineDate = new Date(deadline);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (isNaN(deadlineDate.getTime())) {
+                    errors.push(`Row ${rowNum}: deadline is not a valid date (got "${deadline}")`);
+                } else if (deadlineDate < today) {
+                    errors.push(`Row ${rowNum}: deadline cannot be in the past (${deadline})`);
+                }
+            }
+            
+            // Validate weighting: number 0-100
+            if (weighting === '') {
+                errors.push(`Row ${rowNum}: weighting is required`);
+            } else {
+                const weightNum = parseFloat(weighting);
+                if (isNaN(weightNum) || weightNum < 0 || weightNum > 100) {
+                    errors.push(`Row ${rowNum}: weighting must be a number between 0-100 (got "${weighting}")`);
+                }
+            }
+            
+            return errors;
+        }
+
         function processFile() {
             if (!selectedFile) return;
             const reader = new FileReader();
@@ -286,13 +346,39 @@
                 const required = ['module_code','module_name','assessment_type','deadline','weighting'];
                 const missing = required.filter(h => !headers.includes(h));
                 if (missing.length > 0) { showFileError('Missing columns: ' + missing.join(', ')); return; }
-                parsedModules = rows.slice(1).filter(r => r.length > 1).map(row => ({
-                    code: row[headers.indexOf('module_code')],
-                    name: row[headers.indexOf('module_name')],
-                    assessment: row[headers.indexOf('assessment_type')],
-                    deadline: row[headers.indexOf('deadline')],
-                    weighting: row[headers.indexOf('weighting')]
-                }));
+                
+                // Validate all rows
+                const allErrors = [];
+                const validRows = [];
+                
+                for (let i = 1; i < rows.length; i++) {
+                    if (rows[i].length <= 1) continue; // Skip empty rows
+                    const rowErrors = validateCSVRow(rows[i], i, headers);
+                    if (rowErrors.length > 0) {
+                        allErrors.push(...rowErrors);
+                    } else {
+                        validRows.push({
+                            code: rows[i][headers.indexOf('module_code')],
+                            name: rows[i][headers.indexOf('module_name')],
+                            assessment: rows[i][headers.indexOf('assessment_type')],
+                            deadline: rows[i][headers.indexOf('deadline')],
+                            weighting: rows[i][headers.indexOf('weighting')]
+                        });
+                    }
+                }
+                
+                // If there are errors, show them and don't proceed
+                if (allErrors.length > 0) {
+                    showFileError(allErrors.join(' • '));
+                    return;
+                }
+                
+                if (validRows.length === 0) {
+                    showFileError('No valid data rows found in CSV file.');
+                    return;
+                }
+                
+                parsedModules = validRows;
                 buildPreview();
                 goToStep(3);
             };
