@@ -27,6 +27,10 @@ const app = express();
 // middleware
 app.use(express.json());
 
+// import auth routes
+const authRoutes = require('./routes/auth');
+app.use(authRoutes);
+
 // health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
