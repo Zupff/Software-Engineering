@@ -1,4 +1,4 @@
-const { pool } = require('../server');
+const pool = require('../db');
 
 // query all modules for current user ordered by deadline
 const getAllModules = async (req, res) => {

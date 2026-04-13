@@ -1,4 +1,4 @@
-const { pool } = require('../server');
+const pool = require('../db');
 
 // helper function to calculate module progress and status
 const calculateProgress = async (userId) => {

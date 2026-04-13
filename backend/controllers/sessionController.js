@@ -1,4 +1,4 @@
-const { pool } = require('../server');
+const pool = require('../db');
 
 // log a new study session
 const logSession = async (req, res) => {
