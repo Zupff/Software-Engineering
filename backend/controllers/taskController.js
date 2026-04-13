@@ -1,4 +1,4 @@
-const { pool } = require('../server');
+const pool = require('../db');
 
 // get all tasks for a specific module
 const getTasksByModule = async (req, res) => {
