@@ -294,25 +294,45 @@
             reader.readAsText(selectedFile);
         }
         function showFileError(msg) { document.getElementById('fileErrorMsg').textContent = msg; document.getElementById('fileError').classList.remove('hidden'); }
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
         function buildPreview() {
             const tbody = document.getElementById('previewBody');
             tbody.innerHTML = '';
+            let tableHtml = '';
             parsedModules.forEach(m => {
                 const d = new Date(m.deadline);
                 const overdue = d < new Date();
                 const status = overdue ? '<span class="pill pill-red">Overdue</span>' : '<span class="pill pill-green">Upcoming</span>';
                 const dateStr = isNaN(d) ? m.deadline : d.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
-                tbody.innerHTML += `<tr><td><code>${m.code}</code></td><td>${m.name}</td><td><span class="type-tag">${m.assessment}</span></td><td>${dateStr}</td><td>${m.weighting}</td><td>${status}</td></tr>`;
+                tableHtml += `<tr><td><code>${escapeHtml(m.code)}</code></td><td>${escapeHtml(m.name)}</td><td><span class="type-tag">${escapeHtml(m.assessment)}</span></td><td>${escapeHtml(dateStr)}</td><td>${escapeHtml(m.weighting)}</td><td>${status}</td></tr>`;
             });
+            tbody.innerHTML = tableHtml;
             document.getElementById('successMsg').textContent = parsedModules.length + ' module' + (parsedModules.length !== 1 ? 's' : '') + ' successfully parsed from your file.';
         }
         function confirmImport() {
             const name = document.getElementById('semesterName').value.trim();
             document.getElementById('confirmedName').textContent = '"' + name + '"';
-            document.getElementById('successStats').innerHTML =
-                '<div class="s-pill">📘 ' + parsedModules.length + ' modules imported</div>' +
-                '<div class="s-pill">📅 ' + parsedModules.length + ' deadlines tracked</div>' +
-                '<div class="s-pill">✅ Profile created</div>';
+            const statsContainer = document.getElementById('successStats');
+            statsContainer.innerHTML = '';
+            const stats = [
+                { icon: '📘', label: 'modules imported' },
+                { icon: '📅', label: 'deadlines tracked' },
+                { icon: '✅', label: 'Profile created' }
+            ];
+            stats.forEach((stat, index) => {
+                const div = document.createElement('div');
+                div.className = 's-pill';
+                if (index < 2) {
+                    div.textContent = stat.icon + ' ' + parsedModules.length + ' ' + stat.label;
+                } else {
+                    div.textContent = stat.icon + ' ' + stat.label;
+                }
+                statsContainer.appendChild(div);
+            });
             // TODO: POST to backend → fetch('/api/import', { method:'POST', body: JSON.stringify({ name, modules: parsedModules }) })
             document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
             document.getElementById('step-4').classList.remove('hidden');
