@@ -17,7 +17,7 @@ function isLoggedIn() {
 
 function logout() {
     localStorage.removeItem('authToken');
-    window.location.href = 'index.html';
+    window.location.href = 'login.html';
 }
 
 function getAuthHeader() {

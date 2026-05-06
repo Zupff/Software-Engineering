@@ -29,6 +29,16 @@ body {
     animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.login-back {
+    display: inline-block;
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-decoration: none;
+    margin-bottom: 10px;
+    transition: color 0.15s;
+}
+.login-back:hover { color: var(--primary); }
+
 @keyframes slideUp {
     from {
         opacity: 0;

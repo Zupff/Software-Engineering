@@ -1,0 +1,274 @@
+/* Landing page – marketing-style homepage shown to logged-out visitors. */
+
+body.landing {
+    background: linear-gradient(180deg, var(--primary-soft) 0%, var(--bg) 320px, var(--bg) 100%);
+    color: var(--text);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Top nav ── */
+.lp-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    max-width: 1080px;
+    margin: 0 auto;
+    width: 100%;
+}
+.lp-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+}
+.lp-brand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+.lp-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.lp-link {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.lp-link:hover { color: var(--text); }
+
+/* generic .btn-primary lives in component CSS files but landing has none,
+   so define a minimal version here */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(30, 58, 138, 0.18);
+}
+.btn-compact {
+    padding: 7px 14px;
+    font-size: 0.8rem;
+}
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background 0.15s, border-color 0.15s;
+}
+.btn-ghost:hover {
+    background: var(--bg);
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+/* ── Hero ── */
+.lp-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: center;
+    max-width: 1080px;
+    margin: 24px auto 56px;
+    padding: 24px 32px 0;
+}
+.lp-hero-text h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: var(--text);
+}
+.lp-hero-text p {
+    margin-top: 16px;
+    font-size: 1.025rem;
+    color: var(--muted);
+    line-height: 1.55;
+    max-width: 480px;
+}
+.lp-cta-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+}
+.lp-cta-note {
+    margin-top: 12px;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.lp-hero-art {
+    position: relative;
+    height: 320px;
+}
+.lp-hero-card {
+    position: absolute;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.08);
+    width: 240px;
+}
+.lp-hero-card-head {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 0.05em;
+}
+.lp-hero-card-bar {
+    margin-top: 10px;
+    height: 6px;
+    background: var(--bg);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.lp-hero-card-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 999px;
+}
+.lp-hero-card-meta {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+.lp-hero-card-1 { top: 0;   right: 0;   transform: rotate(-3deg); }
+.lp-hero-card-2 { top: 96px; right: 60px; transform: rotate(2deg); z-index: 2; }
+.lp-hero-card-3 { top: 200px; right: 20px; transform: rotate(-1deg); }
+
+/* ── Features ── */
+.lp-features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    max-width: 1080px;
+    margin: 0 auto 64px;
+    padding: 0 32px;
+}
+.lp-feature {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+}
+.lp-feature-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+.lp-feature-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.lp-feature h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+}
+.lp-feature p {
+    font-size: 0.875rem;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+/* ── Team ── */
+.lp-team {
+    max-width: 1080px;
+    margin: 0 auto 56px;
+    padding: 0 32px;
+}
+.lp-team h2 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+}
+.lp-team-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.lp-team-list li {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+}
+
+/* ── Footer ── */
+.lp-footer {
+    margin-top: auto;
+    padding: 24px 32px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+/* responsive: stack hero + collapse features */
+@media (max-width: 860px) {
+    .lp-hero { grid-template-columns: 1fr; gap: 32px; }
+    .lp-hero-text h1 { font-size: 1.9rem; }
+    .lp-hero-art { height: 260px; }
+    .lp-features { grid-template-columns: 1fr; }
+}

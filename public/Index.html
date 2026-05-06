@@ -1,117 +1,107 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Planner – Login</title>
+    <title>Study Planner</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="theme.css">
-    <link rel="stylesheet" href="Index.css">
+    <link rel="stylesheet" href="Landing.css">
     <script src="auth.js"></script>
 </head>
-<body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="login-icon" aria-hidden="true">
-                    <svg class="icon icon-xl" viewBox="0 0 24 24"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+<body class="landing">
+
+    <header class="lp-nav">
+        <a class="lp-brand" href="index.html">
+            <span class="lp-brand-icon" aria-hidden="true">
+                <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+            </span>
+            <span>Study Planner</span>
+        </a>
+        <nav class="lp-nav-actions">
+            <a href="login.html?demo=1" class="lp-link">Try the demo</a>
+            <a href="login.html" class="btn-primary btn-compact">Sign in</a>
+        </nav>
+    </header>
+
+    <main>
+
+        <section class="lp-hero">
+            <div class="lp-hero-text">
+                <h1>Plan, track, and finish your coursework on time.</h1>
+                <p>Study Planner turns your module deadlines into structured study tasks, captures the hours you actually spend, and shows you exactly where you are against every assessment.</p>
+                <div class="lp-cta-row">
+                    <a href="login.html" class="btn-primary">Sign in</a>
+                    <a href="login.html?demo=1" class="btn-ghost">View the demo</a>
                 </div>
-                <h1>Study Planner</h1>
-                <p>Sign in to your account</p>
+                <p class="lp-cta-note">No setup needed for the demo — credentials are filled in for you.</p>
             </div>
-
-            <div class="alert alert-danger hidden" id="errorMsg">
-                <span id="errorText">Invalid username or password</span>
-            </div>
-
-            <form id="loginForm" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input 
-                        type="text" 
-                        id="username" 
-                        name="username" 
-                        placeholder="Enter your username"
-                        required
-                        autocomplete="username"
-                    />
+            <div class="lp-hero-art" aria-hidden="true">
+                <div class="lp-hero-card lp-hero-card-1">
+                    <div class="lp-hero-card-head">CMP-5012B</div>
+                    <div class="lp-hero-card-bar"><div class="lp-hero-card-fill" style="width:72%"></div></div>
+                    <div class="lp-hero-card-meta">14 / 20 hrs · due 06 Mar</div>
                 </div>
-
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        placeholder="Enter your password"
-                        required
-                        autocomplete="current-password"
-                    />
+                <div class="lp-hero-card lp-hero-card-2">
+                    <div class="lp-hero-card-head">CMP-5020B</div>
+                    <div class="lp-hero-card-bar"><div class="lp-hero-card-fill" style="width:45%"></div></div>
+                    <div class="lp-hero-card-meta">9 / 20 hrs · due 18 Apr</div>
                 </div>
-
-                <button type="submit" id="loginBtn" class="btn-login">Sign In</button>
-            </form>
-
-            <div class="login-footer">
-                <p><strong>Demo:</strong> username: <code>demo</code> | password: <code>demo123</code></p>
+                <div class="lp-hero-card lp-hero-card-3">
+                    <div class="lp-hero-card-head">CMP-5034A</div>
+                    <div class="lp-hero-card-bar"><div class="lp-hero-card-fill" style="width:90%"></div></div>
+                    <div class="lp-hero-card-meta">18 / 20 hrs · due 15 May</div>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
+
+        <section class="lp-features">
+            <article class="lp-feature">
+                <div class="lp-feature-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <h2>Plan tasks against every assessment</h2>
+                <p>Break each coursework or exam into specific study tasks with start and end dates, required hours, and dependencies between them.</p>
+            </article>
+
+            <article class="lp-feature">
+                <div class="lp-feature-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <h2>Log the hours you actually study</h2>
+                <p>Record sessions against any task. Progress bars and milestone status update automatically — no spreadsheets, no manual maths.</p>
+            </article>
+
+            <article class="lp-feature">
+                <div class="lp-feature-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="13" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="11" y1="18" x2="21" y2="18"/></svg>
+                </div>
+                <h2>See your semester at a glance</h2>
+                <p>The dashboard surfaces upcoming, completed, and missed deadlines. The Gantt view shows every task on a timeline with its dependencies and module deadlines.</p>
+            </article>
+        </section>
+
+        <section class="lp-team">
+            <h2>Built by</h2>
+            <ul class="lp-team-list">
+                <li>Isaac Walsham</li>
+                <li>Philip Lush</li>
+                <li>Tate Jeffries</li>
+                <li>Ashwin Anand</li>
+                <li>Daniel Roath</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <footer class="lp-footer">
+        <span>Study Planner · CMP-5012B Software Engineering · 2025–26</span>
+    </footer>
 
     <script>
+        // logged-in users have already seen this page; jump them to the dashboard
         if (isLoggedIn()) {
             window.location.href = 'Dashboard.html';
-        }
-
-        function handleLogin(event) {
-            event.preventDefault();
-            
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            const loginBtn = document.getElementById('loginBtn');
-            const errorMsg = document.getElementById('errorMsg');
-            
-            loginBtn.disabled = true;
-            const originalText = loginBtn.textContent;
-            loginBtn.textContent = 'Signing in…';
-            errorMsg.classList.add('hidden');
-            
-            fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.message || data.error || 'Invalid username or password');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.token) {
-                    saveToken(data.token);
-                    if (data.username) {
-                        localStorage.setItem('username', data.username);
-                    }
-                    window.location.href = 'Dashboard.html';
-                } else {
-                    throw new Error('No token received from server');
-                }
-            })
-            .catch(error => {
-                loginBtn.disabled = false;
-                loginBtn.textContent = originalText;
-                const errorText = error.message || 'Network error. Please check your connection and try again.';
-                document.getElementById('errorText').textContent = errorText;
-                errorMsg.classList.remove('hidden');
-            });
         }
     </script>
 </body>

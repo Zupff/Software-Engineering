@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in · Study Planner</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="Login.css">
+    <script src="auth.js"></script>
+</head>
+<body>
+    <div class="login-container">
+        <a href="index.html" class="login-back">← Back to home</a>
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-icon" aria-hidden="true">
+                    <svg class="icon icon-xl" viewBox="0 0 24 24"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+                </div>
+                <h1>Study Planner</h1>
+                <p>Sign in to your account</p>
+            </div>
+
+            <div class="alert alert-danger hidden" id="errorMsg">
+                <span id="errorText">Invalid username or password</span>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="Enter your username"
+                        required
+                        autocomplete="username"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    />
+                </div>
+
+                <button type="submit" id="loginBtn" class="btn-login">Sign In</button>
+            </form>
+
+            <div class="login-footer">
+                <p><strong>Demo:</strong> username: <code>demo</code> | password: <code>demo123</code></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (isLoggedIn()) {
+            window.location.href = 'Dashboard.html';
+        }
+
+        // pre-fill demo creds if the landing page sent us here with ?demo=1
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('demo') === '1') {
+            document.getElementById('username').value = 'demo';
+            document.getElementById('password').value = 'demo123';
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            loginBtn.disabled = true;
+            const originalText = loginBtn.textContent;
+            loginBtn.textContent = 'Signing in…';
+            errorMsg.classList.add('hidden');
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || data.error || 'Invalid username or password');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.token) {
+                    saveToken(data.token);
+                    if (data.username) {
+                        localStorage.setItem('username', data.username);
+                    }
+                    window.location.href = 'Dashboard.html';
+                } else {
+                    throw new Error('No token received from server');
+                }
+            })
+            .catch(error => {
+                loginBtn.disabled = false;
+                loginBtn.textContent = originalText;
+                const errorText = error.message || 'Network error. Please check your connection and try again.';
+                document.getElementById('errorText').textContent = errorText;
+                errorMsg.classList.remove('hidden');
+            });
+        }
+    </script>
+</body>
+</html>
