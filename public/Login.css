@@ -107,7 +107,8 @@ body {
 }
 
 /* ── Form ── */
-#loginForm {
+/* applies to both the login and register forms inside .login-card */
+.login-card form {
     display: flex;
     flex-direction: column;
     gap: 16px;
