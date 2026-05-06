@@ -137,15 +137,28 @@ body {
 }
 .field input, .field select {
     width: 100%;
-    padding: 9px 11px;
+    height: 38px;
+    padding: 0 11px;
     border: 1.5px solid var(--border);
     border-radius: var(--radius-sm);
     font-family: inherit;
     font-size: 0.875rem;
+    line-height: 1.2;
     color: var(--text);
     background: var(--surface);
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
+}
+/* normalise the native <select> so it matches <input> height across
+   browsers (macOS adds extra chrome by default) and use a plain caret */
+.field select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%2364748b' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><polyline points='1 1.5 6 6.5 11 1.5'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    background-size: 12px 8px;
+    padding-right: 32px;
 }
 .field input:focus, .field select:focus {
     border-color: var(--primary);
