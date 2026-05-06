@@ -109,6 +109,23 @@ const updateTask = async (req, res) => {
 
     const current = currentResult.rows[0];
 
+    // if a new dependency is provided, validate it: must not be self,
+    // must exist, and must belong to the same module as this task
+    if (dependency_task_id !== undefined && dependency_task_id !== null) {
+      if (Number(dependency_task_id) === Number(id)) {
+        return res.status(400).json({ message: 'task cannot depend on itself' });
+      }
+
+      const dependencyResult = await pool.query(
+        'SELECT id FROM tasks WHERE id = $1 AND module_id = $2',
+        [dependency_task_id, current.module_id]
+      );
+
+      if (dependencyResult.rows.length === 0) {
+        return res.status(404).json({ message: 'dependency task not found in this module' });
+      }
+    }
+
     // prepare update values using provided fields or existing values
     const updateTitle = title !== undefined ? title : current.title;
     const updateType = type !== undefined ? type : current.type;

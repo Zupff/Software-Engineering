@@ -45,17 +45,57 @@ const importCSV = async (req, res) => {
         });
     });
 
+    // validate every row before touching the database. row indices in
+    // error messages are 1-based and refer to data rows (excluding the
+    // header), matching how a user would count rows in their CSV.
+    const errors = [];
+    const cleanRows = [];
+    rows.forEach((row, i) => {
+      const rowNum = i + 1;
+      const code = (row.module_code || '').trim();
+      const name = (row.module_name || '').trim();
+      const type = (row.assessment_type || '').trim();
+      const deadline = (row.deadline || '').trim();
+      const weightingRaw = (row.weighting || '').toString().trim();
+
+      if (!code) errors.push(`row ${rowNum}: module_code is required`);
+      else if (code.length > 20) errors.push(`row ${rowNum}: module_code exceeds 20 characters`);
+
+      if (!name) errors.push(`row ${rowNum}: module_name is required`);
+      else if (name.length > 200) errors.push(`row ${rowNum}: module_name exceeds 200 characters`);
+
+      if (!type) errors.push(`row ${rowNum}: assessment_type is required`);
+
+      const deadlineDate = new Date(deadline);
+      if (!deadline || isNaN(deadlineDate.getTime())) {
+        errors.push(`row ${rowNum}: deadline is not a valid date`);
+      }
+
+      const weighting = Number(weightingRaw);
+      if (weightingRaw === '' || !Number.isFinite(weighting) || !Number.isInteger(weighting)) {
+        errors.push(`row ${rowNum}: weighting must be an integer`);
+      } else if (weighting < 0 || weighting > 100) {
+        errors.push(`row ${rowNum}: weighting must be between 0 and 100`);
+      }
+
+      cleanRows.push({ code, name, type, deadline, weighting });
+    });
+
+    if (errors.length > 0) {
+      return res.status(400).json({ message: 'invalid csv data', errors });
+    }
+
     // start database transaction
     const client = await pool.connect();
 
     try {
       await client.query('BEGIN');
 
-      // insert each row into modules table
-      for (const row of rows) {
+      // insert each validated row into modules table
+      for (const row of cleanRows) {
         await client.query(
           'INSERT INTO modules (user_id, module_code, module_name, assessment_type, deadline, weighting) VALUES ($1, $2, $3, $4, $5, $6)',
-          [userId, row.module_code, row.module_name, row.assessment_type, row.deadline, parseInt(row.weighting)]
+          [userId, row.code, row.name, row.type, row.deadline, row.weighting]
         );
       }
 

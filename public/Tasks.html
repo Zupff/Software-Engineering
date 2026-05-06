@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Planner – Tasks</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="Dashboard.css">
+    <link rel="stylesheet" href="Tasks.css">
+    <script src="auth.js"></script>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon" aria-hidden="true">
+                <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+            </div>
+            <span>Study Planner</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                Dashboard
+            </a>
+            <a href="tasks.html" class="nav-item active">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                Tasks
+            </a>
+            <a href="import.html" class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                Import
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-pill" onclick="logout()" style="cursor: pointer;" title="Click to logout">
+                <div class="user-avatar" id="userAvatar">S</div>
+                <div>
+                    <div class="user-name" id="userName">Student</div>
+                    <div class="user-sub">Spring 2025–26</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <header class="topbar">
+            <div>
+                <h1 class="page-title">Tasks</h1>
+                <p class="page-sub">Plan study tasks for each module and log progress as you work</p>
+            </div>
+        </header>
+
+        <div class="alert alert-danger hidden" id="globalError">
+            <span class="alert-dot"></span>
+            <span id="globalErrorMsg"></span>
+        </div>
+
+        <div id="emptyState" class="empty-state hidden">
+            <h2>No modules yet</h2>
+            <p>Import a CSV of your modules first, then come back here to plan tasks.</p>
+            <a href="import.html" class="btn-primary">Go to Import</a>
+        </div>
+
+        <div class="tasks-grid hidden" id="tasksGrid">
+            <aside class="modules-pane">
+                <div class="pane-head">Modules</div>
+                <ul class="modules-list" id="moduleList"></ul>
+            </aside>
+
+            <section class="tasks-pane">
+                <div class="pane-head pane-head-row">
+                    <span id="selectedModuleName">Select a module</span>
+                    <button class="btn-primary btn-compact" id="newTaskBtn" onclick="toggleNewTaskForm()" disabled>+ New task</button>
+                </div>
+
+                <form class="task-form hidden" id="newTaskForm" onsubmit="createTask(event)">
+                    <div class="form-row">
+                        <div class="form-field form-field-grow">
+                            <label for="taskTitle">Title</label>
+                            <input type="text" id="taskTitle" required placeholder="e.g. Draft requirements report" maxlength="200">
+                        </div>
+                        <div class="form-field">
+                            <label for="taskType">Type</label>
+                            <select id="taskType" required>
+                                <option value="Studying">Studying</option>
+                                <option value="Reading">Reading</option>
+                                <option value="Writing">Writing</option>
+                                <option value="Programming">Programming</option>
+                                <option value="Planning">Planning</option>
+                                <option value="Reviewing">Reviewing</option>
+                            </select>
+                        </div>
+                        <div class="form-field form-field-narrow">
+                            <label for="taskHours">Required hrs</label>
+                            <input type="number" id="taskHours" min="0.5" step="0.5" value="2" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="taskDependency">Depends on (optional)</label>
+                            <select id="taskDependency">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                        <div class="form-field form-field-grow">
+                            <label for="taskNotes">Notes (optional)</label>
+                            <input type="text" id="taskNotes" placeholder="Anything to remember about this task" maxlength="500">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-ghost" onclick="toggleNewTaskForm()">Cancel</button>
+                        <button type="submit" class="btn-primary btn-compact">Create task</button>
+                    </div>
+                </form>
+
+                <div class="task-list" id="taskList"></div>
+
+                <div class="empty-tasks hidden" id="emptyTasks">
+                    <p>No tasks yet for this module.</p>
+                    <p class="muted">Click <strong>+ New task</strong> above to plan your first one.</p>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <script>
+        if (!isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+
+        let modules = [];
+        let selectedModuleId = null;
+        let tasksByModule = {};
+        let sessionsByModule = {};
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function showError(msg) {
+            const box = document.getElementById('globalError');
+            document.getElementById('globalErrorMsg').textContent = msg;
+            box.classList.remove('hidden');
+            setTimeout(() => box.classList.add('hidden'), 5000);
+        }
+
+        function initializePage() {
+            const username = localStorage.getItem('username') || 'Student';
+            document.getElementById('userName').textContent = username;
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+        }
+
+        async function loadModules() {
+            try {
+                const res = await authenticatedFetch('/api/modules');
+                if (!res || !res.ok) throw new Error('Could not load modules');
+                modules = await res.json();
+                if (modules.length === 0) {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                    document.getElementById('tasksGrid').classList.add('hidden');
+                    return;
+                }
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('tasksGrid').classList.remove('hidden');
+                renderModules();
+                selectModule(modules[0].id);
+            } catch (err) {
+                showError(err.message || 'Could not load modules');
+            }
+        }
+
+        function renderModules() {
+            const list = document.getElementById('moduleList');
+            list.innerHTML = '';
+            modules.forEach(m => {
+                const li = document.createElement('li');
+                li.className = 'module-item' + (m.id === selectedModuleId ? ' active' : '');
+                li.onclick = () => selectModule(m.id);
+                const taskCount = (tasksByModule[m.id] || []).length;
+                li.innerHTML =
+                    '<div class="module-item-code">' + escapeHtml(m.module_code) + '</div>' +
+                    '<div class="module-item-name">' + escapeHtml(m.module_name) + '</div>' +
+                    '<div class="module-item-meta">' + taskCount + ' ' + (taskCount === 1 ? 'task' : 'tasks') + '</div>';
+                list.appendChild(li);
+            });
+        }
+
+        async function selectModule(moduleId) {
+            selectedModuleId = moduleId;
+            const m = modules.find(x => x.id === moduleId);
+            document.getElementById('selectedModuleName').textContent =
+                m ? (m.module_code + ' · ' + m.module_name) : 'Select a module';
+            document.getElementById('newTaskBtn').disabled = false;
+            document.getElementById('newTaskForm').classList.add('hidden');
+
+            await Promise.all([loadTasks(moduleId), loadSessions(moduleId)]);
+            renderTasks();
+            renderModules();
+        }
+
+        async function loadTasks(moduleId) {
+            try {
+                const res = await authenticatedFetch('/api/tasks?module_id=' + encodeURIComponent(moduleId));
+                if (!res || !res.ok) throw new Error('Could not load tasks');
+                tasksByModule[moduleId] = await res.json();
+            } catch (err) {
+                tasksByModule[moduleId] = [];
+                showError(err.message || 'Could not load tasks');
+            }
+        }
+
+        async function loadSessions(moduleId) {
+            try {
+                const res = await authenticatedFetch('/api/sessions?module_id=' + encodeURIComponent(moduleId));
+                if (!res || !res.ok) {
+                    sessionsByModule[moduleId] = [];
+                    return;
+                }
+                sessionsByModule[moduleId] = await res.json();
+            } catch (err) {
+                sessionsByModule[moduleId] = [];
+            }
+        }
+
+        function hoursLoggedFor(taskId) {
+            const sessions = sessionsByModule[selectedModuleId] || [];
+            return sessions
+                .filter(s => s.task_id === taskId)
+                .reduce((sum, s) => sum + parseFloat(s.duration_hours || 0), 0);
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('taskList');
+            const emptyTasks = document.getElementById('emptyTasks');
+            list.innerHTML = '';
+            const tasks = tasksByModule[selectedModuleId] || [];
+
+            if (tasks.length === 0) {
+                emptyTasks.classList.remove('hidden');
+            } else {
+                emptyTasks.classList.add('hidden');
+            }
+
+            tasks.forEach(t => list.appendChild(renderTaskRow(t, tasks)));
+            populateDependencyOptions(tasks);
+        }
+
+        function populateDependencyOptions(tasks, excludeId) {
+            const sel = document.getElementById('taskDependency');
+            const current = sel.value;
+            sel.innerHTML = '<option value="">None</option>';
+            tasks.forEach(t => {
+                if (excludeId && t.id === excludeId) return;
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.title;
+                sel.appendChild(opt);
+            });
+            sel.value = current;
+        }
+
+        function renderTaskRow(task, allTasks) {
+            const hoursLogged = hoursLoggedFor(task.id);
+            const required = parseFloat(task.required_hours);
+            const pct = required > 0 ? Math.min(100, Math.round((hoursLogged / required) * 100)) : 0;
+            const dep = task.dependency_task_id
+                ? (allTasks.find(t => t.id === task.dependency_task_id) || null)
+                : null;
+            const today = new Date().toISOString().slice(0, 10);
+
+            const row = document.createElement('div');
+            row.className = 'task-row';
+            row.dataset.taskId = task.id;
+
+            row.innerHTML =
+                '<div class="task-row-top">' +
+                    '<div class="task-row-info">' +
+                        '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
+                        '<div class="task-meta">' +
+                            '<span class="task-pill">' + escapeHtml(task.type) + '</span>' +
+                            '<span>' + hoursLogged.toFixed(1) + ' / ' + required.toFixed(1) + ' hrs</span>' +
+                            (dep ? '<span class="task-dep">depends on <strong>' + escapeHtml(dep.title) + '</strong></span>' : '') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="task-actions">' +
+                        '<button class="btn-ghost btn-compact" onclick="toggleSessionForm(' + task.id + ')">Log session</button>' +
+                        '<button class="btn-ghost btn-compact btn-danger" onclick="deleteTaskConfirm(' + task.id + ')">Delete</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="task-bar-wrap"><div class="task-bar" style="width:' + pct + '%"></div></div>' +
+                (task.notes ? '<div class="task-notes">' + escapeHtml(task.notes) + '</div>' : '') +
+                '<form class="session-form hidden" id="sessionForm-' + task.id + '" onsubmit="logSession(event, ' + task.id + ')">' +
+                    '<div class="form-row">' +
+                        '<div class="form-field form-field-narrow">' +
+                            '<label>Hours</label>' +
+                            '<input type="number" name="hours" min="0.25" step="0.25" value="1" required>' +
+                        '</div>' +
+                        '<div class="form-field form-field-narrow">' +
+                            '<label>Date</label>' +
+                            '<input type="date" name="date" value="' + today + '" required>' +
+                        '</div>' +
+                        '<div class="form-field form-field-grow">' +
+                            '<label>Notes (optional)</label>' +
+                            '<input type="text" name="notes" placeholder="What did you work on?" maxlength="500">' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="form-actions">' +
+                        '<button type="button" class="btn-ghost" onclick="toggleSessionForm(' + task.id + ')">Cancel</button>' +
+                        '<button type="submit" class="btn-primary btn-compact">Log session</button>' +
+                    '</div>' +
+                '</form>';
+
+            return row;
+        }
+
+        function toggleSessionForm(taskId) {
+            const form = document.getElementById('sessionForm-' + taskId);
+            if (form) form.classList.toggle('hidden');
+        }
+
+        function toggleNewTaskForm() {
+            const form = document.getElementById('newTaskForm');
+            const isHidden = form.classList.toggle('hidden');
+            if (!isHidden) {
+                document.getElementById('taskTitle').focus();
+                populateDependencyOptions(tasksByModule[selectedModuleId] || []);
+            }
+        }
+
+        async function createTask(event) {
+            event.preventDefault();
+            const payload = {
+                module_id: selectedModuleId,
+                title: document.getElementById('taskTitle').value.trim(),
+                type: document.getElementById('taskType').value,
+                required_hours: parseFloat(document.getElementById('taskHours').value),
+                dependency_task_id: document.getElementById('taskDependency').value || null,
+                notes: document.getElementById('taskNotes').value.trim() || null
+            };
+
+            try {
+                const res = await authenticatedFetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res || !res.ok) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not create task');
+                }
+                document.getElementById('newTaskForm').reset();
+                document.getElementById('newTaskForm').classList.add('hidden');
+                await loadTasks(selectedModuleId);
+                renderTasks();
+                renderModules();
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        async function deleteTaskConfirm(taskId) {
+            const tasks = tasksByModule[selectedModuleId] || [];
+            const t = tasks.find(x => x.id === taskId);
+            if (!t) return;
+            if (!confirm('Delete task "' + t.title + '"? Logged study sessions will be kept but unlinked.')) return;
+
+            try {
+                const res = await authenticatedFetch('/api/tasks/' + taskId, { method: 'DELETE' });
+                if (!res || !res.ok) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not delete task');
+                }
+                await loadTasks(selectedModuleId);
+                renderTasks();
+                renderModules();
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        async function logSession(event, taskId) {
+            event.preventDefault();
+            const form = event.target;
+            const payload = {
+                module_id: selectedModuleId,
+                task_id: taskId,
+                duration_hours: parseFloat(form.hours.value),
+                date_logged: form.date.value,
+                notes: form.notes.value.trim() || null
+            };
+
+            try {
+                const res = await authenticatedFetch('/api/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res || !res.ok) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not log session');
+                }
+                form.reset();
+                form.hours.value = '1';
+                form.date.value = new Date().toISOString().slice(0, 10);
+                form.classList.add('hidden');
+                await loadSessions(selectedModuleId);
+                renderTasks();
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        initializePage();
+        loadModules();
+    </script>
+</body>
+</html>

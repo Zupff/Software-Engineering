@@ -19,8 +19,20 @@ const calculateProgress = async (userId) => {
 
       const hoursLogged = parseFloat(hoursResult.rows[0].total_hours);
 
-      // calculate percentage complete capped at 100
-      const percentage = Math.min((hoursLogged / 20) * 100, 100);
+      // sum required hours from this module's tasks. progress is measured
+      // against the workload the student has actually planned, not a
+      // hardcoded constant.
+      const requiredResult = await pool.query(
+        'SELECT COALESCE(SUM(required_hours), 0) as total_required FROM tasks WHERE module_id = $1',
+        [module.id]
+      );
+
+      const hoursRequired = parseFloat(requiredResult.rows[0].total_required);
+
+      // if no tasks have been planned yet, show 0% rather than dividing by 0
+      const percentage = hoursRequired > 0
+        ? Math.min((hoursLogged / hoursRequired) * 100, 100)
+        : 0;
 
       // calculate days until deadline
       const today = new Date();
@@ -29,20 +41,19 @@ const calculateProgress = async (userId) => {
       deadline.setHours(0, 0, 0, 0);
       const daysUntilDeadline = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
 
-      // determine status based on deadline and progress
+      // determine status. brief specifies completed / upcoming / missed;
+      // 'Due Soon' is a sub-category of upcoming for deadlines within a
+      // week. 'Behind Schedule' was previously produced by dead code (the
+      // expected-progress calc was always negative, clamped to 0, so the
+      // check never fired) and required a module start date we don't
+      // track, so it is removed.
       let status;
-      if (daysUntilDeadline < 0 && percentage < 100) {
+      if (percentage >= 100) {
+        status = 'Completed';
+      } else if (daysUntilDeadline < 0) {
         status = 'Missed';
-      } else if (daysUntilDeadline >= 0 && daysUntilDeadline <= 7) {
+      } else if (daysUntilDeadline <= 7) {
         status = 'Due Soon';
-      } else if (daysUntilDeadline > 7) {
-        // calculate expected progress based on days remaining
-        const expectedProgress = Math.max(0, (1 - (daysUntilDeadline / 7)) * 100);
-        if (percentage < expectedProgress) {
-          status = 'Behind Schedule';
-        } else {
-          status = 'On Track';
-        }
       } else {
         status = 'On Track';
       }
@@ -52,6 +63,7 @@ const calculateProgress = async (userId) => {
         module_name: module.module_name,
         deadline: module.deadline,
         hours_logged: hoursLogged,
+        hours_required: hoursRequired,
         percentage: Math.round(percentage),
         status: status,
       };
@@ -86,17 +98,17 @@ const getDashboard = async (req, res) => {
 
     // calculate summary counts
     const total_modules = progress.length;
-    const completed = progress.filter(m => m.percentage === 100).length;
+    const completed = progress.filter(m => m.status === 'Completed').length;
     const missed = progress.filter(m => m.status === 'Missed').length;
     const upcoming = total_modules - completed - missed;
 
     // create deadline arrays sorted by deadline ascending
     const upcoming_deadlines = progress
-      .filter(m => m.status !== 'Missed' && m.percentage !== 100)
+      .filter(m => m.status !== 'Missed' && m.status !== 'Completed')
       .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
 
     const completed_deadlines = progress
-      .filter(m => m.percentage === 100)
+      .filter(m => m.status === 'Completed')
       .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
 
     const missed_deadlines = progress
