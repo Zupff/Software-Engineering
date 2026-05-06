@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study Planner – Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="Dashboard.css">
     <script src="auth.js"></script>
 </head>
@@ -12,21 +12,27 @@
 
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <div class="brand-icon">📚</div>
+            <div class="brand-icon" aria-hidden="true">
+                <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+            </div>
             <span>Study Planner</span>
         </div>
         <nav class="sidebar-nav">
             <a href="index.html" class="nav-item">
-                <span class="nav-icon">🏠</span> Home
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Home
             </a>
             <a href="dashboard.html" class="nav-item active">
-                <span class="nav-icon">📊</span> Dashboard
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                Dashboard
             </a>
             <a href="tasks.html" class="nav-item">
-                <span class="nav-icon">✏️</span> Tasks
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                Tasks
             </a>
             <a href="import.html" class="nav-item">
-                <span class="nav-icon">📂</span> Import
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                Import
             </a>
         </nav>
         <div class="sidebar-footer">
@@ -53,32 +59,40 @@
         <div class="alert alert-danger">
             <span class="alert-dot"></span>
             <span><strong>1 deadline missed</strong> — CMP-5012B Software Engineering was due 3 days ago and is incomplete.</span>
-            <button class="alert-close" onclick="this.parentElement.style.display='none'">✕</button>
+            <button class="alert-close" onclick="this.parentElement.style.display='none'" aria-label="Dismiss">×</button>
         </div>
         <div class="alert alert-warning">
             <span class="alert-dot"></span>
             <span><strong>2 deadlines approaching</strong> — work due within the next 7 days.</span>
-            <button class="alert-close" onclick="this.parentElement.style.display='none'">✕</button>
+            <button class="alert-close" onclick="this.parentElement.style.display='none'" aria-label="Dismiss">×</button>
         </div>
 
         <div class="summary-grid">
             <div class="summary-card">
-                <div class="summary-icon blue">📘</div>
+                <div class="summary-icon blue" aria-hidden="true">
+                    <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                </div>
                 <div class="summary-num">4</div>
                 <div class="summary-label">Modules</div>
             </div>
             <div class="summary-card">
-                <div class="summary-icon green">✅</div>
+                <div class="summary-icon green" aria-hidden="true">
+                    <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
                 <div class="summary-num">3</div>
                 <div class="summary-label">Completed</div>
             </div>
             <div class="summary-card">
-                <div class="summary-icon amber">⏳</div>
+                <div class="summary-icon amber" aria-hidden="true">
+                    <svg class="icon icon-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
                 <div class="summary-num">4</div>
                 <div class="summary-label">Upcoming</div>
             </div>
             <div class="summary-card">
-                <div class="summary-icon red">⚠️</div>
+                <div class="summary-icon red" aria-hidden="true">
+                    <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                </div>
                 <div class="summary-num">1</div>
                 <div class="summary-label">Missed</div>
             </div>
@@ -161,7 +175,7 @@
                         <div class="dl-dot amber"></div>
                         <div class="dl-body">
                             <div class="dl-title">CMP-5020B Databases Coursework</div>
-                            <div class="dl-date">📅 18 Apr 2026 · 7 days left</div>
+                            <div class="dl-date">18 Apr 2026 · 7 days left</div>
                             <div class="dl-bar-row">
                                 <div class="dl-bar-wrap"><div class="dl-bar bar-amber" style="width:45%"></div></div>
                                 <span>45%</span>
@@ -172,7 +186,7 @@
                         <div class="dl-dot amber"></div>
                         <div class="dl-body">
                             <div class="dl-title">CMP-5042B Networks Coursework</div>
-                            <div class="dl-date">📅 30 Apr 2026 · 19 days left</div>
+                            <div class="dl-date">30 Apr 2026 · 19 days left</div>
                             <div class="dl-bar-row">
                                 <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:90%"></div></div>
                                 <span>90%</span>
@@ -183,7 +197,7 @@
                         <div class="dl-dot blue"></div>
                         <div class="dl-body">
                             <div class="dl-title">CMP-5034A Algorithms Exam</div>
-                            <div class="dl-date">📅 15 May 2026 · 34 days left</div>
+                            <div class="dl-date">15 May 2026 · 34 days left</div>
                             <div class="dl-bar-row">
                                 <div class="dl-bar-wrap"><div class="dl-bar bar-blue" style="width:80%"></div></div>
                                 <span>80%</span>
@@ -197,7 +211,7 @@
                         <div class="dl-dot green"></div>
                         <div class="dl-body">
                             <div class="dl-title">CMP-5012B SE – Requirements Report</div>
-                            <div class="dl-date">📅 Submitted 06 Mar 2026</div>
+                            <div class="dl-date">Submitted 06 Mar 2026</div>
                             <div class="dl-bar-row">
                                 <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:100%"></div></div>
                                 <span>100%</span>
@@ -208,7 +222,7 @@
                         <div class="dl-dot green"></div>
                         <div class="dl-body">
                             <div class="dl-title">CMP-5020B Databases – Lab Test</div>
-                            <div class="dl-date">📅 Submitted 14 Feb 2026</div>
+                            <div class="dl-date">Submitted 14 Feb 2026</div>
                             <div class="dl-bar-row">
                                 <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:100%"></div></div>
                                 <span>100%</span>
@@ -219,7 +233,7 @@
                         <div class="dl-dot green"></div>
                         <div class="dl-body">
                             <div class="dl-title">CMP-5034A Algorithms – Midterm</div>
-                            <div class="dl-date">📅 Submitted 28 Feb 2026</div>
+                            <div class="dl-date">Submitted 28 Feb 2026</div>
                             <div class="dl-bar-row">
                                 <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:100%"></div></div>
                                 <span>100%</span>
@@ -233,7 +247,7 @@
                         <div class="dl-dot red"></div>
                         <div class="dl-body">
                             <div class="dl-title">CMP-5012B SE – Final Coursework</div>
-                            <div class="dl-date">📅 Due 06 Mar 2026 · 3 days overdue</div>
+                            <div class="dl-date">Due 06 Mar 2026 · 3 days overdue</div>
                             <div class="dl-bar-row">
                                 <div class="dl-bar-wrap"><div class="dl-bar bar-red" style="width:65%"></div></div>
                                 <span>65%</span>
@@ -248,10 +262,10 @@
         <section class="card quick-card">
             <h2>Quick Actions</h2>
             <div class="quick-row">
-                <a href="import.html" class="qbtn qbtn-solid">📂 Import Modules</a>
-                <a href="tasks.html" class="qbtn qbtn-solid">✏️ View Tasks</a>
-                <a href="tasks.html" class="qbtn qbtn-outline">➕ Log Study Session</a>
-                <a href="tasks.html" class="qbtn qbtn-outline">🎯 Set New Goal</a>
+                <a href="import.html" class="qbtn qbtn-solid">Import Modules</a>
+                <a href="tasks.html" class="qbtn qbtn-solid">View Tasks</a>
+                <a href="tasks.html" class="qbtn qbtn-outline">Log Study Session</a>
+                <a href="tasks.html" class="qbtn qbtn-outline">Set New Goal</a>
             </div>
         </section>
 

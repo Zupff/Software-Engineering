@@ -1,26 +1,12 @@
 :root {
-    --blue:      #2563eb;
-    --blue-lt:   #eff6ff;
     --blue-mid:  #bfdbfe;
-    --green:     #16a34a;
-    --green-lt:  #f0fdf4;
-    --amber:     #d97706;
-    --amber-lt:  #fffbeb;
-    --red:       #dc2626;
-    --red-lt:    #fef2f2;
-    --text:      #111827;
-    --muted:     #6b7280;
-    --border:    #e5e7eb;
-    --bg:        #f9fafb;
-    --surface:   #ffffff;
-    --sidebar-w: 230px;
-    --radius:    14px;
+    --sidebar-w: 220px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background: var(--bg);
     color: var(--text);
     display: flex;
@@ -204,9 +190,9 @@ body {
     font-size: 1rem; pointer-events: none;
 }
 .field input, .field select {
-    width: 100%; padding: 11px 14px 11px 40px;
-    border: 1.5px solid var(--border); border-radius: 10px;
-    font-family: inherit; font-size: 0.9rem; color: var(--text);
+    width: 100%; padding: 10px 12px;
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    font-family: inherit; font-size: 0.875rem; color: var(--text);
     background: var(--bg); outline: none;
     transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }

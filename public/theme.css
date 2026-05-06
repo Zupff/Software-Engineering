@@ -1,0 +1,66 @@
+/* shared design tokens for every page. link this first so page-specific
+   styles can override or build on it. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    /* refined academic navy palette */
+    --primary:        #1e3a8a;
+    --primary-hover:  #172554;
+    --primary-soft:   #eef2ff;
+    --accent:         #3b82f6;
+
+    /* legacy alias kept so existing rules using --blue still work */
+    --blue:           #1e3a8a;
+    --blue-lt:        #eef2ff;
+
+    /* status colors (slightly muted) */
+    --green:    #15803d;
+    --green-lt: #f0fdf4;
+    --amber:    #b45309;
+    --amber-lt: #fffbeb;
+    --red:      #b91c1c;
+    --red-lt:   #fef2f2;
+
+    /* neutrals */
+    --text:     #0f172a;
+    --muted:    #64748b;
+    --border:   #e2e8f0;
+    --bg:       #f8fafc;
+    --surface:  #ffffff;
+
+    /* tighter geometry */
+    --radius:    8px;
+    --radius-sm: 6px;
+    --radius-lg: 12px;
+
+    /* compact spacing scale */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+}
+
+/* small helper for inline lucide icons */
+.icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+.icon-sm { width: 14px; height: 14px; }
+.icon-lg { width: 20px; height: 20px; }
+.icon-xl { width: 28px; height: 28px; }
