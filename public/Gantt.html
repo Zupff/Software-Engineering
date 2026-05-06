@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Planner – Gantt</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="Dashboard.css">
+    <link rel="stylesheet" href="Tasks.css">
+    <link rel="stylesheet" href="Gantt.css">
+    <script src="auth.js"></script>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon" aria-hidden="true">
+                <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+            </div>
+            <span>Study Planner</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                Dashboard
+            </a>
+            <a href="tasks.html" class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                Tasks
+            </a>
+            <a href="gantt.html" class="nav-item active">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="13" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="11" y1="18" x2="21" y2="18"/></svg>
+                Gantt
+            </a>
+            <a href="import.html" class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                Import
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-pill" onclick="logout()" style="cursor: pointer;" title="Click to logout">
+                <div class="user-avatar" id="userAvatar">S</div>
+                <div>
+                    <div class="user-name" id="userName">Student</div>
+                    <div class="user-sub">Spring 2025–26</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <header class="topbar">
+            <div>
+                <h1 class="page-title">Gantt</h1>
+                <p class="page-sub">Timeline of your tasks, dependencies, and module deadlines</p>
+            </div>
+        </header>
+
+        <div class="alert alert-danger hidden" id="globalError">
+            <span class="alert-dot"></span>
+            <span id="globalErrorMsg"></span>
+        </div>
+
+        <div id="emptyState" class="empty-state hidden">
+            <h2>Nothing to chart yet</h2>
+            <p>Import some modules and add tasks with dates, then come back here.</p>
+            <a href="import.html" class="btn-primary">Go to Import</a>
+        </div>
+
+        <section class="card hidden" id="ganttCard">
+            <div class="card-head">
+                <h2>Timeline</h2>
+                <span class="card-meta" id="ganttRangeLabel"></span>
+            </div>
+            <div class="gantt-scroll">
+                <div class="gantt" id="gantt"></div>
+            </div>
+            <div class="gantt-legend">
+                <span class="lg-swatch lg-bar"></span> Task
+                <span class="lg-swatch lg-bar-fill"></span> Logged hours
+                <span class="lg-swatch lg-deadline"></span> Module deadline
+                <span class="lg-swatch lg-today"></span> Today
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        if (!isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+
+        // pixel width per day. lower = denser timeline. CSS doesn't read this,
+        // it's only used to compute pixel offsets on the client.
+        const DAY_PX = 22;
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function showError(msg) {
+            const box = document.getElementById('globalError');
+            document.getElementById('globalErrorMsg').textContent = msg;
+            box.classList.remove('hidden');
+        }
+
+        function initializePage() {
+            const username = localStorage.getItem('username') || 'Student';
+            document.getElementById('userName').textContent = username;
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+        }
+
+        // floor a date to midnight (date-only comparisons)
+        function startOfDay(d) {
+            const c = new Date(d);
+            c.setHours(0, 0, 0, 0);
+            return c;
+        }
+
+        function daysBetween(a, b) {
+            return Math.round((startOfDay(b) - startOfDay(a)) / (1000 * 60 * 60 * 24));
+        }
+
+        function fmt(d, opts) {
+            return new Date(d).toLocaleDateString('en-GB', opts || { day: 'numeric', month: 'short' });
+        }
+
+        function computeRange(modules, tasks) {
+            // pick a sensible start: the earliest of (today, earliest task start)
+            // pick a sensible end: the latest of (latest task end, latest module deadline)
+            const today = startOfDay(new Date());
+            const candidates = [today];
+            tasks.forEach(t => {
+                if (t.start_date) candidates.push(startOfDay(new Date(t.start_date)));
+            });
+            const endCandidates = [today];
+            tasks.forEach(t => {
+                if (t.end_date) endCandidates.push(startOfDay(new Date(t.end_date)));
+            });
+            modules.forEach(m => {
+                if (m.deadline) endCandidates.push(startOfDay(new Date(m.deadline)));
+            });
+
+            const start = new Date(Math.min.apply(null, candidates));
+            const end   = new Date(Math.max.apply(null, endCandidates));
+
+            // pad a couple of days on each side for breathing room
+            start.setDate(start.getDate() - 2);
+            end.setDate(end.getDate() + 2);
+
+            return { start, end, totalDays: daysBetween(start, end) + 1 };
+        }
+
+        function renderHeader(range) {
+            const head = document.createElement('div');
+            head.className = 'gantt-header';
+            head.style.width = (range.totalDays * DAY_PX) + 'px';
+
+            // monthly band on top, daily ticks below
+            const monthBand = document.createElement('div');
+            monthBand.className = 'gantt-months';
+            const dayBand = document.createElement('div');
+            dayBand.className = 'gantt-days';
+
+            // walk day by day
+            let monthStart = 0;
+            let currentMonth = -1;
+            for (let i = 0; i < range.totalDays; i++) {
+                const d = new Date(range.start);
+                d.setDate(d.getDate() + i);
+                const monthKey = d.getMonth() + '-' + d.getFullYear();
+                if (monthKey !== currentMonth) {
+                    if (currentMonth !== -1) {
+                        appendMonthBlock(monthBand, monthStart, i, currentMonth);
+                    }
+                    monthStart = i;
+                    currentMonth = monthKey;
+                }
+
+                const tick = document.createElement('div');
+                tick.className = 'gantt-day';
+                if (d.getDay() === 0 || d.getDay() === 6) tick.classList.add('weekend');
+                if (startOfDay(d).getTime() === startOfDay(new Date()).getTime()) tick.classList.add('today');
+                tick.textContent = d.getDate();
+                tick.style.left = (i * DAY_PX) + 'px';
+                tick.style.width = DAY_PX + 'px';
+                dayBand.appendChild(tick);
+            }
+            // close out the final month block
+            appendMonthBlock(monthBand, monthStart, range.totalDays, currentMonth);
+
+            function appendMonthBlock(parent, fromIdx, toIdx, monthKey) {
+                const [m, y] = monthKey.split('-').map(Number);
+                const block = document.createElement('div');
+                block.className = 'gantt-month';
+                block.style.left = (fromIdx * DAY_PX) + 'px';
+                block.style.width = ((toIdx - fromIdx) * DAY_PX) + 'px';
+                block.textContent = new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+                parent.appendChild(block);
+            }
+
+            head.appendChild(monthBand);
+            head.appendChild(dayBand);
+            return head;
+        }
+
+        function renderTodayLine(range) {
+            const line = document.createElement('div');
+            line.className = 'gantt-today-line';
+            const offset = daysBetween(range.start, new Date());
+            line.style.left = (offset * DAY_PX + DAY_PX / 2) + 'px';
+            return line;
+        }
+
+        function renderGantt(data) {
+            const container = document.getElementById('gantt');
+            container.innerHTML = '';
+            const { modules, tasks } = data;
+            const range = computeRange(modules, tasks);
+
+            document.getElementById('ganttRangeLabel').textContent =
+                fmt(range.start, { day: 'numeric', month: 'short' }) + ' – ' +
+                fmt(range.end,   { day: 'numeric', month: 'short', year: 'numeric' });
+
+            const header = renderHeader(range);
+            container.appendChild(header);
+
+            const body = document.createElement('div');
+            body.className = 'gantt-body';
+            body.style.width = (range.totalDays * DAY_PX) + 'px';
+
+            // group tasks by module
+            const tasksByModule = {};
+            tasks.forEach(t => {
+                if (!tasksByModule[t.module_id]) tasksByModule[t.module_id] = [];
+                tasksByModule[t.module_id].push(t);
+            });
+
+            // for dependency labels we need a quick id -> task lookup
+            const taskById = {};
+            tasks.forEach(t => { taskById[t.id] = t; });
+
+            modules.forEach(m => {
+                const moduleTasks = tasksByModule[m.id] || [];
+
+                const groupHead = document.createElement('div');
+                groupHead.className = 'gantt-module-head';
+                groupHead.innerHTML =
+                    '<span class="gm-code">' + escapeHtml(m.module_code) + '</span> ' +
+                    '<span class="gm-name">' + escapeHtml(m.module_name) + '</span>';
+                body.appendChild(groupHead);
+
+                if (moduleTasks.length === 0) {
+                    const note = document.createElement('div');
+                    note.className = 'gantt-row gantt-row-empty';
+                    note.textContent = 'No tasks for this module yet.';
+                    body.appendChild(note);
+                } else {
+                    moduleTasks.forEach(t => {
+                        body.appendChild(renderTaskRow(t, range, taskById));
+                    });
+                }
+
+                // module deadline marker spanning the whole row group
+                if (m.deadline) {
+                    const dlOffset = daysBetween(range.start, m.deadline);
+                    const marker = document.createElement('div');
+                    marker.className = 'gantt-deadline';
+                    marker.style.left = (dlOffset * DAY_PX + DAY_PX / 2) + 'px';
+                    marker.title = m.module_code + ' deadline: ' + fmt(m.deadline, { day: 'numeric', month: 'short', year: 'numeric' });
+                    body.appendChild(marker);
+                }
+            });
+
+            body.appendChild(renderTodayLine(range));
+            container.appendChild(body);
+        }
+
+        function renderTaskRow(task, range, taskById) {
+            const row = document.createElement('div');
+            row.className = 'gantt-row';
+
+            if (!task.start_date || !task.end_date) {
+                row.classList.add('gantt-row-undated');
+                row.innerHTML = '<span class="gantt-task-label">' + escapeHtml(task.title) + '</span>' +
+                                '<span class="gantt-task-note">no dates set</span>';
+                return row;
+            }
+
+            const startOffset = daysBetween(range.start, task.start_date);
+            const span = Math.max(1, daysBetween(task.start_date, task.end_date) + 1);
+
+            const bar = document.createElement('div');
+            bar.className = 'gantt-bar';
+            bar.style.left  = (startOffset * DAY_PX) + 'px';
+            bar.style.width = (span * DAY_PX - 4) + 'px';
+
+            const fill = document.createElement('div');
+            fill.className = 'gantt-bar-fill';
+            fill.style.width = (task.percentage || 0) + '%';
+            bar.appendChild(fill);
+
+            const label = document.createElement('span');
+            label.className = 'gantt-bar-label';
+            const dep = task.dependency_task_id ? taskById[task.dependency_task_id] : null;
+            const depTxt = dep ? ' · after ' + dep.title : '';
+            label.textContent = task.title + depTxt;
+            bar.appendChild(label);
+
+            bar.title =
+                task.title +
+                '\nType: ' + task.type +
+                '\n' + fmt(task.start_date) + ' → ' + fmt(task.end_date) +
+                '\nProgress: ' + (task.hours_logged || 0).toFixed(1) + ' / ' +
+                                  (task.required_hours || 0).toFixed(1) + ' hrs (' +
+                                  (task.percentage || 0) + '%)' +
+                (dep ? '\nDepends on: ' + dep.title : '');
+
+            row.appendChild(bar);
+            return row;
+        }
+
+        async function loadGantt() {
+            try {
+                const res = await authenticatedFetch('/api/gantt');
+                if (!res || !res.ok) throw new Error('Could not load Gantt data');
+                const data = await res.json();
+                if (!data.modules || data.modules.length === 0) {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                    return;
+                }
+                document.getElementById('ganttCard').classList.remove('hidden');
+                renderGantt(data);
+            } catch (err) {
+                showError(err.message || 'Could not load Gantt data');
+            }
+        }
+
+        initializePage();
+        loadGantt();
+    </script>
+</body>
+</html>

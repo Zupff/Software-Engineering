@@ -42,6 +42,10 @@ app.use(sessionRoutes);
 const dashboardRoutes = require('./routes/dashboard');
 app.use(dashboardRoutes);
 
+// import gantt routes
+const ganttRoutes = require('./routes/gantt');
+app.use(ganttRoutes);
+
 // health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

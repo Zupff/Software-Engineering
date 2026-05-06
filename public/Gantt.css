@@ -1,0 +1,223 @@
+/* Gantt page – horizontal timeline rendered with absolute positioning
+   inside a scrolling container. Day width is set in pixels by the JS
+   (DAY_PX) so the bar offsets and the header ticks stay aligned. */
+
+.gantt-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.gantt {
+    position: relative;
+    min-width: 100%;
+}
+
+/* ── Header (months on top, days below) ── */
+.gantt-header {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+}
+.gantt-months {
+    position: relative;
+    height: 22px;
+    border-bottom: 1px solid var(--border);
+}
+.gantt-month {
+    position: absolute;
+    top: 0;
+    height: 22px;
+    line-height: 22px;
+    padding: 0 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.gantt-days {
+    position: relative;
+    height: 22px;
+}
+.gantt-day {
+    position: absolute;
+    top: 0;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    font-size: 0.65rem;
+    color: var(--muted);
+    border-right: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+.gantt-day.weekend {
+    background: color-mix(in srgb, var(--bg) 70%, var(--border));
+}
+.gantt-day.today {
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 700;
+}
+
+/* ── Body (rows + bars) ── */
+.gantt-body {
+    position: relative;
+    padding: 6px 0 18px;
+}
+
+.gantt-module-head {
+    position: sticky;
+    left: 0;
+    padding: 12px 14px 6px;
+    font-size: 0.78rem;
+    z-index: 2;
+    background: linear-gradient(to right,
+        var(--surface) 0%,
+        var(--surface) 240px,
+        color-mix(in srgb, var(--surface) 92%, transparent) 100%);
+    pointer-events: none;
+}
+.gm-code {
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 0.04em;
+}
+.gm-name {
+    font-weight: 600;
+    color: var(--text);
+    margin-left: 6px;
+}
+
+.gantt-row {
+    position: relative;
+    height: 32px;
+    margin: 4px 0;
+}
+.gantt-row-empty {
+    height: 26px;
+    line-height: 26px;
+    padding-left: 14px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-style: italic;
+}
+.gantt-row-undated {
+    height: 26px;
+    line-height: 26px;
+    padding-left: 14px;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+.gantt-row-undated .gantt-task-label {
+    color: var(--text);
+    font-weight: 500;
+    margin-right: 8px;
+}
+.gantt-row-undated .gantt-task-note {
+    background: var(--bg);
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+}
+
+.gantt-bar {
+    position: absolute;
+    top: 4px;
+    height: 24px;
+    background: color-mix(in srgb, var(--primary) 18%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: default;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.gantt-bar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+}
+.gantt-bar-fill {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    background: var(--primary);
+    border-radius: 5px 0 0 5px;
+}
+.gantt-bar-label {
+    position: relative;
+    z-index: 1;
+    display: block;
+    padding: 0 8px;
+    line-height: 24px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    mix-blend-mode: normal;
+}
+.gantt-bar-fill ~ .gantt-bar-label,
+.gantt-bar:has(.gantt-bar-fill[style*="100%"]) .gantt-bar-label {
+    /* readable text whether the fill is light or dark behind it */
+    color: var(--text);
+}
+
+/* ── Vertical markers ── */
+.gantt-deadline {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 2px dashed var(--red);
+    z-index: 1;
+    pointer-events: auto;
+}
+.gantt-deadline::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -5px;
+    width: 8px; height: 8px;
+    background: var(--red);
+    border-radius: 50%;
+}
+
+.gantt-today-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 2px solid color-mix(in srgb, var(--primary) 70%, transparent);
+    z-index: 1;
+}
+
+/* ── Legend ── */
+.gantt-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+.lg-swatch {
+    display: inline-block;
+    width: 14px; height: 10px;
+    border-radius: 3px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+.lg-bar { background: color-mix(in srgb, var(--primary) 18%, var(--surface)); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent); }
+.lg-bar-fill { background: var(--primary); }
+.lg-deadline { width: 0; border-left: 2px dashed var(--red); height: 12px; }
+.lg-today    { width: 0; border-left: 2px solid color-mix(in srgb, var(--primary) 70%, transparent); height: 12px; }
