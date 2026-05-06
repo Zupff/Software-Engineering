@@ -98,12 +98,22 @@
                         </div>
                     </div>
                     <div class="form-row">
+                        <div class="form-field form-field-narrow">
+                            <label for="taskStart">Start date</label>
+                            <input type="date" id="taskStart" required>
+                        </div>
+                        <div class="form-field form-field-narrow">
+                            <label for="taskEnd">End date</label>
+                            <input type="date" id="taskEnd" required>
+                        </div>
                         <div class="form-field">
                             <label for="taskDependency">Depends on (optional)</label>
                             <select id="taskDependency">
                                 <option value="">None</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-field form-field-grow">
                             <label for="taskNotes">Notes (optional)</label>
                             <input type="text" id="taskNotes" placeholder="Anything to remember about this task" maxlength="500">
@@ -265,6 +275,13 @@
             sel.value = current;
         }
 
+        function fmtShortDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return '';
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        }
+
         function renderTaskRow(task, allTasks) {
             const hoursLogged = hoursLoggedFor(task.id);
             const required = parseFloat(task.required_hours);
@@ -273,6 +290,12 @@
                 ? (allTasks.find(t => t.id === task.dependency_task_id) || null)
                 : null;
             const today = new Date().toISOString().slice(0, 10);
+
+            const startStr = fmtShortDate(task.start_date);
+            const endStr   = fmtShortDate(task.end_date);
+            const dateRange = (startStr || endStr)
+                ? (startStr && endStr ? startStr + ' → ' + endStr : (startStr ? 'from ' + startStr : 'until ' + endStr))
+                : '';
 
             const row = document.createElement('div');
             row.className = 'task-row';
@@ -285,6 +308,7 @@
                         '<div class="task-meta">' +
                             '<span class="task-pill">' + escapeHtml(task.type) + '</span>' +
                             '<span>' + hoursLogged.toFixed(1) + ' / ' + required.toFixed(1) + ' hrs</span>' +
+                            (dateRange ? '<span class="task-dates">' + dateRange + '</span>' : '') +
                             (dep ? '<span class="task-dep">depends on <strong>' + escapeHtml(dep.title) + '</strong></span>' : '') +
                         '</div>' +
                     '</div>' +
@@ -328,6 +352,11 @@
             const form = document.getElementById('newTaskForm');
             const isHidden = form.classList.toggle('hidden');
             if (!isHidden) {
+                const today = new Date();
+                const weekOut = new Date(today);
+                weekOut.setDate(today.getDate() + 7);
+                document.getElementById('taskStart').value = today.toISOString().slice(0, 10);
+                document.getElementById('taskEnd').value   = weekOut.toISOString().slice(0, 10);
                 document.getElementById('taskTitle').focus();
                 populateDependencyOptions(tasksByModule[selectedModuleId] || []);
             }
@@ -340,9 +369,16 @@
                 title: document.getElementById('taskTitle').value.trim(),
                 type: document.getElementById('taskType').value,
                 required_hours: parseFloat(document.getElementById('taskHours').value),
+                start_date: document.getElementById('taskStart').value || null,
+                end_date: document.getElementById('taskEnd').value || null,
                 dependency_task_id: document.getElementById('taskDependency').value || null,
                 notes: document.getElementById('taskNotes').value.trim() || null
             };
+
+            if (payload.start_date && payload.end_date && payload.start_date > payload.end_date) {
+                showError('Start date must be on or before end date');
+                return;
+            }
 
             try {
                 const res = await authenticatedFetch('/api/tasks', {

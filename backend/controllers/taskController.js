@@ -34,10 +34,19 @@ const getTasksByModule = async (req, res) => {
   }
 };
 
+// helper: returns a normalised ISO date string if `value` is a valid date,
+// or null if the value is missing/empty, or undefined to signal an error
+function parseDate(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return undefined;
+  return d.toISOString().slice(0, 10);
+}
+
 // create a new task
 const createTask = async (req, res) => {
   try {
-    const { module_id, title, type, required_hours, dependency_task_id, notes } = req.body;
+    const { module_id, title, type, required_hours, start_date, end_date, dependency_task_id, notes } = req.body;
     const userId = req.user.id;
 
     // validate required fields are present
@@ -48,6 +57,19 @@ const createTask = async (req, res) => {
     // validate required_hours is a positive number
     if (isNaN(required_hours) || required_hours <= 0) {
       return res.status(400).json({ message: 'required_hours must be a positive number' });
+    }
+
+    // validate start_date / end_date if provided, and that start <= end
+    const startISO = parseDate(start_date);
+    const endISO   = parseDate(end_date);
+    if (startISO === undefined) {
+      return res.status(400).json({ message: 'start_date is not a valid date' });
+    }
+    if (endISO === undefined) {
+      return res.status(400).json({ message: 'end_date is not a valid date' });
+    }
+    if (startISO && endISO && startISO > endISO) {
+      return res.status(400).json({ message: 'start_date must be on or before end_date' });
     }
 
     // verify module exists and belongs to current user
@@ -74,8 +96,8 @@ const createTask = async (req, res) => {
 
     // insert new task into tasks table
     const result = await pool.query(
-      'INSERT INTO tasks (module_id, title, type, required_hours, dependency_task_id, notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [module_id, title, type, required_hours, dependency_task_id || null, notes || null]
+      'INSERT INTO tasks (module_id, title, type, required_hours, start_date, end_date, dependency_task_id, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [module_id, title, type, required_hours, startISO, endISO, dependency_task_id || null, notes || null]
     );
 
     return res.status(201).json(result.rows[0]);
@@ -89,7 +111,7 @@ const createTask = async (req, res) => {
 const updateTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, type, required_hours, dependency_task_id, notes } = req.body;
+    const { title, type, required_hours, start_date, end_date, dependency_task_id, notes } = req.body;
     const userId = req.user.id;
 
     // validate required_hours is a positive number if provided
@@ -108,6 +130,27 @@ const updateTask = async (req, res) => {
     }
 
     const current = currentResult.rows[0];
+
+    // validate start_date / end_date if provided
+    let startISO;
+    if (start_date !== undefined) {
+      startISO = parseDate(start_date);
+      if (startISO === undefined) {
+        return res.status(400).json({ message: 'start_date is not a valid date' });
+      }
+    }
+    let endISO;
+    if (end_date !== undefined) {
+      endISO = parseDate(end_date);
+      if (endISO === undefined) {
+        return res.status(400).json({ message: 'end_date is not a valid date' });
+      }
+    }
+    const finalStart = start_date !== undefined ? startISO : current.start_date;
+    const finalEnd   = end_date   !== undefined ? endISO   : current.end_date;
+    if (finalStart && finalEnd && new Date(finalStart) > new Date(finalEnd)) {
+      return res.status(400).json({ message: 'start_date must be on or before end_date' });
+    }
 
     // if a new dependency is provided, validate it: must not be self,
     // must exist, and must belong to the same module as this task
@@ -135,8 +178,8 @@ const updateTask = async (req, res) => {
 
     // update task in database
     const result = await pool.query(
-      'UPDATE tasks SET title = $1, type = $2, required_hours = $3, dependency_task_id = $4, notes = $5 WHERE id = $6 RETURNING *',
-      [updateTitle, updateType, updateRequiredHours, updateDependencyTaskId || null, updateNotes, id]
+      'UPDATE tasks SET title = $1, type = $2, required_hours = $3, start_date = $4, end_date = $5, dependency_task_id = $6, notes = $7 WHERE id = $8 RETURNING *',
+      [updateTitle, updateType, updateRequiredHours, finalStart, finalEnd, updateDependencyTaskId || null, updateNotes, id]
     );
 
     return res.status(200).json(result.rows[0]);

@@ -25,8 +25,11 @@ CREATE TABLE tasks (
   title VARCHAR NOT NULL,
   type VARCHAR NOT NULL,
   required_hours NUMERIC NOT NULL,
+  start_date DATE,
+  end_date DATE,
   dependency_task_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
-  notes TEXT
+  notes TEXT,
+  CONSTRAINT tasks_dates_order CHECK (start_date IS NULL OR end_date IS NULL OR start_date <= end_date)
 );
 
 -- tracks study sessions logged by users for modules and tasks
