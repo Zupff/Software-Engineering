@@ -6,6 +6,7 @@
     <title>Study Planner – Import</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="Dashboard.css">
     <link rel="stylesheet" href="Import.css">
     <script src="auth.js"></script>
 </head>
@@ -47,21 +48,12 @@
     </aside>
 
     <main class="main">
-        <div class="hero">
-            <div class="hero-text">
-                <div class="hero-badge">Module Import</div>
-                <h1>Set up your semester</h1>
-                <p>Upload your UEA module file and we'll build your personalised study profile — deadlines, tasks and all.</p>
+        <header class="topbar">
+            <div>
+                <h1 class="page-title">Import</h1>
+                <p class="page-sub">Set up a new semester from your UEA module file</p>
             </div>
-            <div class="hero-art">
-                <div class="art-ring ring-1"></div>
-                <div class="art-ring ring-2"></div>
-                <div class="art-ring ring-3"></div>
-                <div class="art-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                </div>
-            </div>
-        </div>
+        </header>
 
         <div class="steps-wrap">
             <div class="step active" id="step-ind-1">
@@ -82,11 +74,9 @@
 
         <div class="step-content" id="step-1">
             <div class="card animate-in">
-                <div class="card-icon-header blue">
-                    <div>
-                        <h2>Name your semester</h2>
-                        <p>Give this semester a name so you can identify it in your dashboard</p>
-                    </div>
+                <div class="card-head">
+                    <h2>Name your semester</h2>
+                    <span class="card-meta">Used to identify it on your dashboard</span>
                 </div>
                 <div class="fields-grid">
                     <div class="field">
@@ -118,11 +108,9 @@
 
         <div class="step-content hidden" id="step-2">
             <div class="card animate-in">
-                <div class="card-icon-header green">
-                    <div>
-                        <h2>Upload your semester file</h2>
-                        <p>Upload the CSV file provided by UEA containing your module and deadline information</p>
-                    </div>
+                <div class="card-head">
+                    <h2>Upload your CSV</h2>
+                    <span class="card-meta">Module and deadline data, provided by UEA</span>
                 </div>
                 <div class="alert alert-danger hidden" id="fileError">
                     <span id="fileErrorMsg">Invalid file. Please upload a valid CSV file.</span>
@@ -133,15 +121,11 @@
                      ondragleave="handleDragLeave(event)"
                      ondrop="handleDrop(event)">
                     <div class="dz-content">
-                        <div class="dz-orbit">
-                            <div class="dz-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                            </div>
-                            <div class="dz-orbit-ring"></div>
+                        <div class="dz-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
                         </div>
                         <div class="dz-title">Drop your CSV file here</div>
-                        <div class="dz-sub">or <span class="dz-link">click to browse your files</span></div>
-                        <div class="dz-badge">.csv files only</div>
+                        <div class="dz-sub">or <span class="dz-link">click to browse</span></div>
                     </div>
                     <input type="file" id="fileInput" accept=".csv" style="display:none" onchange="handleFileSelect(event)">
                 </div>
@@ -179,11 +163,9 @@
 
         <div class="step-content hidden" id="step-3">
             <div class="card animate-in">
-                <div class="card-icon-header amber">
-                    <div>
-                        <h2>Preview imported modules</h2>
-                        <p>Check everything looks correct before confirming your semester profile</p>
-                    </div>
+                <div class="card-head">
+                    <h2>Preview imported modules</h2>
+                    <span class="card-meta">Confirm everything looks right before saving</span>
                 </div>
                 <div class="alert alert-success" id="successAlert">
                     <span id="successMsg">4 modules successfully parsed from your file.</span>
@@ -211,20 +193,18 @@
         </div>
 
         <div class="step-content hidden" id="step-4">
-            <div class="card success-card animate-in">
-                <div class="success-burst">
-                    <div class="burst-ring r1"></div>
-                    <div class="burst-ring r2"></div>
-                    <div class="success-emoji" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <div class="card animate-in">
+                <div class="success-card">
+                    <div class="success-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     </div>
-                </div>
-                <h2>You're all set!</h2>
-                <p>Your semester profile <strong id="confirmedName"></strong> has been created successfully.</p>
-                <div class="success-pills" id="successStats"></div>
-                <div class="btn-row center">
-                    <a href="dashboard.html" class="btn-primary">Go to Dashboard →</a>
-                    <a href="tasks.html" class="btn-ghost">Set Up Tasks →</a>
+                    <h2>Semester created</h2>
+                    <p>Your semester profile <strong id="confirmedName"></strong> is ready.</p>
+                    <div class="success-pills" id="successStats"></div>
+                    <div class="btn-row center">
+                        <a href="dashboard.html" class="btn-primary">Go to dashboard</a>
+                        <a href="tasks.html" class="btn-ghost">Set up tasks</a>
+                    </div>
                 </div>
             </div>
         </div>
