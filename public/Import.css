@@ -18,7 +18,7 @@ body {
    classes. Local rules below cover only Import-specific UI. */
 
 .main {
-    margin-left: var(--sidebar-w);
+    margin-left: 6px;
     flex: 1;
     padding: 24px 28px 48px;
 }

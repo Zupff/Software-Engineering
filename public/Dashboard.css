@@ -21,6 +21,38 @@ body {
     position: fixed;
     top: 0; left: 0; bottom: 0;
     z-index: 100;
+    /* collapsed by default — only the 6px navy indicator (::before) shows.
+       hover or keyboard focus inside slides it back in. */
+    transform: translateX(calc(-100% + 6px));
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    box-shadow: 0 0 0 rgba(15, 23, 42, 0);
+}
+.sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    right: 0;
+    width: 6px;
+    background: var(--primary);
+    transition: opacity 0.22s ease;
+}
+/* invisible hover-trap that extends 22px past the visible edge so the
+   user doesn't have to hit the 6px strip exactly */
+.sidebar::after {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: 0; bottom: 0;
+    width: 22px;
+}
+.sidebar:hover,
+.sidebar:focus-within {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.08);
+}
+.sidebar:hover::before,
+.sidebar:focus-within::before {
+    opacity: 0;
 }
 .sidebar-brand {
     display: flex;
@@ -80,7 +112,8 @@ body {
 .user-sub  { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
 
 .main {
-    margin-left: var(--sidebar-w);
+    /* sidebar is overlay-style now; only the 6px indicator strip is held back */
+    margin-left: 6px;
     flex: 1;
     padding: 24px 28px 48px;
 }
