@@ -54,6 +54,10 @@ app.use(semesterRoutes);
 const milestoneRoutes = require('./routes/milestones');
 app.use(milestoneRoutes);
 
+// import profile routes
+const profileRoutes = require('./routes/profile');
+app.use(profileRoutes);
+
 // health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

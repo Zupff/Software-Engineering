@@ -149,3 +149,194 @@ body {
     flex-shrink: 0;
 }
 .semester-switcher-item.active .ssi-year { color: var(--primary); }
+
+/* Profile pill: avatar can hold either an initial or an SVG. SVG mode
+   strips font sizing and centres the icon. */
+.user-avatar.user-avatar-svg {
+    color: white;
+}
+.user-avatar svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+}
+
+/* Profile popover above the user pill */
+.user-pill { position: relative; }
+.profile-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 8px;
+    right: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.12);
+    padding: 6px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.profile-menu.hidden { display: none; }
+.pm-head {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+}
+.pm-name { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.pm-course { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+.pm-action {
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.82rem;
+    color: var(--text);
+    transition: background 0.15s;
+}
+.pm-action:hover { background: var(--bg); }
+.pm-signout { color: var(--red); }
+
+/* ── Profile editor modal ── */
+.profile-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 200;
+    backdrop-filter: blur(2px);
+}
+.profile-modal-backdrop.hidden { display: none; }
+.profile-modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+}
+.pe-head {
+    padding: 22px 24px 6px;
+}
+.pe-head h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+}
+.pe-head p {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+.pe-form {
+    padding: 16px 24px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.pe-field { display: flex; flex-direction: column; }
+.pe-field > label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+}
+.pe-field input,
+.pe-field select {
+    padding: 9px 11px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.pe-field input:focus,
+.pe-field select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.pe-grid {
+    display: grid;
+    gap: 8px;
+}
+.pe-grid-avatars { grid-template-columns: repeat(6, 1fr); }
+.pe-grid-colors  { grid-template-columns: repeat(6, 1fr); }
+
+.pe-avatar {
+    aspect-ratio: 1;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.pe-avatar svg { width: 20px; height: 20px; }
+.pe-avatar:hover { color: var(--text); border-color: color-mix(in srgb, var(--primary) 30%, var(--border)); }
+.pe-avatar.selected {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.pe-color {
+    aspect-ratio: 1;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    position: relative;
+    box-shadow: inset 0 0 0 1.5px transparent;
+    transition: transform 0.12s, box-shadow 0.15s;
+}
+.pe-color:hover { transform: translateY(-1px); }
+.pe-color.selected {
+    box-shadow: inset 0 0 0 1.5px var(--surface), 0 0 0 2px currentColor;
+}
+
+.pe-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.pe-preview-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.pe-preview-avatar svg { width: 20px; height: 20px; }
+.pe-preview-name { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.pe-preview-course { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+.pe-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}

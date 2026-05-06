@@ -4,6 +4,10 @@ CREATE TABLE users (
   username VARCHAR UNIQUE NOT NULL,
   password_hash VARCHAR NOT NULL,
   email VARCHAR UNIQUE NOT NULL,
+  display_name VARCHAR,
+  course VARCHAR,
+  avatar_id VARCHAR,
+  avatar_color VARCHAR,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
