@@ -50,6 +50,10 @@ app.use(ganttRoutes);
 const semesterRoutes = require('./routes/semesters');
 app.use(semesterRoutes);
 
+// import milestone routes
+const milestoneRoutes = require('./routes/milestones');
+app.use(milestoneRoutes);
+
 // health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

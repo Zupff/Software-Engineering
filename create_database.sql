@@ -62,3 +62,11 @@ CREATE TABLE milestones (
   deadline DATE NOT NULL
 );
 
+-- many-to-many: each milestone is achieved by completing a set of tasks,
+-- and a single task may contribute to more than one milestone.
+CREATE TABLE milestone_tasks (
+  milestone_id INTEGER REFERENCES milestones(id) ON DELETE CASCADE,
+  task_id INTEGER REFERENCES tasks(id) ON DELETE CASCADE,
+  PRIMARY KEY (milestone_id, task_id)
+);
+

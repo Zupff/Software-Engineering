@@ -104,3 +104,107 @@
 
 /* topbar tweaks for this page so the title and back link sit nicely */
 .topbar { align-items: flex-start; }
+
+/* ── Milestones ── */
+.milestone-list {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.milestone-row {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    background: var(--surface);
+}
+.milestone-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+.milestone-info { min-width: 0; flex: 1; }
+.milestone-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.milestone-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+.milestone-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+.milestone-bar-wrap {
+    margin-top: 10px;
+    height: 4px;
+    background: var(--bg);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.milestone-bar {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 999px;
+    transition: width 0.3s;
+}
+.milestone-tasks {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.milestone-task {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+.milestone-task.done {
+    color: var(--text);
+    background: color-mix(in srgb, var(--green-lt) 60%, transparent);
+}
+.mt-check {
+    width: 16px;
+    text-align: center;
+    color: var(--muted);
+    font-weight: 700;
+}
+.milestone-task.done .mt-check { color: var(--green); }
+.mt-title { flex: 1; }
+.milestone-empty-tasks {
+    margin-top: 10px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-style: italic;
+}
+
+#msTasks {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--text);
+    background: var(--surface);
+}
+#msTasks:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}

@@ -116,6 +116,42 @@
                 </section>
             </div>
 
+            <section class="card">
+                <div class="card-head">
+                    <h2>Milestones</h2>
+                    <button class="btn-primary btn-compact" id="newMilestoneBtn" onclick="toggleMilestoneForm()">+ New milestone</button>
+                </div>
+
+                <form class="task-form hidden" id="newMilestoneForm" onsubmit="createMilestone(event)">
+                    <div class="form-row">
+                        <div class="form-field form-field-grow">
+                            <label for="msTitle">Title</label>
+                            <input type="text" id="msTitle" required maxlength="200" placeholder="e.g. First draft submitted">
+                        </div>
+                        <div class="form-field form-field-narrow">
+                            <label for="msDeadline">Deadline</label>
+                            <input type="date" id="msDeadline" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field form-field-grow">
+                            <label>Contributing tasks (hold ⌘ / Ctrl to pick more than one)</label>
+                            <select id="msTasks" multiple size="4"></select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-ghost" onclick="toggleMilestoneForm()">Cancel</button>
+                        <button type="submit" class="btn-primary btn-compact">Create milestone</button>
+                    </div>
+                </form>
+
+                <div class="milestone-list" id="milestoneList"></div>
+                <div class="empty-block hidden" id="milestoneListEmpty">
+                    <p>No milestones for this module yet.</p>
+                    <p class="muted">Use them to mark intermediate deliverables (e.g. first draft, peer review).</p>
+                </div>
+            </section>
+
         </div>
 
     </main>
@@ -176,6 +212,11 @@
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
         }
 
+        let currentModule = null;
+        let currentTasks = [];
+        let hoursByTaskId = {};
+        let milestones = [];
+
         async function loadModule() {
             const id = getModuleIdFromUrl();
             if (!id) {
@@ -184,9 +225,10 @@
             }
 
             try {
-                const [moduleRes, sessionsRes] = await Promise.all([
+                const [moduleRes, sessionsRes, milestonesRes] = await Promise.all([
                     authenticatedFetch('/api/modules/' + id),
                     authenticatedFetch('/api/sessions?module_id=' + id),
+                    authenticatedFetch('/api/milestones?module_id=' + id),
                 ]);
 
                 if (!moduleRes || !moduleRes.ok) {
@@ -194,12 +236,169 @@
                     throw new Error('Could not load module');
                 }
                 const module = await moduleRes.json();
-                const sessions = (sessionsRes && sessionsRes.ok) ? await sessionsRes.json() : [];
+                const sessions   = (sessionsRes   && sessionsRes.ok)   ? await sessionsRes.json()   : [];
+                milestones       = (milestonesRes && milestonesRes.ok) ? await milestonesRes.json() : [];
 
                 renderModule(module, sessions);
+                renderMilestones();
             } catch (err) {
                 showError(err.message || 'Could not load module');
             }
+        }
+
+        function isTaskComplete(taskId) {
+            const task = currentTasks.find(t => t.id === taskId);
+            if (!task) return false;
+            const required = parseFloat(task.required_hours) || 0;
+            if (required <= 0) return false;
+            return (hoursByTaskId[taskId] || 0) >= required;
+        }
+
+        function renderMilestones() {
+            const list = document.getElementById('milestoneList');
+            const empty = document.getElementById('milestoneListEmpty');
+            list.innerHTML = '';
+
+            populateMilestoneTaskSelect();
+
+            if (!milestones || milestones.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            const taskById = {};
+            currentTasks.forEach(t => { taskById[t.id] = t; });
+
+            milestones.forEach(m => {
+                const taskIds = (m.task_ids || []).filter(tid => taskById[tid]);
+                const completedCount = taskIds.filter(isTaskComplete).length;
+                const totalCount = taskIds.length;
+                const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+                const days = daysUntil(m.deadline);
+                const isComplete = totalCount > 0 && completedCount === totalCount;
+
+                let statusLabel, statusCls;
+                if (isComplete) {
+                    statusLabel = 'Achieved';
+                    statusCls = 'pill-green';
+                } else if (days < 0) {
+                    statusLabel = 'Missed';
+                    statusCls = 'pill-red';
+                } else if (days <= 7) {
+                    statusLabel = days === 0 ? 'Due today' : 'Due in ' + days + ' day' + (days === 1 ? '' : 's');
+                    statusCls = 'pill-amber';
+                } else {
+                    statusLabel = 'In ' + days + ' days';
+                    statusCls = 'pill-blue';
+                }
+
+                const row = document.createElement('div');
+                row.className = 'milestone-row';
+                row.innerHTML =
+                    '<div class="milestone-top">' +
+                        '<div class="milestone-info">' +
+                            '<div class="milestone-title">' + escapeHtml(m.title) + '</div>' +
+                            '<div class="milestone-meta">' +
+                                '<span>Due ' + formatDate(m.deadline) + '</span>' +
+                                '<span>' + completedCount + ' / ' + totalCount + ' task' + (totalCount === 1 ? '' : 's') + ' complete</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="milestone-actions">' +
+                            '<span class="pill ' + statusCls + '">' + escapeHtml(statusLabel) + '</span>' +
+                            '<button class="btn-ghost btn-compact btn-danger" onclick="deleteMilestone(' + m.id + ')">Delete</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="milestone-bar-wrap"><div class="milestone-bar" style="width:' + pct + '%"></div></div>' +
+                    (taskIds.length > 0
+                        ? '<ul class="milestone-tasks">' + taskIds.map(tid => {
+                              const t = taskById[tid];
+                              const done = isTaskComplete(tid);
+                              return '<li class="milestone-task' + (done ? ' done' : '') + '">' +
+                                         '<span class="mt-check">' + (done ? '✓' : '○') + '</span>' +
+                                         '<span class="mt-title">' + escapeHtml(t.title) + '</span>' +
+                                     '</li>';
+                          }).join('') + '</ul>'
+                        : '<div class="milestone-empty-tasks">No contributing tasks linked yet.</div>');
+
+                list.appendChild(row);
+            });
+        }
+
+        function populateMilestoneTaskSelect() {
+            const sel = document.getElementById('msTasks');
+            sel.innerHTML = '';
+            currentTasks.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.title;
+                sel.appendChild(opt);
+            });
+        }
+
+        function toggleMilestoneForm() {
+            const form = document.getElementById('newMilestoneForm');
+            const isHidden = form.classList.toggle('hidden');
+            if (!isHidden) {
+                document.getElementById('msTitle').value = '';
+                document.getElementById('msDeadline').value = (currentModule && currentModule.deadline)
+                    ? new Date(currentModule.deadline).toISOString().slice(0, 10)
+                    : new Date().toISOString().slice(0, 10);
+                Array.from(document.getElementById('msTasks').options).forEach(o => o.selected = false);
+                document.getElementById('msTitle').focus();
+            }
+        }
+
+        async function createMilestone(event) {
+            event.preventDefault();
+            if (!currentModule) return;
+
+            const title = document.getElementById('msTitle').value.trim();
+            const deadline = document.getElementById('msDeadline').value;
+            const taskIds = Array.from(document.getElementById('msTasks').selectedOptions).map(o => parseInt(o.value, 10));
+
+            try {
+                const res = await authenticatedFetch('/api/milestones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        module_id: currentModule.id,
+                        title, deadline,
+                        task_ids: taskIds,
+                    })
+                });
+                if (!res || !res.ok) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not create milestone');
+                }
+                document.getElementById('newMilestoneForm').classList.add('hidden');
+                await reloadMilestones();
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        async function deleteMilestone(id) {
+            const m = (milestones || []).find(x => x.id === id);
+            if (!m) return;
+            if (!confirm('Delete milestone "' + m.title + '"?')) return;
+            try {
+                const res = await authenticatedFetch('/api/milestones/' + id, { method: 'DELETE' });
+                if (!res || !res.ok) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not delete milestone');
+                }
+                await reloadMilestones();
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        async function reloadMilestones() {
+            if (!currentModule) return;
+            const res = await authenticatedFetch('/api/milestones?module_id=' + currentModule.id);
+            milestones = (res && res.ok) ? await res.json() : [];
+            renderMilestones();
         }
 
         function renderModule(module, sessions) {
@@ -215,7 +414,8 @@
             document.getElementById('msDeadlineRel').textContent = module.deadline ? relDeadline(module.deadline) : '';
             document.getElementById('msWeighting').textContent  = (module.weighting != null ? module.weighting + '%' : '—');
 
-            // hours-logged per task lookup
+            // hours-logged per task lookup (also stashed at module scope so
+            // the milestones card can compute task completion without refetching)
             const hoursByTask = {};
             sessions.forEach(s => {
                 if (s.task_id == null) return;
@@ -223,6 +423,9 @@
             });
 
             const tasks = module.tasks || [];
+            currentModule = module;
+            currentTasks  = tasks;
+            hoursByTaskId = hoursByTask;
             let totalRequired = 0;
             let totalLogged   = 0;
             tasks.forEach(t => {
