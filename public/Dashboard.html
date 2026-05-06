@@ -355,7 +355,7 @@
 
         async function loadDashboard() {
             try {
-                const res = await authenticatedFetch('/api/dashboard');
+                const res = await authenticatedFetch(withActiveSemester('/api/dashboard'));
                 if (!res || !res.ok) throw new Error('Could not load dashboard');
                 const data = await res.json();
                 renderAlerts(data);

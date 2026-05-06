@@ -1,15 +1,25 @@
 const pool = require('../db');
 
-// query all modules for current user ordered by deadline
+// query all modules for current user ordered by deadline. Optionally
+// filtered by ?semester_id=N so the active-semester switcher can scope
+// every page; missing means "all the user's modules".
 const getAllModules = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { semester_id } = req.query;
 
-    // get all modules for user ordered by deadline ascending
-    const result = await pool.query(
-      'SELECT * FROM modules WHERE user_id = $1 ORDER BY deadline ASC',
-      [userId]
-    );
+    let result;
+    if (semester_id) {
+      result = await pool.query(
+        'SELECT * FROM modules WHERE user_id = $1 AND semester_id = $2 ORDER BY deadline ASC',
+        [userId, semester_id]
+      );
+    } else {
+      result = await pool.query(
+        'SELECT * FROM modules WHERE user_id = $1 ORDER BY deadline ASC',
+        [userId]
+      );
+    }
 
     return res.status(200).json(result.rows);
   } catch (error) {

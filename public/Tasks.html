@@ -172,7 +172,7 @@
 
         async function loadModules() {
             try {
-                const res = await authenticatedFetch('/api/modules');
+                const res = await authenticatedFetch(withActiveSemester('/api/modules'));
                 if (!res || !res.ok) throw new Error('Could not load modules');
                 modules = await res.json();
                 if (modules.length === 0) {

@@ -1,12 +1,17 @@
 const pool = require('../db');
 
-// helper function to calculate module progress and status
-const calculateProgress = async (userId) => {
-  // query all modules for user
-  const modulesResult = await pool.query(
-    'SELECT * FROM modules WHERE user_id = $1',
-    [userId]
-  );
+// helper function to calculate module progress and status. semesterId
+// is optional; when provided, only that semester's modules are returned.
+const calculateProgress = async (userId, semesterId) => {
+  const modulesResult = semesterId
+    ? await pool.query(
+        'SELECT * FROM modules WHERE user_id = $1 AND semester_id = $2',
+        [userId, semesterId]
+      )
+    : await pool.query(
+        'SELECT * FROM modules WHERE user_id = $1',
+        [userId]
+      );
 
   // calculate progress for each module
   const progress = await Promise.all(
@@ -78,9 +83,10 @@ const calculateProgress = async (userId) => {
 const getProgress = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { semester_id } = req.query;
 
-    // calculate progress for all modules
-    const progress = await calculateProgress(userId);
+    // calculate progress for all modules (optionally scoped to a semester)
+    const progress = await calculateProgress(userId, semester_id);
 
     return res.status(200).json(progress);
   } catch (error) {
@@ -93,9 +99,10 @@ const getProgress = async (req, res) => {
 const getDashboard = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { semester_id } = req.query;
 
-    // calculate progress for all modules
-    const progress = await calculateProgress(userId);
+    // calculate progress for all modules (optionally scoped to a semester)
+    const progress = await calculateProgress(userId, semester_id);
 
     // calculate summary counts
     const total_modules = progress.length;

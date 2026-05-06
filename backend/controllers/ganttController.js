@@ -6,11 +6,17 @@ const pool = require('../db');
 const getGantt = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { semester_id } = req.query;
 
-    const modulesResult = await pool.query(
-      'SELECT id, module_code, module_name, assessment_type, deadline, weighting FROM modules WHERE user_id = $1 ORDER BY deadline ASC',
-      [userId]
-    );
+    const modulesResult = semester_id
+      ? await pool.query(
+          'SELECT id, module_code, module_name, assessment_type, deadline, weighting FROM modules WHERE user_id = $1 AND semester_id = $2 ORDER BY deadline ASC',
+          [userId, semester_id]
+        )
+      : await pool.query(
+          'SELECT id, module_code, module_name, assessment_type, deadline, weighting FROM modules WHERE user_id = $1 ORDER BY deadline ASC',
+          [userId]
+        );
 
     const moduleIds = modulesResult.rows.map(m => m.id);
     if (moduleIds.length === 0) {

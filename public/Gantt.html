@@ -326,7 +326,7 @@
 
         async function loadGantt() {
             try {
-                const res = await authenticatedFetch('/api/gantt');
+                const res = await authenticatedFetch(withActiveSemester('/api/gantt'));
                 if (!res || !res.ok) throw new Error('Could not load Gantt data');
                 const data = await res.json();
                 if (!data.modules || data.modules.length === 0) {
