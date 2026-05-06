@@ -8,12 +8,13 @@ const app = express();
 // middleware
 app.use(express.json());
 
-// serve static frontend files
-app.use(express.static(path.join(__dirname, '..')));
+// serve static frontend files from public/ only
+const publicDir = path.join(__dirname, '..', 'public');
+app.use(express.static(publicDir));
 
-// serve index.html for root path
+// serve Index.html for root path
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
+  res.sendFile(path.join(publicDir, 'Index.html'));
 });
 
 // import auth routes
