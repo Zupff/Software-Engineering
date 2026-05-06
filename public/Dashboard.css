@@ -208,7 +208,16 @@ body {
 .pill { font-size: 0.7rem; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
 .pill-red   { background: var(--red-lt);   color: var(--red); }
 .pill-amber { background: var(--amber-lt); color: var(--amber); }
-.pill-blue  { background: var(--blue-lt);  color: var(--blue); }
+.pill-blue  { background: var(--primary-soft); color: var(--primary); }
+
+.empty-block {
+    padding: 16px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-align: center;
+}
+.empty-block a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.empty-block a:hover { text-decoration: underline; }
 .pill-green { background: var(--green-lt); color: var(--green); }
 
 .tab-row { display: flex; gap: 6px; margin-bottom: 14px; }

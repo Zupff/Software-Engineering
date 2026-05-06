@@ -52,44 +52,35 @@
             <a href="import.html" class="btn-primary">+ Import Modules</a>
         </header>
 
-        <div class="alert alert-danger">
-            <span class="alert-dot"></span>
-            <span><strong>1 deadline missed</strong> — CMP-5012B Software Engineering was due 3 days ago and is incomplete.</span>
-            <button class="alert-close" onclick="this.parentElement.style.display='none'" aria-label="Dismiss">×</button>
-        </div>
-        <div class="alert alert-warning">
-            <span class="alert-dot"></span>
-            <span><strong>2 deadlines approaching</strong> — work due within the next 7 days.</span>
-            <button class="alert-close" onclick="this.parentElement.style.display='none'" aria-label="Dismiss">×</button>
-        </div>
+        <div id="alerts"></div>
 
         <div class="summary-grid">
             <div class="summary-card">
                 <div class="summary-icon blue" aria-hidden="true">
                     <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                 </div>
-                <div class="summary-num">4</div>
+                <div class="summary-num" id="sumModules">0</div>
                 <div class="summary-label">Modules</div>
             </div>
             <div class="summary-card">
                 <div class="summary-icon green" aria-hidden="true">
                     <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                 </div>
-                <div class="summary-num">3</div>
+                <div class="summary-num" id="sumCompleted">0</div>
                 <div class="summary-label">Completed</div>
             </div>
             <div class="summary-card">
                 <div class="summary-icon amber" aria-hidden="true">
                     <svg class="icon icon-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
-                <div class="summary-num">4</div>
+                <div class="summary-num" id="sumUpcoming">0</div>
                 <div class="summary-label">Upcoming</div>
             </div>
             <div class="summary-card">
                 <div class="summary-icon red" aria-hidden="true">
                     <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
                 </div>
-                <div class="summary-num">1</div>
+                <div class="summary-num" id="sumMissed">0</div>
                 <div class="summary-label">Missed</div>
             </div>
         </div>
@@ -101,56 +92,9 @@
                     <h2>Module Progress</h2>
                     <span class="card-meta">Based on logged study sessions</span>
                 </div>
-                <div class="module-list">
-
-                    <div class="module-row">
-                        <div class="module-top">
-                            <div>
-                                <div class="module-name">CMP-5012B Software Engineering</div>
-                                <div class="module-meta">Coursework · Due 06 Mar 2026</div>
-                            </div>
-                            <span class="pill pill-red">Missed</span>
-                        </div>
-                        <div class="bar-wrap"><div class="bar bar-red" style="width:65%"></div></div>
-                        <div class="bar-labels"><span>65% complete</span><span>13 / 20 hrs</span></div>
-                    </div>
-
-                    <div class="module-row">
-                        <div class="module-top">
-                            <div>
-                                <div class="module-name">CMP-5020B Databases</div>
-                                <div class="module-meta">Coursework · Due 18 Apr 2026</div>
-                            </div>
-                            <span class="pill pill-amber">Due in 7 days</span>
-                        </div>
-                        <div class="bar-wrap"><div class="bar bar-amber" style="width:45%"></div></div>
-                        <div class="bar-labels"><span>45% complete</span><span>9 / 20 hrs</span></div>
-                    </div>
-
-                    <div class="module-row">
-                        <div class="module-top">
-                            <div>
-                                <div class="module-name">CMP-5034A Algorithms</div>
-                                <div class="module-meta">Exam · Due 15 May 2026</div>
-                            </div>
-                            <span class="pill pill-blue">On track</span>
-                        </div>
-                        <div class="bar-wrap"><div class="bar bar-blue" style="width:80%"></div></div>
-                        <div class="bar-labels"><span>80% complete</span><span>16 / 20 hrs</span></div>
-                    </div>
-
-                    <div class="module-row">
-                        <div class="module-top">
-                            <div>
-                                <div class="module-name">CMP-5042B Computer Networks</div>
-                                <div class="module-meta">Coursework · Due 30 Apr 2026</div>
-                            </div>
-                            <span class="pill pill-green">On track</span>
-                        </div>
-                        <div class="bar-wrap"><div class="bar bar-green" style="width:90%"></div></div>
-                        <div class="bar-labels"><span>90% complete</span><span>18 / 20 hrs</span></div>
-                    </div>
-
+                <div class="module-list" id="moduleList"></div>
+                <div class="empty-block hidden" id="moduleListEmpty">
+                    <p>No modules yet. <a href="import.html">Import a CSV</a> to get started.</p>
                 </div>
             </section>
 
@@ -166,91 +110,9 @@
                     <button class="tab" onclick="showTab('missed', this)">Missed</button>
                 </div>
 
-                <div class="tab-pane" id="tab-upcoming">
-                    <div class="deadline-item">
-                        <div class="dl-dot amber"></div>
-                        <div class="dl-body">
-                            <div class="dl-title">CMP-5020B Databases Coursework</div>
-                            <div class="dl-date">18 Apr 2026 · 7 days left</div>
-                            <div class="dl-bar-row">
-                                <div class="dl-bar-wrap"><div class="dl-bar bar-amber" style="width:45%"></div></div>
-                                <span>45%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="deadline-item">
-                        <div class="dl-dot amber"></div>
-                        <div class="dl-body">
-                            <div class="dl-title">CMP-5042B Networks Coursework</div>
-                            <div class="dl-date">30 Apr 2026 · 19 days left</div>
-                            <div class="dl-bar-row">
-                                <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:90%"></div></div>
-                                <span>90%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="deadline-item">
-                        <div class="dl-dot blue"></div>
-                        <div class="dl-body">
-                            <div class="dl-title">CMP-5034A Algorithms Exam</div>
-                            <div class="dl-date">15 May 2026 · 34 days left</div>
-                            <div class="dl-bar-row">
-                                <div class="dl-bar-wrap"><div class="dl-bar bar-blue" style="width:80%"></div></div>
-                                <span>80%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-pane hidden" id="tab-completed">
-                    <div class="deadline-item success">
-                        <div class="dl-dot green"></div>
-                        <div class="dl-body">
-                            <div class="dl-title">CMP-5012B SE – Requirements Report</div>
-                            <div class="dl-date">Submitted 06 Mar 2026</div>
-                            <div class="dl-bar-row">
-                                <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:100%"></div></div>
-                                <span>100%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="deadline-item success">
-                        <div class="dl-dot green"></div>
-                        <div class="dl-body">
-                            <div class="dl-title">CMP-5020B Databases – Lab Test</div>
-                            <div class="dl-date">Submitted 14 Feb 2026</div>
-                            <div class="dl-bar-row">
-                                <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:100%"></div></div>
-                                <span>100%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="deadline-item success">
-                        <div class="dl-dot green"></div>
-                        <div class="dl-body">
-                            <div class="dl-title">CMP-5034A Algorithms – Midterm</div>
-                            <div class="dl-date">Submitted 28 Feb 2026</div>
-                            <div class="dl-bar-row">
-                                <div class="dl-bar-wrap"><div class="dl-bar bar-green" style="width:100%"></div></div>
-                                <span>100%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-pane hidden" id="tab-missed">
-                    <div class="deadline-item danger">
-                        <div class="dl-dot red"></div>
-                        <div class="dl-body">
-                            <div class="dl-title">CMP-5012B SE – Final Coursework</div>
-                            <div class="dl-date">Due 06 Mar 2026 · 3 days overdue</div>
-                            <div class="dl-bar-row">
-                                <div class="dl-bar-wrap"><div class="dl-bar bar-red" style="width:65%"></div></div>
-                                <span>65%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <div class="tab-pane" id="tab-upcoming"></div>
+                <div class="tab-pane hidden" id="tab-completed"></div>
+                <div class="tab-pane hidden" id="tab-missed"></div>
 
             </section>
         </div>
@@ -272,11 +134,50 @@
             window.location.href = 'index.html';
         }
 
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function formatDate(iso) {
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return '';
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function daysUntil(iso) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const target = new Date(iso);
+            target.setHours(0, 0, 0, 0);
+            return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+        }
+
+        function statusToPill(status) {
+            switch (status) {
+                case 'Completed':  return { cls: 'pill-green', label: 'Completed' };
+                case 'Missed':     return { cls: 'pill-red',   label: 'Missed' };
+                case 'Due Soon':   return { cls: 'pill-amber', label: 'Due soon' };
+                default:           return { cls: 'pill-blue',  label: 'On track' };
+            }
+        }
+
+        function statusToBar(status) {
+            switch (status) {
+                case 'Completed':  return 'bar-green';
+                case 'Missed':     return 'bar-red';
+                case 'Due Soon':   return 'bar-amber';
+                default:           return 'bar-blue';
+            }
+        }
+
         function initializePage() {
             const username = localStorage.getItem('username') || 'Student';
             document.getElementById('userName').textContent = username;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
-            
+
             document.getElementById('currentDate').textContent =
                 new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
         }
@@ -288,7 +189,142 @@
             btn.classList.add('active');
         }
 
+        function renderAlerts(data) {
+            const container = document.getElementById('alerts');
+            container.innerHTML = '';
+
+            if (data.missed > 0) {
+                const div = document.createElement('div');
+                div.className = 'alert alert-danger';
+                div.innerHTML =
+                    '<span class="alert-dot"></span>' +
+                    '<span><strong>' + data.missed + ' deadline' + (data.missed === 1 ? '' : 's') +
+                        ' missed</strong> — review your missed work and plan next steps.</span>' +
+                    '<button class="alert-close" onclick="this.parentElement.style.display=\'none\'" aria-label="Dismiss">×</button>';
+                container.appendChild(div);
+            }
+
+            const dueSoon = (data.upcoming_deadlines || []).filter(m => m.status === 'Due Soon').length;
+            if (dueSoon > 0) {
+                const div = document.createElement('div');
+                div.className = 'alert alert-warning';
+                div.innerHTML =
+                    '<span class="alert-dot"></span>' +
+                    '<span><strong>' + dueSoon + ' deadline' + (dueSoon === 1 ? '' : 's') +
+                        ' approaching</strong> — work due within the next 7 days.</span>' +
+                    '<button class="alert-close" onclick="this.parentElement.style.display=\'none\'" aria-label="Dismiss">×</button>';
+                container.appendChild(div);
+            }
+        }
+
+        function renderSummary(data) {
+            document.getElementById('sumModules').textContent   = data.total_modules || 0;
+            document.getElementById('sumCompleted').textContent = data.completed     || 0;
+            document.getElementById('sumUpcoming').textContent  = data.upcoming      || 0;
+            document.getElementById('sumMissed').textContent    = data.missed        || 0;
+        }
+
+        function renderModuleList(progress) {
+            const list = document.getElementById('moduleList');
+            const empty = document.getElementById('moduleListEmpty');
+            list.innerHTML = '';
+
+            if (!progress || progress.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            progress.forEach(m => {
+                const pill = statusToPill(m.status);
+                const bar  = statusToBar(m.status);
+                const row = document.createElement('div');
+                row.className = 'module-row';
+                row.innerHTML =
+                    '<div class="module-top">' +
+                        '<div>' +
+                            '<div class="module-name">' + escapeHtml(m.module_code) + ' ' + escapeHtml(m.module_name) + '</div>' +
+                            '<div class="module-meta">Due ' + formatDate(m.deadline) + '</div>' +
+                        '</div>' +
+                        '<span class="pill ' + pill.cls + '">' + pill.label + '</span>' +
+                    '</div>' +
+                    '<div class="bar-wrap"><div class="bar ' + bar + '" style="width:' + (m.percentage || 0) + '%"></div></div>' +
+                    '<div class="bar-labels">' +
+                        '<span>' + (m.percentage || 0) + '% complete</span>' +
+                        '<span>' + (parseFloat(m.hours_logged) || 0).toFixed(1) + ' / ' +
+                                   (parseFloat(m.hours_required) || 0).toFixed(1) + ' hrs</span>' +
+                    '</div>';
+                list.appendChild(row);
+            });
+        }
+
+        function deadlineItem(m, kind) {
+            const days = daysUntil(m.deadline);
+            let dot = 'blue', extraClass = '', dateText = formatDate(m.deadline);
+            if (kind === 'completed') {
+                dot = 'green'; extraClass = ' success';
+                dateText = 'Submitted ' + formatDate(m.deadline);
+            } else if (kind === 'missed') {
+                dot = 'red'; extraClass = ' danger';
+                dateText = 'Due ' + formatDate(m.deadline) + ' · ' + Math.abs(days) + ' day' +
+                           (Math.abs(days) === 1 ? '' : 's') + ' overdue';
+            } else {
+                dot = (m.status === 'Due Soon') ? 'amber' : 'blue';
+                dateText = formatDate(m.deadline) + ' · ' + days + ' day' + (days === 1 ? '' : 's') + ' left';
+            }
+            const barCls = statusToBar(m.status);
+            const div = document.createElement('div');
+            div.className = 'deadline-item' + extraClass;
+            div.innerHTML =
+                '<div class="dl-dot ' + dot + '"></div>' +
+                '<div class="dl-body">' +
+                    '<div class="dl-title">' + escapeHtml(m.module_code) + ' ' + escapeHtml(m.module_name) + '</div>' +
+                    '<div class="dl-date">' + dateText + '</div>' +
+                    '<div class="dl-bar-row">' +
+                        '<div class="dl-bar-wrap"><div class="dl-bar ' + barCls + '" style="width:' + (m.percentage || 0) + '%"></div></div>' +
+                        '<span>' + (m.percentage || 0) + '%</span>' +
+                    '</div>' +
+                '</div>';
+            return div;
+        }
+
+        function renderDeadlines(data) {
+            const upcoming  = document.getElementById('tab-upcoming');
+            const completed = document.getElementById('tab-completed');
+            const missed    = document.getElementById('tab-missed');
+            upcoming.innerHTML  = '';
+            completed.innerHTML = '';
+            missed.innerHTML    = '';
+
+            (data.upcoming_deadlines  || []).forEach(m => upcoming.appendChild(deadlineItem(m, 'upcoming')));
+            (data.completed_deadlines || []).forEach(m => completed.appendChild(deadlineItem(m, 'completed')));
+            (data.missed_deadlines    || []).forEach(m => missed.appendChild(deadlineItem(m, 'missed')));
+
+            const emptyMsg = (txt) => '<p class="empty-block">' + txt + '</p>';
+            if (!upcoming.children.length)  upcoming.innerHTML  = emptyMsg('No upcoming deadlines.');
+            if (!completed.children.length) completed.innerHTML = emptyMsg('Nothing completed yet.');
+            if (!missed.children.length)    missed.innerHTML    = emptyMsg('No missed deadlines.');
+        }
+
+        async function loadDashboard() {
+            try {
+                const res = await authenticatedFetch('/api/dashboard');
+                if (!res || !res.ok) throw new Error('Could not load dashboard');
+                const data = await res.json();
+                renderAlerts(data);
+                renderSummary(data);
+                renderModuleList(data.progress);
+                renderDeadlines(data);
+            } catch (err) {
+                const container = document.getElementById('alerts');
+                container.innerHTML =
+                    '<div class="alert alert-danger"><span class="alert-dot"></span>' +
+                    '<span>' + escapeHtml(err.message || 'Could not load dashboard') + '</span></div>';
+            }
+        }
+
         initializePage();
+        loadDashboard();
     </script>
 </body>
 </html>
