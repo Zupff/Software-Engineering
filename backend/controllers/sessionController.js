@@ -22,6 +22,26 @@ const logSession = async (req, res) => {
       return res.status(400).json({ message: 'date_logged must be a valid date' });
     }
 
+    // verify module belongs to the authenticated user
+    const moduleCheck = await pool.query(
+      'SELECT id FROM modules WHERE id = $1 AND user_id = $2',
+      [module_id, userId]
+    );
+    if (moduleCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'module not found' });
+    }
+
+    // if task_id provided, verify it belongs to that same module
+    if (task_id) {
+      const taskCheck = await pool.query(
+        'SELECT id FROM tasks WHERE id = $1 AND module_id = $2',
+        [task_id, module_id]
+      );
+      if (taskCheck.rows.length === 0) {
+        return res.status(404).json({ message: 'task not found in this module' });
+      }
+    }
+
     // insert session into study_sessions table
     const result = await pool.query(
       'INSERT INTO study_sessions (user_id, module_id, task_id, duration_hours, date_logged, notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
