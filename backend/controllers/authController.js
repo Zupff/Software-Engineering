@@ -3,19 +3,31 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 
 // register a new user with username email and password
+const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,32}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // validate that all fields are present
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: 'username email and password are required' });
+    // validate that all fields are present and well-formed
+    if (typeof username !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Could not create account' });
+    }
+    if (!USERNAME_RE.test(username)) {
+      return res.status(400).json({ message: 'Could not create account' });
+    }
+    if (email.length > 254 || !EMAIL_RE.test(email)) {
+      return res.status(400).json({ message: 'Could not create account' });
+    }
+    if (password.length < 6 || password.length > 200) {
+      return res.status(400).json({ message: 'Could not create account' });
     }
 
-    // check if username already exists in database
+    // check if username/email already exists — return generic message to avoid enumeration
     const userExists = await pool.query('SELECT id FROM users WHERE username = $1 OR email = $2', [username, email]);
     if (userExists.rows.length > 0) {
-      return res.status(409).json({ message: 'username or email already exists' });
+      return res.status(409).json({ message: 'Could not create account' });
     }
 
     // hash password using bcrypt with 10 salt rounds

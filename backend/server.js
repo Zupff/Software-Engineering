@@ -1,13 +1,23 @@
 require('dotenv').config();
-console.log('DB_PASSWORD:', process.env.DB_PASSWORD);
 const express = require('express');
+const helmet = require('helmet');
 const path = require('path');
+
+// fail fast if jwt secret is missing or weak
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must be set and at least 32 characters long');
+}
 
 // initialize express app
 const app = express();
 
+// security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // disabled for inline scripts in current pages
+}));
+
 // middleware
-app.use(express.json());
+app.use(express.json({ limit: '50kb' }));
 
 // serve static frontend files from public/ only
 const publicDir = path.join(__dirname, '..', 'public');
@@ -64,7 +74,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // start server on configured port
-const port = 3000;
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`server is running on port ${port}`);
 });

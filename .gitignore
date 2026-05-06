@@ -1,1 +1,4 @@
 local-state/
+.env
+**/.env
+node_modules/
