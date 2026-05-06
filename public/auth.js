@@ -338,16 +338,9 @@ function buildProfileEditorModal() {
                     '<label>Colour</label>' +
                     '<div class="pe-grid pe-grid-colors">' + colorBtns + '</div>' +
                 '</div>' +
-                '<div class="pe-preview">' +
-                    '<div class="pe-preview-avatar" id="pePreviewAvatar"></div>' +
-                    '<div>' +
-                        '<div class="pe-preview-name" id="pePreviewName">Display name</div>' +
-                        '<div class="pe-preview-course" id="pePreviewCourse">Course</div>' +
-                    '</div>' +
-                '</div>' +
                 '<div class="pe-actions">' +
-                    '<button type="button" class="btn-ghost" id="peCancel">Cancel</button>' +
-                    '<button type="submit" class="btn-primary">Save profile</button>' +
+                    '<button type="button" class="pe-btn pe-btn-ghost" id="peCancel">Cancel</button>' +
+                    '<button type="submit" class="pe-btn pe-btn-primary">Save profile</button>' +
                 '</div>' +
             '</form>' +
         '</div>';
@@ -356,13 +349,11 @@ function buildProfileEditorModal() {
 
     // wire selection toggles + live preview
     modal.querySelectorAll('.pe-avatar').forEach(b => {
-        b.addEventListener('click', () => { setSelectedAvatar(modal, b.dataset.avatar); updatePreview(modal); });
+        b.addEventListener('click', () => setSelectedAvatar(modal, b.dataset.avatar));
     });
     modal.querySelectorAll('.pe-color').forEach(b => {
-        b.addEventListener('click', () => { setSelectedColor(modal, b.dataset.color); updatePreview(modal); });
+        b.addEventListener('click', () => setSelectedColor(modal, b.dataset.color));
     });
-    modal.querySelector('#peName').addEventListener('input',  () => updatePreview(modal));
-    modal.querySelector('#peCourse').addEventListener('change', () => updatePreview(modal));
 
     modal.querySelector('#peCancel').addEventListener('click', () => closeProfileEditor());
     modal.addEventListener('click', (ev) => { if (ev.target === modal) closeProfileEditor(); });
@@ -383,20 +374,6 @@ function setSelectedAvatar(modal, id) {
 function setSelectedColor(modal, name) {
     modal.querySelectorAll('.pe-color').forEach(b => b.classList.toggle('selected', b.dataset.color === name));
     modal.dataset.selectedColor = name;
-}
-
-function updatePreview(modal) {
-    const name   = modal.querySelector('#peName').value.trim() || 'Display name';
-    const course = modal.querySelector('#peCourse').value || 'Course';
-    const av     = modal.dataset.selectedAvatar || 'cap';
-    const color  = modal.dataset.selectedColor || 'navy';
-
-    const avatarBox = modal.querySelector('#pePreviewAvatar');
-    avatarBox.innerHTML = avatarSvg(av);
-    avatarBox.style.background = avatarColor(color);
-
-    modal.querySelector('#pePreviewName').textContent   = name;
-    modal.querySelector('#pePreviewCourse').textContent = course;
 }
 
 async function saveProfileFromModal(modal) {
