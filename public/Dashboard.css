@@ -192,6 +192,12 @@ body {
 .module-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 .module-info { min-width: 0; flex: 1; }
 .module-deadline-text { color: var(--text); font-weight: 500; }
+.module-name-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.module-name-link:hover { color: var(--primary); }
 
 .deadline-edit-btn {
     background: none;

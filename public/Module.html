@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Planner – Module</title>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="Dashboard.css">
+    <link rel="stylesheet" href="Tasks.css">
+    <link rel="stylesheet" href="Module.css">
+    <script src="auth.js"></script>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon" aria-hidden="true">
+                <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+            </div>
+            <span>Study Planner</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                Dashboard
+            </a>
+            <a href="tasks.html" class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                Tasks
+            </a>
+            <a href="gantt.html" class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="13" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="11" y1="18" x2="21" y2="18"/></svg>
+                Gantt
+            </a>
+            <a href="import.html" class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                Import
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-pill" onclick="logout()" style="cursor: pointer;" title="Click to logout">
+                <div class="user-avatar" id="userAvatar">S</div>
+                <div>
+                    <div class="user-name" id="userName">Student</div>
+                    <div class="user-sub">Spring 2025–26</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <a href="dashboard.html" class="back-link">← Back to dashboard</a>
+                <h1 class="page-title" id="moduleTitle">Loading…</h1>
+                <p class="page-sub" id="moduleSub"></p>
+            </div>
+            <a href="tasks.html" class="btn-primary" id="manageTasksBtn">Manage tasks</a>
+        </div>
+
+        <div class="alert alert-danger hidden" id="globalError">
+            <span class="alert-dot"></span>
+            <span id="globalErrorMsg"></span>
+        </div>
+
+        <div id="moduleContent" class="hidden">
+
+            <section class="card module-summary">
+                <div class="ms-grid">
+                    <div class="ms-cell">
+                        <div class="ms-label">Assessment</div>
+                        <div class="ms-value" id="msAssessment">—</div>
+                    </div>
+                    <div class="ms-cell">
+                        <div class="ms-label">Deadline</div>
+                        <div class="ms-value" id="msDeadline">—</div>
+                        <div class="ms-sub" id="msDeadlineRel"></div>
+                    </div>
+                    <div class="ms-cell">
+                        <div class="ms-label">Weighting</div>
+                        <div class="ms-value" id="msWeighting">—</div>
+                    </div>
+                    <div class="ms-cell">
+                        <div class="ms-label">Progress</div>
+                        <div class="ms-value" id="msProgress">0%</div>
+                        <div class="ms-sub" id="msProgressSub">0 / 0 hrs</div>
+                    </div>
+                </div>
+                <div class="bar-wrap" style="margin-top:14px"><div class="bar bar-blue" id="msBar" style="width:0%"></div></div>
+            </section>
+
+            <div class="content-grid">
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Tasks</h2>
+                        <span class="card-meta" id="taskCount">0 tasks</span>
+                    </div>
+                    <div class="task-list" id="moduleTaskList"></div>
+                    <div class="empty-block hidden" id="taskListEmpty">
+                        <p>No tasks for this module yet.</p>
+                        <p><a href="tasks.html">Add tasks →</a></p>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Recent sessions</h2>
+                        <span class="card-meta" id="sessionCount">0 sessions</span>
+                    </div>
+                    <ul class="session-list" id="sessionList"></ul>
+                    <div class="empty-block hidden" id="sessionListEmpty">
+                        <p>No study sessions logged yet.</p>
+                        <p><a href="tasks.html">Log your first one →</a></p>
+                    </div>
+                </section>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        if (!isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+
+        function getModuleIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            return id ? parseInt(id, 10) : null;
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function formatDate(iso) {
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return '';
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function shortDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return '';
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        }
+
+        function daysUntil(iso) {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const target = new Date(iso); target.setHours(0,0,0,0);
+            return Math.round((target - today) / (1000 * 60 * 60 * 24));
+        }
+
+        function relDeadline(iso) {
+            const d = daysUntil(iso);
+            if (d === 0) return 'Today';
+            if (d > 0)  return 'in ' + d + ' day' + (d === 1 ? '' : 's');
+            return Math.abs(d) + ' day' + (Math.abs(d) === 1 ? '' : 's') + ' overdue';
+        }
+
+        function showError(msg) {
+            const box = document.getElementById('globalError');
+            document.getElementById('globalErrorMsg').textContent = msg;
+            box.classList.remove('hidden');
+        }
+
+        function initializePage() {
+            const username = localStorage.getItem('username') || 'Student';
+            document.getElementById('userName').textContent = username;
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+        }
+
+        async function loadModule() {
+            const id = getModuleIdFromUrl();
+            if (!id) {
+                showError('No module selected. Pick one from the dashboard.');
+                return;
+            }
+
+            try {
+                const [moduleRes, sessionsRes] = await Promise.all([
+                    authenticatedFetch('/api/modules/' + id),
+                    authenticatedFetch('/api/sessions?module_id=' + id),
+                ]);
+
+                if (!moduleRes || !moduleRes.ok) {
+                    if (moduleRes && moduleRes.status === 404) throw new Error('Module not found');
+                    throw new Error('Could not load module');
+                }
+                const module = await moduleRes.json();
+                const sessions = (sessionsRes && sessionsRes.ok) ? await sessionsRes.json() : [];
+
+                renderModule(module, sessions);
+            } catch (err) {
+                showError(err.message || 'Could not load module');
+            }
+        }
+
+        function renderModule(module, sessions) {
+            document.getElementById('moduleContent').classList.remove('hidden');
+
+            document.getElementById('moduleTitle').textContent = module.module_code + ' · ' + module.module_name;
+            document.getElementById('moduleSub').textContent = module.assessment_type
+                ? module.assessment_type + ' assessment'
+                : '';
+
+            document.getElementById('msAssessment').textContent = module.assessment_type || '—';
+            document.getElementById('msDeadline').textContent   = formatDate(module.deadline);
+            document.getElementById('msDeadlineRel').textContent = module.deadline ? relDeadline(module.deadline) : '';
+            document.getElementById('msWeighting').textContent  = (module.weighting != null ? module.weighting + '%' : '—');
+
+            // hours-logged per task lookup
+            const hoursByTask = {};
+            sessions.forEach(s => {
+                if (s.task_id == null) return;
+                hoursByTask[s.task_id] = (hoursByTask[s.task_id] || 0) + parseFloat(s.duration_hours || 0);
+            });
+
+            const tasks = module.tasks || [];
+            let totalRequired = 0;
+            let totalLogged   = 0;
+            tasks.forEach(t => {
+                totalRequired += parseFloat(t.required_hours) || 0;
+                totalLogged   += hoursByTask[t.id] || 0;
+            });
+            const pct = totalRequired > 0 ? Math.min(100, Math.round((totalLogged / totalRequired) * 100)) : 0;
+            document.getElementById('msProgress').textContent    = pct + '%';
+            document.getElementById('msProgressSub').textContent = totalLogged.toFixed(1) + ' / ' + totalRequired.toFixed(1) + ' hrs';
+            document.getElementById('msBar').style.width = pct + '%';
+
+            renderTasks(tasks, hoursByTask);
+            renderSessions(sessions, tasks);
+        }
+
+        function renderTasks(tasks, hoursByTask) {
+            const list = document.getElementById('moduleTaskList');
+            const empty = document.getElementById('taskListEmpty');
+            list.innerHTML = '';
+            document.getElementById('taskCount').textContent =
+                tasks.length + ' task' + (tasks.length === 1 ? '' : 's');
+
+            if (tasks.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            const byId = {};
+            tasks.forEach(t => { byId[t.id] = t; });
+
+            tasks.forEach(t => {
+                const required = parseFloat(t.required_hours) || 0;
+                const logged   = hoursByTask[t.id] || 0;
+                const tpct = required > 0 ? Math.min(100, Math.round((logged / required) * 100)) : 0;
+                const dep = t.dependency_task_id ? byId[t.dependency_task_id] : null;
+
+                const startStr = shortDate(t.start_date);
+                const endStr   = shortDate(t.end_date);
+                const dateRange = (startStr || endStr)
+                    ? (startStr && endStr ? startStr + ' → ' + endStr : (startStr ? 'from ' + startStr : 'until ' + endStr))
+                    : '';
+
+                const row = document.createElement('div');
+                row.className = 'task-row';
+                row.innerHTML =
+                    '<div class="task-row-top">' +
+                        '<div class="task-row-info">' +
+                            '<div class="task-title">' + escapeHtml(t.title) + '</div>' +
+                            '<div class="task-meta">' +
+                                '<span class="task-pill">' + escapeHtml(t.type) + '</span>' +
+                                '<span>' + logged.toFixed(1) + ' / ' + required.toFixed(1) + ' hrs</span>' +
+                                (dateRange ? '<span class="task-dates">' + dateRange + '</span>' : '') +
+                                (dep ? '<span class="task-dep">depends on <strong>' + escapeHtml(dep.title) + '</strong></span>' : '') +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="task-bar-wrap"><div class="task-bar" style="width:' + tpct + '%"></div></div>' +
+                    (t.notes ? '<div class="task-notes">' + escapeHtml(t.notes) + '</div>' : '');
+                list.appendChild(row);
+            });
+        }
+
+        function renderSessions(sessions, tasks) {
+            const list = document.getElementById('sessionList');
+            const empty = document.getElementById('sessionListEmpty');
+            list.innerHTML = '';
+            document.getElementById('sessionCount').textContent =
+                sessions.length + ' session' + (sessions.length === 1 ? '' : 's');
+
+            if (sessions.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            const taskTitleById = {};
+            tasks.forEach(t => { taskTitleById[t.id] = t.title; });
+
+            // already returned newest-first by the API, but be defensive
+            const sorted = sessions.slice().sort((a, b) => new Date(b.date_logged) - new Date(a.date_logged));
+
+            sorted.slice(0, 20).forEach(s => {
+                const li = document.createElement('li');
+                li.className = 'session-item';
+                const taskName = s.task_id ? taskTitleById[s.task_id] : null;
+                li.innerHTML =
+                    '<div class="session-date">' + shortDate(s.date_logged) + '</div>' +
+                    '<div class="session-body">' +
+                        '<div class="session-top">' +
+                            '<span class="session-hours">' + parseFloat(s.duration_hours).toFixed(1) + ' hrs</span>' +
+                            (taskName
+                                ? '<span class="session-task">on <strong>' + escapeHtml(taskName) + '</strong></span>'
+                                : '<span class="session-task muted">unattached</span>') +
+                        '</div>' +
+                        (s.notes ? '<div class="session-notes">' + escapeHtml(s.notes) + '</div>' : '') +
+                    '</div>';
+                list.appendChild(li);
+            });
+
+            if (sorted.length > 20) {
+                const more = document.createElement('li');
+                more.className = 'session-more';
+                more.textContent = '+ ' + (sorted.length - 20) + ' older session' + (sorted.length - 20 === 1 ? '' : 's');
+                list.appendChild(more);
+            }
+        }
+
+        initializePage();
+        loadModule();
+    </script>
+</body>
+</html>

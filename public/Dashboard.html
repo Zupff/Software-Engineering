@@ -248,7 +248,11 @@
                 row.innerHTML =
                     '<div class="module-top">' +
                         '<div class="module-info">' +
-                            '<div class="module-name">' + escapeHtml(m.module_code) + ' ' + escapeHtml(m.module_name) + '</div>' +
+                            '<div class="module-name">' +
+                                (m.id
+                                    ? '<a href="module.html?id=' + m.id + '" class="module-name-link">' + escapeHtml(m.module_code) + ' ' + escapeHtml(m.module_name) + '</a>'
+                                    : escapeHtml(m.module_code) + ' ' + escapeHtml(m.module_name)) +
+                            '</div>' +
                             '<div class="module-meta">' +
                                 'Due <span class="module-deadline-text">' + formatDate(m.deadline) + '</span>' +
                                 (m.id ? ' <button class="deadline-edit-btn" onclick="toggleDeadlineEdit(' + m.id + ')" title="Change deadline" aria-label="Change deadline">Edit</button>' : '') +
