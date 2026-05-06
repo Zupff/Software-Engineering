@@ -15,6 +15,12 @@ const importCSV = async (req, res) => {
     }
 
     const userId = req.user.id;
+    // semester metadata is sent alongside the file via multipart fields.
+    // both are optional from the client's perspective: if the user didn't
+    // pick a semester (older clients), we fall back to a default name so
+    // imported modules still have a valid foreign key.
+    const semesterName = (req.body.semester_name || '').toString().trim() || 'Imported semester';
+    const academicYear = (req.body.academic_year || '').toString().trim() || null;
     const rows = [];
     const requiredColumns = ['module_code', 'module_name', 'assessment_type', 'deadline', 'weighting'];
     let headerValidated = false;
@@ -91,11 +97,24 @@ const importCSV = async (req, res) => {
     try {
       await client.query('BEGIN');
 
+      // upsert the semester for this user — same name from the same user
+      // returns the existing id, so re-importing into the same semester
+      // appends modules rather than creating duplicates.
+      const semResult = await client.query(
+        `INSERT INTO semesters (user_id, name, academic_year)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, name) DO UPDATE
+           SET academic_year = COALESCE(EXCLUDED.academic_year, semesters.academic_year)
+         RETURNING id`,
+        [userId, semesterName, academicYear]
+      );
+      const semesterId = semResult.rows[0].id;
+
       // insert each validated row into modules table
       for (const row of cleanRows) {
         await client.query(
-          'INSERT INTO modules (user_id, module_code, module_name, assessment_type, deadline, weighting) VALUES ($1, $2, $3, $4, $5, $6)',
-          [userId, row.code, row.name, row.type, row.deadline, row.weighting]
+          'INSERT INTO modules (user_id, semester_id, module_code, module_name, assessment_type, deadline, weighting) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+          [userId, semesterId, row.code, row.name, row.type, row.deadline, row.weighting]
         );
       }
 

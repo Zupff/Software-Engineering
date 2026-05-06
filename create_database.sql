@@ -7,10 +7,21 @@ CREATE TABLE users (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- a semester study profile groups a set of modules under an academic period
+CREATE TABLE semesters (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  name VARCHAR NOT NULL,
+  academic_year VARCHAR,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE (user_id, name)
+);
+
 -- stores module information for each user including assessment details
 CREATE TABLE modules (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  semester_id INTEGER REFERENCES semesters(id) ON DELETE CASCADE,
   module_code VARCHAR NOT NULL,
   module_name VARCHAR NOT NULL,
   assessment_type VARCHAR NOT NULL,

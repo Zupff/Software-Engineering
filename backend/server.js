@@ -46,6 +46,10 @@ app.use(dashboardRoutes);
 const ganttRoutes = require('./routes/gantt');
 app.use(ganttRoutes);
 
+// import semester routes
+const semesterRoutes = require('./routes/semesters');
+app.use(semesterRoutes);
+
 // health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

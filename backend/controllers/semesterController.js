@@ -1,0 +1,71 @@
+const pool = require('../db');
+
+// list semesters for the authenticated user, newest first
+const listSemesters = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await pool.query(
+      'SELECT id, name, academic_year, created_at FROM semesters WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+    return res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('list semesters error', error);
+    return res.status(500).json({ message: 'internal server error' });
+  }
+};
+
+// return the most recently created semester for the user, or 404 if none.
+// used by the frontend to populate the sidebar without forcing an extra
+// "active semester" concept onto the data model yet.
+const currentSemester = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await pool.query(
+      'SELECT id, name, academic_year, created_at FROM semesters WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'no semester yet' });
+    }
+    return res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error('current semester error', error);
+    return res.status(500).json({ message: 'internal server error' });
+  }
+};
+
+// create a new semester. returns the existing one if a semester with the
+// same name already exists for this user, since the import flow uses the
+// semester name as a natural key.
+const createSemester = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, academic_year } = req.body;
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ message: 'name is required' });
+    }
+    const cleanName = name.trim();
+    if (cleanName.length > 100) {
+      return res.status(400).json({ message: 'name must be 100 characters or fewer' });
+    }
+    const cleanYear = (academic_year || '').toString().trim() || null;
+
+    const result = await pool.query(
+      `INSERT INTO semesters (user_id, name, academic_year)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, name) DO UPDATE
+         SET academic_year = COALESCE(EXCLUDED.academic_year, semesters.academic_year)
+       RETURNING id, name, academic_year, created_at`,
+      [userId, cleanName, cleanYear]
+    );
+
+    return res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('create semester error', error);
+    return res.status(500).json({ message: 'internal server error' });
+  }
+};
+
+module.exports = { listSemesters, currentSemester, createSemester };

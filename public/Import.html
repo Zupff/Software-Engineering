@@ -39,7 +39,7 @@
                 <div class="user-avatar">S</div>
                 <div>
                     <div class="user-name">Student</div>
-                    <div class="user-sub">Spring 2025–26</div>
+                    <div class="user-sub" data-current-semester>Loading…</div>
                 </div>
             </div>
         </div>
@@ -419,21 +419,23 @@
         }
         function confirmImport() {
             const name = document.getElementById('semesterName').value.trim();
-            
+            const academicYear = document.getElementById('semesterYear').value;
+
             const confirmBtn = event.target;
             confirmBtn.disabled = true;
             const originalText = confirmBtn.textContent;
             confirmBtn.textContent = 'Importing…';
-            
+
+            // backend route uses multer + csv-parser, so we ship the raw file
+            // (validated server-side) plus the semester metadata as fields.
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('semester_name', name);
+            formData.append('academic_year', academicYear);
+
             authenticatedFetch('/api/import/csv', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name: name,
-                    modules: parsedModules
-                })
+                body: formData
             })
             .then(response => {
                 if (!response.ok) {
