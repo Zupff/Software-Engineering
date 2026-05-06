@@ -129,11 +129,6 @@ body.landing {
     gap: 10px;
     margin-top: 24px;
 }
-.lp-cta-note {
-    margin-top: 12px;
-    font-size: 0.78rem;
-    color: var(--muted);
-}
 
 .lp-hero-art {
     position: relative;
@@ -226,32 +221,63 @@ body.landing {
 /* ── Team ── */
 .lp-team {
     max-width: 1080px;
-    margin: 0 auto 56px;
-    padding: 0 32px;
+    margin: 0 auto 72px;
+    padding: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
 }
-.lp-team h2 {
-    font-size: 0.78rem;
-    font-weight: 700;
+.lp-team-head { margin-bottom: 22px; }
+.lp-team-head h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+.lp-team-head p {
+    margin-top: 4px;
+    font-size: 0.85rem;
     color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 14px;
 }
 .lp-team-list {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
 }
 .lp-team-list li {
-    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 6px 14px;
-    font-size: 0.85rem;
-    font-weight: 500;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+}
+.lp-team-list li:hover {
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+.lp-team-initial {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+.lp-team-name {
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--text);
 }
 
