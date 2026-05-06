@@ -244,11 +244,22 @@
                 const bar  = statusToBar(m.status);
                 const row = document.createElement('div');
                 row.className = 'module-row';
+                const isoDeadline = (m.deadline || '').slice(0, 10);
                 row.innerHTML =
                     '<div class="module-top">' +
-                        '<div>' +
+                        '<div class="module-info">' +
                             '<div class="module-name">' + escapeHtml(m.module_code) + ' ' + escapeHtml(m.module_name) + '</div>' +
-                            '<div class="module-meta">Due ' + formatDate(m.deadline) + '</div>' +
+                            '<div class="module-meta">' +
+                                'Due <span class="module-deadline-text">' + formatDate(m.deadline) + '</span>' +
+                                (m.id ? ' <button class="deadline-edit-btn" onclick="toggleDeadlineEdit(' + m.id + ')" title="Change deadline" aria-label="Change deadline">Edit</button>' : '') +
+                            '</div>' +
+                            (m.id ? (
+                                '<form class="deadline-edit-form hidden" id="deadlineForm-' + m.id + '" onsubmit="saveDeadline(event, ' + m.id + ')">' +
+                                    '<input type="date" name="deadline" value="' + isoDeadline + '" required>' +
+                                    '<button type="submit" class="btn-primary btn-compact">Save</button>' +
+                                    '<button type="button" class="btn-ghost btn-compact" onclick="toggleDeadlineEdit(' + m.id + ')">Cancel</button>' +
+                                '</form>'
+                            ) : '') +
                         '</div>' +
                         '<span class="pill ' + pill.cls + '">' + pill.label + '</span>' +
                     '</div>' +
@@ -308,6 +319,34 @@
             if (!upcoming.children.length)  upcoming.innerHTML  = emptyMsg('No upcoming deadlines.');
             if (!completed.children.length) completed.innerHTML = emptyMsg('Nothing completed yet.');
             if (!missed.children.length)    missed.innerHTML    = emptyMsg('No missed deadlines.');
+        }
+
+        function toggleDeadlineEdit(moduleId) {
+            const form = document.getElementById('deadlineForm-' + moduleId);
+            if (form) form.classList.toggle('hidden');
+        }
+
+        async function saveDeadline(event, moduleId) {
+            event.preventDefault();
+            const form = event.target;
+            const newDeadline = form.deadline.value;
+            try {
+                const res = await authenticatedFetch('/api/modules/' + moduleId + '/deadline', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deadline: newDeadline })
+                });
+                if (!res || !res.ok) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not update deadline');
+                }
+                await loadDashboard();
+            } catch (err) {
+                const container = document.getElementById('alerts');
+                container.innerHTML =
+                    '<div class="alert alert-danger"><span class="alert-dot"></span>' +
+                    '<span>' + escapeHtml(err.message) + '</span></div>';
+            }
         }
 
         async function loadDashboard() {

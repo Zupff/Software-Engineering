@@ -190,6 +190,44 @@ body {
 }
 .module-name { font-size: 0.875rem; font-weight: 600; }
 .module-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+.module-info { min-width: 0; flex: 1; }
+.module-deadline-text { color: var(--text); font-weight: 500; }
+
+.deadline-edit-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-family: inherit;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0 4px;
+    margin-left: 6px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.deadline-edit-btn:hover { color: var(--primary-hover); }
+
+.deadline-edit-form {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+.deadline-edit-form input[type="date"] {
+    padding: 4px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.78rem;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+}
+.deadline-edit-form input[type="date"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
 
 .bar-wrap {
     width: 100%; height: 7px;

@@ -59,6 +59,7 @@ const calculateProgress = async (userId) => {
       }
 
       return {
+        id: module.id,
         module_code: module.module_code,
         module_name: module.module_name,
         deadline: module.deadline,
