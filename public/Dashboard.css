@@ -188,7 +188,10 @@ body {
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     margin-bottom: 4px;
+    align-self: flex-start;
+    flex-shrink: 0;
 }
+.summary-icon .icon { width: 18px; height: 18px; }
 .summary-icon.blue  { background: var(--primary-soft); color: var(--primary); }
 .summary-icon.green { background: var(--green-lt);    color: var(--green); }
 .summary-icon.amber { background: var(--amber-lt);    color: var(--amber); }
