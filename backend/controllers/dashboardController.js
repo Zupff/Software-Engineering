@@ -19,8 +19,20 @@ const calculateProgress = async (userId) => {
 
       const hoursLogged = parseFloat(hoursResult.rows[0].total_hours);
 
-      // calculate percentage complete capped at 100
-      const percentage = Math.min((hoursLogged / 20) * 100, 100);
+      // sum required hours from this module's tasks. progress is measured
+      // against the workload the student has actually planned, not a
+      // hardcoded constant.
+      const requiredResult = await pool.query(
+        'SELECT COALESCE(SUM(required_hours), 0) as total_required FROM tasks WHERE module_id = $1',
+        [module.id]
+      );
+
+      const hoursRequired = parseFloat(requiredResult.rows[0].total_required);
+
+      // if no tasks have been planned yet, show 0% rather than dividing by 0
+      const percentage = hoursRequired > 0
+        ? Math.min((hoursLogged / hoursRequired) * 100, 100)
+        : 0;
 
       // calculate days until deadline
       const today = new Date();
@@ -52,6 +64,7 @@ const calculateProgress = async (userId) => {
         module_name: module.module_name,
         deadline: module.deadline,
         hours_logged: hoursLogged,
+        hours_required: hoursRequired,
         percentage: Math.round(percentage),
         status: status,
       };
