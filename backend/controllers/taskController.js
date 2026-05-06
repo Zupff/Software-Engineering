@@ -1,5 +1,10 @@
 const pool = require('../db');
 
+// allowed task types — kept in sync with the dropdown on the Tasks page.
+// validated on both create and update so a malicious or buggy client
+// can't insert arbitrary strings.
+const ALLOWED_TASK_TYPES = ['Studying', 'Reading', 'Writing', 'Programming', 'Planning', 'Reviewing'];
+
 // get all tasks for a specific module
 const getTasksByModule = async (req, res) => {
   try {
@@ -52,6 +57,13 @@ const createTask = async (req, res) => {
     // validate required fields are present
     if (!module_id || !title || !type || required_hours === undefined) {
       return res.status(400).json({ message: 'module_id title type and required_hours are required' });
+    }
+
+    // validate type against the allowed set
+    if (!ALLOWED_TASK_TYPES.includes(type)) {
+      return res.status(400).json({
+        message: 'type must be one of: ' + ALLOWED_TASK_TYPES.join(', ')
+      });
     }
 
     // validate required_hours is a positive number
@@ -113,6 +125,13 @@ const updateTask = async (req, res) => {
     const { id } = req.params;
     const { title, type, required_hours, start_date, end_date, dependency_task_id, notes } = req.body;
     const userId = req.user.id;
+
+    // validate type against the allowed set if provided
+    if (type !== undefined && !ALLOWED_TASK_TYPES.includes(type)) {
+      return res.status(400).json({
+        message: 'type must be one of: ' + ALLOWED_TASK_TYPES.join(', ')
+      });
+    }
 
     // validate required_hours is a positive number if provided
     if (required_hours !== undefined && (isNaN(required_hours) || required_hours <= 0)) {
