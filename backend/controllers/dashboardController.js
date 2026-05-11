@@ -80,21 +80,6 @@ const calculateProgress = async (userId, semesterId) => {
 };
 
 // get progress for all modules for logged in user
-const getProgress = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { semester_id } = req.query;
-
-    // calculate progress for all modules (optionally scoped to a semester)
-    const progress = await calculateProgress(userId, semester_id);
-
-    return res.status(200).json(progress);
-  } catch (error) {
-    console.error('get progress error', error);
-    return res.status(500).json({ message: 'internal server error' });
-  }
-};
-
 // get dashboard summary with counts and deadline arrays
 const getDashboard = async (req, res) => {
   try {
@@ -140,4 +125,4 @@ const getDashboard = async (req, res) => {
   }
 };
 
-module.exports = { getProgress, getDashboard };
+module.exports = { getDashboard };

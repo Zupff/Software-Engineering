@@ -98,6 +98,13 @@
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(data => {
+                        // distinguish rate-limit (429) from bad credentials (401)
+                        // so users locked out understand they need to wait, not
+                        // try a different password.
+                        if (response.status === 429) {
+                            throw new Error(data.message ||
+                                'Too many login attempts. Please wait a few minutes and try again.');
+                        }
                         throw new Error(data.message || data.error || 'Invalid username or password');
                     });
                 }
