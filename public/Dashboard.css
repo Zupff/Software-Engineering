@@ -4,12 +4,13 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html, body { height: 100%; overflow: hidden; }
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background: var(--bg);
     color: var(--text);
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
 }
 
 .sidebar {
@@ -115,7 +116,32 @@ body {
     /* sidebar is overlay-style now; only the 6px indicator strip is held back */
     margin-left: 6px;
     flex: 1;
-    padding: 24px 28px 48px;
+    padding: 20px 28px 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+/* let the two-column row consume remaining vertical space */
+.content-grid {
+    flex: 1;
+    min-height: 0;
+}
+.content-grid > .card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+.content-grid > .card > .card-head { flex-shrink: 0; }
+.content-grid > .card > .tab-row    { flex-shrink: 0; }
+/* scroll bodies */
+.module-list,
+.tab-pane {
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    padding-right: 4px; /* space for scrollbar */
 }
 
 .topbar {
@@ -274,7 +300,18 @@ body {
 .card-head h2 { font-size: 1rem; font-weight: 700; }
 .card-meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; display: block; }
 
-.module-list { display: flex; flex-direction: column; gap: 18px; }
+.module-list { display: flex; flex-direction: column; gap: 10px; }
+.module-row {
+    padding: 12px 14px;
+    border-radius: 9px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+.module-row:hover {
+    border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
 .module-top {
     display: flex;
     justify-content: space-between;
@@ -413,6 +450,7 @@ body {
 
 .tab-pane        { display: flex; flex-direction: column; gap: 10px; }
 .tab-pane.hidden { display: none; }
+.hidden { display: none !important; }
 
 .deadline-item {
     display: flex;
