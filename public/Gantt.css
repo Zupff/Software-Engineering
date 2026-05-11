@@ -101,6 +101,7 @@
 }
 .gantt-labels-head {
     height: var(--gantt-head-h);
+    box-sizing: border-box;
     border-bottom: 1px solid var(--border);
     background: var(--bg);
     display: flex;
@@ -200,6 +201,7 @@
     display: flex;
     align-items: center;
     padding: 0 14px;
+    border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
     font-size: 0.76rem;
     color: var(--muted);
     font-style: italic;
