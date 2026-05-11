@@ -93,4 +93,27 @@ const updateModuleDeadline = async (req, res) => {
   }
 };
 
-module.exports = { getAllModules, getModuleById, updateModuleDeadline };
+// delete a module owned by the current user. tasks + study_sessions
+// cascade via FK ON DELETE CASCADE.
+const deleteModule = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const result = await pool.query(
+      'DELETE FROM modules WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'module not found' });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error('delete module error', error);
+    return res.status(500).json({ message: 'internal server error' });
+  }
+};
+
+module.exports = { getAllModules, getModuleById, updateModuleDeadline, deleteModule };

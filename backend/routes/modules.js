@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllModules, getModuleById, updateModuleDeadline } = require('../controllers/moduleController');
+const { getAllModules, getModuleById, updateModuleDeadline, deleteModule } = require('../controllers/moduleController');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -12,5 +12,8 @@ router.get('/api/modules/:id', authMiddleware, getModuleById);
 
 // update module deadline
 router.patch('/api/modules/:id', authMiddleware, updateModuleDeadline);
+
+// delete a module (cascades to tasks + study sessions)
+router.delete('/api/modules/:id', authMiddleware, deleteModule);
 
 module.exports = router;

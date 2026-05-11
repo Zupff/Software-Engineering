@@ -110,10 +110,19 @@ const importCSV = async (req, res) => {
       );
       const semesterId = semResult.rows[0].id;
 
-      // insert each validated row into modules table
+      // upsert each validated row into modules. The UNIQUE (semester_id,
+      // module_code) constraint means re-importing the same CSV updates
+      // existing modules rather than creating duplicates.
       for (const row of cleanRows) {
         await client.query(
-          'INSERT INTO modules (user_id, semester_id, module_code, module_name, assessment_type, deadline, weighting) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+          `INSERT INTO modules
+             (user_id, semester_id, module_code, module_name, assessment_type, deadline, weighting)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (semester_id, module_code) DO UPDATE
+             SET module_name     = EXCLUDED.module_name,
+                 assessment_type = EXCLUDED.assessment_type,
+                 deadline        = EXCLUDED.deadline,
+                 weighting       = EXCLUDED.weighting`,
           [userId, semesterId, row.code, row.name, row.type, row.deadline, row.weighting]
         );
       }

@@ -30,7 +30,10 @@ CREATE TABLE modules (
   module_name VARCHAR NOT NULL,
   assessment_type VARCHAR NOT NULL,
   deadline DATE NOT NULL,
-  weighting INTEGER
+  weighting INTEGER,
+  -- a CSV can only contain each module code once per semester; this
+  -- constraint also lets the import endpoint UPSERT on re-import
+  CONSTRAINT modules_semester_code_key UNIQUE (semester_id, module_code)
 );
 
 -- stores individual tasks or assignments for each module

@@ -57,7 +57,10 @@
                 <h1 class="page-title" id="moduleTitle">Loading…</h1>
                 <p class="page-sub" id="moduleSub"></p>
             </div>
-            <a href="Tasks.html" class="btn-primary" id="manageTasksBtn">Manage tasks</a>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-ghost btn-danger" onclick="deleteModuleConfirm()" id="deleteModuleBtn">Delete module</button>
+                <a href="Tasks.html" class="btn-primary" id="manageTasksBtn">Manage tasks</a>
+            </div>
         </div>
 
         <div class="alert alert-danger hidden" id="globalError">
@@ -217,6 +220,31 @@
         let currentTasks = [];
         let hoursByTaskId = {};
         let milestones = [];
+        let currentModule = null;
+
+        async function deleteModuleConfirm() {
+            if (!currentModule) return;
+            const label = currentModule.module_code + ' ' + currentModule.module_name;
+            const taskCount = currentTasks.length;
+            const msg = 'Delete "' + label + '"?\n\n' +
+                'This will permanently remove the module' +
+                (taskCount > 0 ? ', ' + taskCount + ' task' + (taskCount === 1 ? '' : 's') : '') +
+                ', and any logged study sessions on those tasks.\n\nThis cannot be undone.';
+            if (!confirm(msg)) return;
+
+            try {
+                const res = await authenticatedFetch('/api/modules/' + currentModule.id, {
+                    method: 'DELETE'
+                });
+                if (!res || (!res.ok && res.status !== 204)) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not delete module');
+                }
+                window.location.href = 'Dashboard.html';
+            } catch (err) {
+                showError(err.message);
+            }
+        }
 
         async function loadModule() {
             const id = getModuleIdFromUrl();
@@ -237,6 +265,7 @@
                     throw new Error('Could not load module');
                 }
                 const module = await moduleRes.json();
+                currentModule = module;
                 const sessions   = (sessionsRes   && sessionsRes.ok)   ? await sessionsRes.json()   : [];
                 milestones       = (milestonesRes && milestonesRes.ok) ? await milestonesRes.json() : [];
 
