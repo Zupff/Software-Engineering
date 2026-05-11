@@ -184,10 +184,34 @@
                 document.getElementById('emptyState').classList.add('hidden');
                 document.getElementById('tasksGrid').classList.remove('hidden');
                 renderModules();
-                selectModule(modules[0].id);
+                await selectModule(modules[0].id);
+                applyQuickAction();
             } catch (err) {
                 showError(err.message || 'Could not load modules');
             }
+        }
+
+        // Quick Action deep links from the dashboard:
+        //   ?action=new-task     → auto-open the new-task form
+        //   ?action=log-session  → auto-open the session form on the first task
+        function applyQuickAction() {
+            const action = new URLSearchParams(window.location.search).get('action');
+            if (!action) return;
+            if (action === 'new-task') {
+                toggleNewTaskForm();
+            } else if (action === 'log-session') {
+                const tasks = tasksByModule[selectedModuleId] || [];
+                if (tasks.length === 0) {
+                    showError('Add a task to this module before logging a study session.');
+                    return;
+                }
+                const firstTaskId = tasks[0].id;
+                toggleSessionForm(firstTaskId);
+                const row = document.querySelector('.task-row[data-task-id="' + firstTaskId + '"]');
+                if (row && row.scrollIntoView) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            // strip the query param so refresh / back doesn't replay the action
+            history.replaceState({}, '', window.location.pathname);
         }
 
         function renderModules() {
