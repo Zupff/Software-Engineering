@@ -70,12 +70,11 @@
         </div>
 
         <section class="card hidden" id="ganttCard" style="padding: 0; overflow: hidden;">
-            <div class="card-head" style="padding: 22px 24px 14px;">
-                <h2>Timeline</h2>
-                <span class="card-meta" id="ganttRangeLabel"></span>
-            </div>
-
-            <div class="gantt-toolbar">
+            <div class="gantt-topbar">
+                <div>
+                    <h2>Timeline</h2>
+                    <span class="card-meta" id="ganttRangeLabel"></span>
+                </div>
                 <label class="gantt-toggle">
                     <input type="checkbox" id="hideEmptyToggle" />
                     Hide modules with no dated tasks
@@ -108,7 +107,6 @@
         }
 
         // pixel width per day for each zoom preset. lower = denser timeline.
-        const DAY_PX = 14;
         let hideEmpty = false;
         let cachedData = null;
 
@@ -161,20 +159,23 @@
             const end   = new Date(Math.max.apply(null, endCandidates));
             start.setDate(start.getDate() - 3);
             end.setDate(end.getDate() + 3);
-            return { start, end, totalDays: daysBetween(start, end) + 1, dayPx: DAY_PX };
+
+            // dayPx is computed to fill the available timeline width — no horizontal scroll
+            const scroll = document.getElementById('ganttScroll');
+            const availWidth = scroll ? scroll.clientWidth : 800;
+            const totalDays = daysBetween(start, end) + 1;
+            const dayPx = availWidth / totalDays;
+            return { start, end, totalDays, dayPx };
         }
 
         function renderHeader(range) {
             const dayPx = range.dayPx;
             const head = document.createElement('div');
             head.className = 'gantt-header';
-            head.style.width = (range.totalDays * dayPx) + 'px';
+            head.style.width = '100%';
 
             const monthBand = document.createElement('div');
             monthBand.className = 'gantt-months';
-            const dayBand = document.createElement('div');
-            dayBand.className = 'gantt-days';
-            if (dayPx < 14) dayBand.classList.add('compact');
 
             let monthStart = 0;
             let currentMonth = null;
@@ -183,37 +184,24 @@
                 d.setDate(d.getDate() + i);
                 const monthKey = d.getMonth() + '-' + d.getFullYear();
                 if (monthKey !== currentMonth) {
-                    if (currentMonth !== null) {
-                        appendMonthBlock(monthBand, monthStart, i, currentMonth);
-                    }
+                    if (currentMonth !== null) appendMonthBlock(monthStart, i, currentMonth);
                     monthStart = i;
                     currentMonth = monthKey;
                 }
-
-                const tick = document.createElement('div');
-                tick.className = 'gantt-day';
-                if (d.getDay() === 0 || d.getDay() === 6) tick.classList.add('weekend');
-                if (d.getDay() === 1) tick.classList.add('week-start');
-                if (startOfDay(d).getTime() === startOfDay(new Date()).getTime()) tick.classList.add('today');
-                tick.textContent = d.getDate();
-                tick.style.left = (i * dayPx) + 'px';
-                tick.style.width = dayPx + 'px';
-                dayBand.appendChild(tick);
             }
-            appendMonthBlock(monthBand, monthStart, range.totalDays, currentMonth);
+            appendMonthBlock(monthStart, range.totalDays, currentMonth);
 
-            function appendMonthBlock(parent, fromIdx, toIdx, monthKey) {
+            function appendMonthBlock(fromIdx, toIdx, monthKey) {
                 const [m, y] = monthKey.split('-').map(Number);
                 const block = document.createElement('div');
                 block.className = 'gantt-month';
                 block.style.left = (fromIdx * dayPx) + 'px';
                 block.style.width = ((toIdx - fromIdx) * dayPx) + 'px';
                 block.textContent = new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
-                parent.appendChild(block);
+                monthBand.appendChild(block);
             }
 
             head.appendChild(monthBand);
-            head.appendChild(dayBand);
             return head;
         }
 
@@ -249,7 +237,7 @@
 
             const body = document.createElement('div');
             body.className = 'gantt-body';
-            body.style.width = (range.totalDays * range.dayPx) + 'px';
+            body.style.width = '100%';
 
             // group tasks by module
             const tasksByModule = {};
@@ -470,6 +458,15 @@
         initializePage();
         wireToolbar();
         loadGantt();
+
+        // re-render on resize so the timeline always fits the viewport
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (cachedData) renderGantt(cachedData);
+            }, 120);
+        });
     </script>
 </body>
 </html>

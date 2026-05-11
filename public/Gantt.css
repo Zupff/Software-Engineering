@@ -12,10 +12,23 @@
     --gantt-label-w: 240px;
     --gantt-row-h: 36px;
     --gantt-head-h: 44px;
-    --gantt-mod-head-h: 60px;
+    --gantt-mod-head-h: 70px;
 }
 
-/* ── Toolbar (zoom presets) ── */
+/* ── Topbar (title + toggle on one row, tight gap) ── */
+.gantt-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 24px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-wrap: wrap;
+}
+.gantt-topbar h2 { font-size: 1rem; font-weight: 700; }
+.gantt-topbar .card-meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; display: block; }
+
 .gantt-toolbar {
     display: flex;
     align-items: center;
@@ -103,9 +116,10 @@
     z-index: 2;
 }
 
-/* right timeline column */
+/* right timeline column — no horizontal scroll, vertical only via .gantt-labels */
 .gantt-scroll {
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     position: relative;
 }
 
@@ -192,7 +206,7 @@
     box-sizing: border-box;
 }
 
-/* ── Timeline header ── */
+/* ── Timeline header (month band only) ── */
 .gantt-header {
     position: sticky;
     top: 0;
@@ -200,59 +214,31 @@
     background: var(--bg);
     border-bottom: 1px solid var(--border);
     height: var(--gantt-head-h);
+    box-sizing: border-box;
 }
 .gantt-months {
     position: relative;
-    height: 22px;
-    border-bottom: 1px solid var(--border);
+    height: 100%;
+    background: var(--bg);
 }
 .gantt-month {
     position: absolute;
     top: 0;
-    height: 22px;
-    line-height: 22px;
-    padding: 0 8px;
-    font-size: 0.7rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--text);
     border-right: 1px solid var(--border);
     white-space: nowrap;
     overflow: hidden;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
+    box-sizing: border-box;
 }
-.gantt-month:nth-child(even) {
-    background: color-mix(in srgb, var(--bg) 60%, var(--surface));
-}
-.gantt-days {
-    position: relative;
-    height: 22px;
-}
-.gantt-day {
-    position: absolute;
-    top: 0;
-    height: 22px;
-    line-height: 22px;
-    text-align: center;
-    font-size: 0.62rem;
-    color: var(--muted);
-    border-right: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
-}
-.gantt-day.weekend {
-    background: color-mix(in srgb, var(--bg) 60%, var(--border));
-}
-.gantt-day.today {
-    background: var(--primary-soft);
-    color: var(--primary);
-    font-weight: 700;
-}
-/* week-only mode hides day numbers */
-.gantt-days.compact .gantt-day {
-    font-size: 0;
-}
-.gantt-days.compact .gantt-day.week-start {
-    font-size: 0.62rem;
-}
+.gantt-month:last-child { border-right: none; }
 
 /* ── Body / bars ── */
 .gantt-body {
@@ -340,16 +326,6 @@
     border-left: 2px dashed var(--red);
     z-index: 2;
     pointer-events: none;
-}
-.gantt-deadline::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -4px;
-    width: 8px;
-    height: 8px;
-    background: var(--red);
-    border-radius: 50%;
 }
 
 /* today line spans the full body */
