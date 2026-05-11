@@ -345,8 +345,8 @@
             const form = event.target;
             const newDeadline = form.deadline.value;
             try {
-                const res = await authenticatedFetch('/api/modules/' + moduleId + '/deadline', {
-                    method: 'PUT',
+                const res = await authenticatedFetch('/api/modules/' + moduleId, {
+                    method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ deadline: newDeadline })
                 });
