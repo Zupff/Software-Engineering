@@ -270,6 +270,39 @@ body { height: 100vh; }
     -webkit-appearance: none;
     margin: 0;
 }
+
+/* <input type="date"> renders its value with browser default font sizing
+   on macOS; force the same 0.875rem as text inputs so the displayed
+   date doesn't look oversized in the 38px box. */
+.form-field input[type="date"] {
+    font-size: 0.875rem;
+    line-height: 1.2;
+}
+.form-field input[type="date"]::-webkit-datetime-edit {
+    padding: 0;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    color: var(--text);
+}
+.form-field input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+}
+.form-field input[type="date"]::-webkit-datetime-edit-text,
+.form-field input[type="date"]::-webkit-datetime-edit-day-field,
+.form-field input[type="date"]::-webkit-datetime-edit-month-field,
+.form-field input[type="date"]::-webkit-datetime-edit-year-field {
+    font-size: 0.875rem;
+    padding: 0;
+}
+.form-field input[type="date"]::-webkit-calendar-picker-indicator {
+    margin-left: 6px;
+    opacity: 0.55;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.form-field input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
 .form-field input:focus,
 .form-field select:focus {
     border-color: var(--primary);
