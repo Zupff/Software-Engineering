@@ -68,4 +68,27 @@ const createSemester = async (req, res) => {
   }
 };
 
-module.exports = { listSemesters, currentSemester, createSemester };
+// delete a semester owned by the current user. Modules cascade-delete via
+// FK ON DELETE CASCADE on semesters(id), so tasks and study_sessions go too.
+const deleteSemester = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM semesters WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'semester not found' });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error('delete semester error', error);
+    return res.status(500).json({ message: 'internal server error' });
+  }
+};
+
+module.exports = { listSemesters, currentSemester, createSemester, deleteSemester };

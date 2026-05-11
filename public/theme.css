@@ -118,24 +118,32 @@ body {
 .semester-switcher-menu.hidden { display: none; }
 .semester-switcher-item {
     display: flex;
+    align-items: stretch;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+    overflow: hidden;
+}
+.semester-switcher-item:hover { background: var(--bg); }
+.semester-switcher-item.active {
+    background: var(--primary-soft);
+}
+.semester-switcher-item.active .ssi-switch { color: var(--primary); font-weight: 600; }
+
+/* main row button — fills the item, click to switch */
+.ssi-switch {
+    flex: 1;
+    min-width: 0;
+    display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     background: none;
     border: none;
-    border-radius: var(--radius-sm);
     padding: 8px 10px;
     text-align: left;
     cursor: pointer;
     font-family: inherit;
     color: var(--text);
-    transition: background 0.15s;
-}
-.semester-switcher-item:hover { background: var(--bg); }
-.semester-switcher-item.active {
-    background: var(--primary-soft);
-    color: var(--primary);
-    font-weight: 600;
 }
 .ssi-name {
     font-size: 0.82rem;
@@ -149,6 +157,29 @@ body {
     flex-shrink: 0;
 }
 .semester-switcher-item.active .ssi-year { color: var(--primary); }
+
+/* delete (×) button at the right edge — only visible on hover/active */
+.ssi-delete {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    border-left: 1px solid transparent;
+    padding: 0 10px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+.semester-switcher-item:hover .ssi-delete,
+.semester-switcher-item:focus-within .ssi-delete { opacity: 1; }
+.ssi-delete:hover {
+    color: var(--red);
+    background: var(--red-lt);
+}
 
 /* Profile pill: avatar can hold either an initial or an SVG. SVG mode
    strips font sizing and centres the icon. */

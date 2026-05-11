@@ -117,15 +117,18 @@ function attachSwitcher(el, semesters, active) {
     const menu = document.createElement('div');
     menu.className = 'semester-switcher-menu hidden';
     semesters.forEach(s => {
-        const item = document.createElement('button');
-        item.type = 'button';
+        const item = document.createElement('div');
         item.className = 'semester-switcher-item' + (s.id === active.id ? ' active' : '');
-        item.innerHTML =
+
+        const switchBtn = document.createElement('button');
+        switchBtn.type = 'button';
+        switchBtn.className = 'ssi-switch';
+        switchBtn.innerHTML =
             '<span class="ssi-name"></span>' +
             (s.academic_year ? '<span class="ssi-year"></span>' : '');
-        item.querySelector('.ssi-name').textContent = s.name;
-        if (s.academic_year) item.querySelector('.ssi-year').textContent = s.academic_year;
-        item.addEventListener('click', (ev) => {
+        switchBtn.querySelector('.ssi-name').textContent = s.name;
+        if (s.academic_year) switchBtn.querySelector('.ssi-year').textContent = s.academic_year;
+        switchBtn.addEventListener('click', (ev) => {
             ev.stopPropagation();
             if (s.id !== active.id) {
                 setActiveSemesterId(s.id);
@@ -134,6 +137,37 @@ function attachSwitcher(el, semesters, active) {
                 menu.classList.add('hidden');
             }
         });
+        item.appendChild(switchBtn);
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'ssi-delete';
+        delBtn.setAttribute('title', 'Delete semester');
+        delBtn.setAttribute('aria-label', 'Delete semester');
+        delBtn.innerHTML = '×';
+        delBtn.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            const msg = 'Delete semester "' + s.name + '"?\n\n' +
+                'This permanently removes all modules, tasks, and study sessions in this semester. ' +
+                'This cannot be undone.';
+            if (!confirm(msg)) return;
+            try {
+                const res = await authenticatedFetch('/api/semesters/' + s.id, { method: 'DELETE' });
+                if (!res || (!res.ok && res.status !== 204)) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not delete semester');
+                }
+                // if we deleted the active one, clear it so the next render picks a new one
+                if (s.id === active.id) {
+                    localStorage.removeItem('activeSemesterId');
+                }
+                window.location.reload();
+            } catch (err) {
+                alert(err.message || 'Could not delete semester');
+            }
+        });
+        item.appendChild(delBtn);
+
         menu.appendChild(item);
     });
     el.appendChild(menu);
