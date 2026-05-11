@@ -412,7 +412,14 @@
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(data => {
-                        throw new Error(data.error || 'Failed to import modules');
+                        // backend returns { message, errors?: string[] } — surface both
+                        const detail = Array.isArray(data.errors) && data.errors.length
+                            ? data.errors.join(' • ')
+                            : '';
+                        const msg = data.message || data.error || 'Failed to import modules';
+                        const err = new Error(detail ? msg + ': ' + detail : msg);
+                        err.rowErrors = data.errors;
+                        throw err;
                     });
                 }
                 return response.json();
@@ -442,10 +449,20 @@
             .catch(error => {
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = originalText;
-                const errorMsg = error.message || 'Network error. Please check your connection and try again.';
+                const fallback = 'Network error. Please check your connection and try again.';
                 const alertDiv = document.createElement('div');
                 alertDiv.className = 'alert alert-danger';
-                alertDiv.innerHTML = '<span>' + escapeHtml(errorMsg) + '</span>';
+                if (Array.isArray(error.rowErrors) && error.rowErrors.length) {
+                    // structured per-row errors from backend: render as a bulleted list
+                    const items = error.rowErrors.map(e =>
+                        '<li>' + escapeHtml(e) + '</li>'
+                    ).join('');
+                    alertDiv.innerHTML =
+                        '<div><strong>Could not import:</strong><ul style="margin: 6px 0 0 18px; padding: 0;">' +
+                        items + '</ul></div>';
+                } else {
+                    alertDiv.innerHTML = '<span>' + escapeHtml(error.message || fallback) + '</span>';
+                }
                 const step3 = document.getElementById('step-3');
                 const existingAlert = step3.querySelector('.alert-danger');
                 if (existingAlert) existingAlert.remove();
