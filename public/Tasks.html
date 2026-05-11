@@ -166,9 +166,7 @@
         }
 
         function initializePage() {
-            const username = localStorage.getItem('username') || 'Student';
-            document.getElementById('userName').textContent = username;
-            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+            // user pill is rendered by auth.js — leave it alone
         }
 
         async function loadModules() {

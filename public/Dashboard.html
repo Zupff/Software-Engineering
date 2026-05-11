@@ -188,10 +188,8 @@
         }
 
         function initializePage() {
-            const username = localStorage.getItem('username') || 'Student';
-            document.getElementById('userName').textContent = username;
-            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
-
+            // user pill (avatar + name) is owned by auth.js — don't write it
+            // here from stale localStorage, that flashes "Student" on load.
             document.getElementById('currentDate').textContent =
                 new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
         }
