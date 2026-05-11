@@ -129,9 +129,20 @@
             // user pill is rendered by auth.js — leave it alone
         }
 
+        // Parse a 'YYYY-MM-DD' string as a local-midnight Date so the
+        // chart axes & math don't shift by a day across timezones.
+        function parseLocalDate(s) {
+            if (s instanceof Date) return s;
+            if (typeof s === 'string' && /^\d{4}-\d{2}-\d{2}/.test(s)) {
+                const [y, m, d] = s.slice(0, 10).split('-').map(Number);
+                return new Date(y, m - 1, d);
+            }
+            return new Date(s);
+        }
+
         // floor a date to midnight (date-only comparisons)
         function startOfDay(d) {
-            const c = new Date(d);
+            const c = parseLocalDate(d);
             c.setHours(0, 0, 0, 0);
             return c;
         }
@@ -141,7 +152,7 @@
         }
 
         function fmt(d, opts) {
-            return new Date(d).toLocaleDateString('en-GB', opts || { day: 'numeric', month: 'short' });
+            return parseLocalDate(d).toLocaleDateString('en-GB', opts || { day: 'numeric', month: 'short' });
         }
 
         function computeRange(modules, tasks) {

@@ -178,22 +178,45 @@
                 .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
+        // Local YYYY-MM-DD; avoids the UTC drift of toISOString on
+        // <input type="date"> defaults. If the input is already a
+        // 'YYYY-MM-DD' string (e.g. from the DB) it's returned as-is.
+        function localDateString(d) {
+            if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10);
+            const dt = d ? new Date(d) : new Date();
+            const y = dt.getFullYear();
+            const m = String(dt.getMonth() + 1).padStart(2, '0');
+            const day = String(dt.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+        }
+
+        // Parse a 'YYYY-MM-DD' string as a local-midnight Date (avoids the
+        // implicit UTC interpretation new Date('YYYY-MM-DD') uses).
+        function parseLocalDate(s) {
+            if (s instanceof Date) return s;
+            if (typeof s === 'string' && /^\d{4}-\d{2}-\d{2}/.test(s)) {
+                const [y, m, d] = s.slice(0, 10).split('-').map(Number);
+                return new Date(y, m - 1, d);
+            }
+            return new Date(s);
+        }
+
         function formatDate(iso) {
-            const d = new Date(iso);
+            const d = parseLocalDate(iso);
             if (isNaN(d.getTime())) return '';
             return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         }
 
         function shortDate(iso) {
             if (!iso) return '';
-            const d = new Date(iso);
+            const d = parseLocalDate(iso);
             if (isNaN(d.getTime())) return '';
             return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
         }
 
         function daysUntil(iso) {
             const today = new Date(); today.setHours(0,0,0,0);
-            const target = new Date(iso); target.setHours(0,0,0,0);
+            const target = parseLocalDate(iso); target.setHours(0,0,0,0);
             return Math.round((target - today) / (1000 * 60 * 60 * 24));
         }
 
@@ -371,8 +394,8 @@
             if (!isHidden) {
                 document.getElementById('msTitle').value = '';
                 document.getElementById('msDeadline').value = (currentModule && currentModule.deadline)
-                    ? new Date(currentModule.deadline).toISOString().slice(0, 10)
-                    : new Date().toISOString().slice(0, 10);
+                    ? localDateString(currentModule.deadline)
+                    : localDateString();
                 Array.from(document.getElementById('msTasks').options).forEach(o => o.selected = false);
                 document.getElementById('msTitle').focus();
             }
