@@ -319,6 +319,7 @@
                     '</div>' +
                     '<div class="task-actions">' +
                         '<button class="btn-ghost btn-compact" onclick="toggleSessionForm(' + task.id + ')">Log session</button>' +
+                        '<button class="btn-ghost btn-compact" onclick="toggleEditForm(' + task.id + ')">Edit</button>' +
                         '<button class="btn-ghost btn-compact btn-danger" onclick="deleteTaskConfirm(' + task.id + ')">Delete</button>' +
                     '</div>' +
                 '</div>' +
@@ -343,14 +344,133 @@
                         '<button type="button" class="btn-ghost" onclick="toggleSessionForm(' + task.id + ')">Cancel</button>' +
                         '<button type="submit" class="btn-primary btn-compact">Log session</button>' +
                     '</div>' +
-                '</form>';
+                '</form>' +
+                buildEditForm(task, allTasks);
 
             return row;
+        }
+
+        // Inline edit form. Pre-filled from current task values. Dependency
+        // options exclude this task itself (server enforces this too).
+        function buildEditForm(task, allTasks) {
+            const types = ['Studying','Reading','Writing','Programming','Planning','Reviewing'];
+            const typeOpts = types.map(t =>
+                '<option value="' + t + '"' + (t === task.type ? ' selected' : '') + '>' + t + '</option>'
+            ).join('');
+            const depOpts = ['<option value="">None</option>'].concat(
+                allTasks
+                    .filter(t => t.id !== task.id)
+                    .map(t =>
+                        '<option value="' + t.id + '"' +
+                            (Number(task.dependency_task_id) === Number(t.id) ? ' selected' : '') +
+                        '>' + escapeHtml(t.title) + '</option>'
+                    )
+            ).join('');
+            const startVal = task.start_date ? String(task.start_date).slice(0, 10) : '';
+            const endVal   = task.end_date   ? String(task.end_date).slice(0, 10)   : '';
+
+            return (
+                '<form class="task-form hidden" id="editForm-' + task.id + '" onsubmit="saveEdit(event, ' + task.id + ')" style="margin: 12px 0 0 0;">' +
+                    '<div class="form-row">' +
+                        '<div class="form-field form-field-grow">' +
+                            '<label>Title</label>' +
+                            '<input type="text" name="title" required maxlength="200" value="' + escapeHtml(task.title) + '">' +
+                        '</div>' +
+                        '<div class="form-field">' +
+                            '<label>Type</label>' +
+                            '<select name="type" required>' + typeOpts + '</select>' +
+                        '</div>' +
+                        '<div class="form-field form-field-narrow">' +
+                            '<label>Required hrs</label>' +
+                            '<input type="number" name="required_hours" min="0.5" step="0.5" required value="' +
+                                Number(task.required_hours).toString() + '">' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="form-row">' +
+                        '<div class="form-field form-field-narrow">' +
+                            '<label>Start date</label>' +
+                            '<input type="date" name="start_date" value="' + startVal + '">' +
+                        '</div>' +
+                        '<div class="form-field form-field-narrow">' +
+                            '<label>End date</label>' +
+                            '<input type="date" name="end_date" value="' + endVal + '">' +
+                        '</div>' +
+                        '<div class="form-field">' +
+                            '<label>Depends on (optional)</label>' +
+                            '<select name="dependency_task_id">' + depOpts + '</select>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="form-row">' +
+                        '<div class="form-field form-field-grow">' +
+                            '<label>Notes (optional)</label>' +
+                            '<input type="text" name="notes" maxlength="500" value="' + escapeHtml(task.notes || '') + '">' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="form-actions">' +
+                        '<button type="button" class="btn-ghost" onclick="toggleEditForm(' + task.id + ')">Cancel</button>' +
+                        '<button type="submit" class="btn-primary btn-compact">Save changes</button>' +
+                    '</div>' +
+                '</form>'
+            );
         }
 
         function toggleSessionForm(taskId) {
             const form = document.getElementById('sessionForm-' + taskId);
             if (form) form.classList.toggle('hidden');
+            // close any open edit form on the same row so the panes don't stack
+            const edit = document.getElementById('editForm-' + taskId);
+            if (edit) edit.classList.add('hidden');
+        }
+
+        function toggleEditForm(taskId) {
+            const form = document.getElementById('editForm-' + taskId);
+            if (form) form.classList.toggle('hidden');
+            const session = document.getElementById('sessionForm-' + taskId);
+            if (session) session.classList.add('hidden');
+        }
+
+        async function saveEdit(event, taskId) {
+            event.preventDefault();
+            const form = event.target;
+            const payload = {
+                title: form.title.value.trim(),
+                type: form.type.value,
+                required_hours: parseFloat(form.required_hours.value),
+                start_date: form.start_date.value || null,
+                end_date: form.end_date.value || null,
+                dependency_task_id: form.dependency_task_id.value
+                    ? Number(form.dependency_task_id.value) : null,
+                notes: form.notes.value.trim() || null
+            };
+
+            if (payload.start_date && payload.end_date && payload.start_date > payload.end_date) {
+                showError('Start date must be on or before end date');
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Saving…';
+
+            try {
+                const res = await authenticatedFetch('/api/tasks/' + taskId, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res || !res.ok) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not save changes');
+                }
+                await loadTasks(selectedModuleId);
+                renderTasks();
+                renderModules();
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                showError(err.message);
+            }
         }
 
         function toggleNewTaskForm() {
