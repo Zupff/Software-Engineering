@@ -6,12 +6,13 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html, body { height: 100%; overflow: hidden; }
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background: var(--bg);
     color: var(--text);
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
 }
 
 /* Sidebar styles live in Dashboard.css; this page links it for shared
@@ -20,8 +21,26 @@ body {
 .main {
     margin-left: 6px;
     flex: 1;
-    padding: 24px 28px 48px;
+    padding: 20px 28px 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
 }
+/* the active step takes whatever space is left and scrolls internally */
+.step-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px; /* space for scrollbar */
+}
+.step-content > .card {
+    margin-bottom: 4px;
+}
+/* steps-wrap stays pinned at top, doesn't scroll */
+.steps-wrap { flex-shrink: 0; }
+.topbar     { flex-shrink: 0; }
 
 .topbar {
     display: flex;
@@ -275,18 +294,24 @@ body {
 .file-remove-btn {
     background: var(--surface);
     color: var(--muted);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 6px 10px;
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 12px;
     font-family: inherit;
     font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
     transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 .file-remove-btn:hover {
     color: var(--red);
     border-color: color-mix(in srgb, var(--red) 30%, var(--border));
+    background: var(--red-lt);
 }
 
 /* ── Format guide ── */
@@ -329,44 +354,48 @@ body {
 }
 .format-col span { font-size: 0.72rem; color: var(--muted); }
 
-/* ── Buttons (reuse Dashboard btn-primary) ── */
-.btn-primary {
+/* ── Buttons: shared height/sizing so primary + ghost line up in a row ── */
+.btn-primary,
+.btn-ghost {
+    height: 36px;
+    box-sizing: border-box;
+    padding: 0 16px;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1;
     display: inline-flex;
     align-items: center;
-    padding: 9px 16px;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+.btn-primary {
     background: var(--primary);
     color: white;
-    border: none;
-    border-radius: var(--radius);
-    text-decoration: none;
-    font-family: inherit;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.12s;
+    border: 1.5px solid var(--primary);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 .btn-primary:hover:not(:disabled) {
     background: var(--primary-hover);
+    border-color: var(--primary-hover);
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.18);
 }
 .btn-primary:disabled {
     background: color-mix(in srgb, var(--primary) 35%, var(--border));
+    border-color: transparent;
+    color: white;
     cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
 .btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    padding: 9px 16px;
     background: var(--surface);
     color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    text-decoration: none;
-    font-family: inherit;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    border: 1.5px solid var(--border);
 }
 .btn-ghost:hover {
     background: var(--bg);
