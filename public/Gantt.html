@@ -21,19 +21,19 @@
             <span>Study Planner</span>
         </div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html" class="nav-item">
+            <a href="Dashboard.html" class="nav-item">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
                 Dashboard
             </a>
-            <a href="tasks.html" class="nav-item">
+            <a href="Tasks.html" class="nav-item">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                 Tasks
             </a>
-            <a href="gantt.html" class="nav-item active">
+            <a href="Gantt.html" class="nav-item active">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="13" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="11" y1="18" x2="21" y2="18"/></svg>
                 Gantt Chart
             </a>
-            <a href="import.html" class="nav-item">
+            <a href="Import.html" class="nav-item">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
                 Import
             </a>
@@ -66,7 +66,7 @@
         <div id="emptyState" class="empty-state hidden">
             <h2>Nothing to chart yet</h2>
             <p>Import some modules and add tasks with dates, then come back here.</p>
-            <a href="import.html" class="btn-primary">Go to Import</a>
+            <a href="Import.html" class="btn-primary">Go to Import</a>
         </div>
 
         <section class="card hidden" id="ganttCard" style="padding: 0; overflow: hidden;">
@@ -105,7 +105,7 @@
 
     <script>
         if (!isLoggedIn()) {
-            window.location.href = 'login.html';
+            window.location.href = 'Login.html';
         }
 
         // pixel width per day for each zoom preset. lower = denser timeline.
