@@ -227,15 +227,48 @@ body { height: 100vh; }
 .form-field input,
 .form-field select {
     width: 100%;
-    padding: 8px 10px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 0 11px;
     border: 1.5px solid var(--border);
     border-radius: var(--radius-sm);
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
+    line-height: 1.2;
     color: var(--text);
     background: var(--surface);
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
+}
+/* Normalise <select> so it renders at the same height as <input> across
+   browsers (macOS adds extra chrome) — same treatment as the Import page */
+.form-field select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%2364748b' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><polyline points='1 1.5 6 6.5 11 1.5'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    background-size: 12px 8px;
+    padding-right: 32px;
+}
+/* Multi-select doesn't take a fixed height; let it grow with its size attr */
+.form-field select[multiple] {
+    height: auto;
+    min-height: 38px;
+    padding: 8px 11px;
+    background-image: none;
+    padding-right: 11px;
+}
+/* Trim native spinner chrome from <input type="number"> so its visible
+   height matches text inputs (the spinner buttons stretch some browsers) */
+.form-field input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+.form-field input[type="number"]::-webkit-inner-spin-button,
+.form-field input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 .form-field input:focus,
 .form-field select:focus {
