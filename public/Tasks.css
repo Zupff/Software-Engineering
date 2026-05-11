@@ -1,6 +1,34 @@
 /* Tasks page – two-pane layout, module list left, task panel right.
    Reuses sidebar / topbar / btn / alert classes from Dashboard.css. */
 
+/* ── Viewport lock: page never scrolls; panes scroll internally ── */
+html, body { height: 100%; overflow: hidden; }
+body { height: 100vh; }
+.main {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    padding: 20px 28px 20px;
+}
+.tasks-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+}
+.modules-pane,
+.tasks-pane {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
 .empty-state {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -11,32 +39,20 @@
 .empty-state h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
 .empty-state p  { font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; }
 
-.tasks-grid {
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 16px;
-    align-items: start;
-}
-
-.modules-pane,
-.tasks-pane {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-}
-
+/* ── Pane heads: tidy, surface-coloured, no grey strip ── */
 .pane-head {
-    padding: 12px 16px;
+    padding: 14px 16px;
     border-bottom: 1px solid var(--border);
-    font-size: 0.78rem;
-    font-weight: 600;
+    background: var(--surface);
+    flex-shrink: 0;
+}
+.pane-head:not(.pane-head-row) {
+    font-size: 0.7rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--muted);
-    background: var(--bg);
 }
-
 .pane-head-row {
     display: flex;
     align-items: center;
@@ -45,10 +61,9 @@
 }
 .pane-head-row > span {
     color: var(--text);
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-transform: none;
-    letter-spacing: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 /* ── Modules list ── */
@@ -56,25 +71,28 @@
     list-style: none;
     margin: 0;
     padding: 6px;
-    max-height: 70vh;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
 }
 .module-item {
     padding: 10px 12px;
     border-radius: var(--radius);
+    border: 1px solid transparent;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background 0.15s, border-color 0.15s;
 }
 .module-item:hover { background: var(--bg); }
 .module-item.active {
     background: var(--primary-soft);
-    outline: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 25%, transparent);
 }
 .module-item-code {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
     color: var(--primary);
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 .module-item-name {
     font-size: 0.875rem;
@@ -89,12 +107,15 @@
     margin-top: 4px;
 }
 
-/* ── Task list ── */
+/* ── Task list (scrolls inside the tasks-pane) ── */
 .task-list {
-    padding: 12px;
+    padding: 12px 14px 14px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 .task-row {
     border: 1px solid var(--border);
@@ -229,34 +250,70 @@
 }
 
 /* ── Buttons (compact variants used across this page) ── */
+/* compact: shared height + sizing so primary/ghost align in a row */
 .btn-compact {
-    padding: 6px 12px !important;
-    font-size: 0.8rem !important;
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 12px !important;
+    font-size: 0.78rem !important;
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 .btn-ghost {
     background: var(--surface);
     color: var(--muted);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 6px 12px;
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 12px;
     font-family: inherit;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
 }
 .btn-ghost:hover {
     background: var(--bg);
     color: var(--text);
+    border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
 }
 .btn-ghost.btn-danger:hover {
     color: var(--red);
     border-color: color-mix(in srgb, var(--red) 30%, var(--border));
+    background: var(--red-lt);
 }
 
+/* Override the global navy-shadow on btn-primary inside Tasks so the
+   "+ New task" button doesn't show a soft grey halo */
+.tasks-pane .btn-primary,
+.task-form .btn-primary {
+    background: var(--primary);
+    border: 1.5px solid var(--primary);
+    box-shadow: none;
+    color: white;
+    font-weight: 600;
+    transition: background 0.15s, border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+}
+.tasks-pane .btn-primary:hover:not(:disabled),
+.task-form .btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.18);
+}
 .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* ── Empty tasks placeholder ── */
@@ -269,8 +326,8 @@
 
 /* responsive */
 @media (max-width: 900px) {
-    .tasks-grid { grid-template-columns: 1fr; }
-    .modules-list { max-height: 220px; }
+    .tasks-grid { grid-template-columns: 1fr; grid-template-rows: 200px 1fr; }
+    .modules-list { max-height: none; }
 }
 
 .hidden { display: none !important; }
