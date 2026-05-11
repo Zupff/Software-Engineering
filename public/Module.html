@@ -220,7 +220,6 @@
         let currentTasks = [];
         let hoursByTaskId = {};
         let milestones = [];
-        let currentModule = null;
 
         async function deleteModuleConfirm() {
             if (!currentModule) return;
@@ -336,6 +335,7 @@
                         '</div>' +
                         '<div class="milestone-actions">' +
                             '<span class="pill ' + statusCls + '">' + escapeHtml(statusLabel) + '</span>' +
+                            '<button class="btn-ghost btn-compact" onclick="toggleEditMilestone(' + m.id + ')">Edit</button>' +
                             '<button class="btn-ghost btn-compact btn-danger" onclick="deleteMilestone(' + m.id + ')">Delete</button>' +
                         '</div>' +
                     '</div>' +
@@ -349,7 +349,8 @@
                                          '<span class="mt-title">' + escapeHtml(t.title) + '</span>' +
                                      '</li>';
                           }).join('') + '</ul>'
-                        : '<div class="milestone-empty-tasks">No contributing tasks linked yet.</div>');
+                        : '<div class="milestone-empty-tasks">No contributing tasks linked yet.</div>') +
+                    buildMilestoneEditForm(m, currentTasks);
 
                 list.appendChild(row);
             });
@@ -404,6 +405,79 @@
                 document.getElementById('newMilestoneForm').classList.add('hidden');
                 await reloadMilestones();
             } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        // Inline milestone edit form. Pre-filled from the current milestone's
+        // values; multi-select for contributing tasks marks the existing links.
+        function buildMilestoneEditForm(m, allTasks) {
+            const linked = new Set((m.task_ids || []).map(Number));
+            const taskOpts = allTasks.map(t =>
+                '<option value="' + t.id + '"' +
+                    (linked.has(Number(t.id)) ? ' selected' : '') +
+                '>' + escapeHtml(t.title) + '</option>'
+            ).join('');
+            const deadlineVal = m.deadline ? String(m.deadline).slice(0, 10) : '';
+            return (
+                '<form class="task-form hidden" id="editMilestoneForm-' + m.id + '" ' +
+                       'onsubmit="saveMilestoneEdit(event, ' + m.id + ')" ' +
+                       'style="margin: 10px 0 0 0;">' +
+                    '<div class="form-row">' +
+                        '<div class="form-field form-field-grow">' +
+                            '<label>Title</label>' +
+                            '<input type="text" name="title" required maxlength="200" value="' + escapeHtml(m.title) + '">' +
+                        '</div>' +
+                        '<div class="form-field form-field-narrow">' +
+                            '<label>Deadline</label>' +
+                            '<input type="date" name="deadline" required value="' + deadlineVal + '">' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="form-row">' +
+                        '<div class="form-field form-field-grow">' +
+                            '<label>Contributing tasks (hold ⌘ / Ctrl to pick more than one)</label>' +
+                            '<select name="task_ids" multiple size="4">' + taskOpts + '</select>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="form-actions">' +
+                        '<button type="button" class="btn-ghost" onclick="toggleEditMilestone(' + m.id + ')">Cancel</button>' +
+                        '<button type="submit" class="btn-primary btn-compact">Save changes</button>' +
+                    '</div>' +
+                '</form>'
+            );
+        }
+
+        function toggleEditMilestone(id) {
+            const form = document.getElementById('editMilestoneForm-' + id);
+            if (form) form.classList.toggle('hidden');
+        }
+
+        async function saveMilestoneEdit(event, id) {
+            event.preventDefault();
+            const form = event.target;
+            const title = form.title.value.trim();
+            const deadline = form.deadline.value;
+            const taskIds = Array.from(form.task_ids.selectedOptions).map(o => parseInt(o.value, 10));
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Saving…';
+
+            try {
+                const res = await authenticatedFetch('/api/milestones/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, deadline, task_ids: taskIds })
+                });
+                if (!res || !res.ok) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not save milestone');
+                }
+                await reloadMilestones();
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
                 showError(err.message);
             }
         }
