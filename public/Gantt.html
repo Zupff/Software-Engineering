@@ -91,6 +91,8 @@
                 </div>
             </div>
 
+            <div class="gantt-tooltip hidden" id="ganttTooltip" role="tooltip"></div>
+
             <div class="gantt-legend">
                 <span><span class="lg-swatch lg-bar"></span>Task</span>
                 <span><span class="lg-swatch lg-bar-fill"></span>Logged hours</span>
@@ -334,8 +336,8 @@
                         const marker = document.createElement('div');
                         marker.className = 'gantt-deadline';
                         marker.style.left = (dlOffset * range.dayPx + range.dayPx / 2) + 'px';
-                        marker.title = m.module_code + ' deadline: ' +
-                            fmt(m.deadline, { day: 'numeric', month: 'short', year: 'numeric' });
+                        marker.dataset.tooltip = buildDeadlineTooltip(m, moduleTasks);
+                        attachHover(marker);
                         band.appendChild(marker);
                     }
                 }
@@ -418,17 +420,118 @@
             label.textContent = task.title;
             bar.appendChild(label);
 
-            bar.title =
-                task.title +
-                '\nType: ' + (task.type || 'task') +
-                '\n' + fmt(task.start_date) + ' → ' + fmt(task.end_date) +
-                '\nProgress: ' + (task.hours_logged || 0).toFixed(1) + ' / ' +
-                                  (task.required_hours || 0).toFixed(1) + ' hrs (' +
-                                  (task.percentage || 0) + '%)' +
-                (dep ? '\nDepends on: ' + dep.title : '');
+            // attach rich hover data instead of native title
+            bar.dataset.tooltip = buildTaskTooltip(task, dep);
+            attachHover(bar);
 
             row.appendChild(bar);
             return row;
+        }
+
+        // ── Custom hover tooltip ───────────────────────────────────────────
+        function buildTaskTooltip(task, dep) {
+            const days = Math.max(1, daysBetween(task.start_date, task.end_date) + 1);
+            const pct = task.percentage || 0;
+            const hoursLogged = (task.hours_logged || 0).toFixed(1);
+            const hoursReq    = (task.required_hours || 0).toFixed(1);
+            const today = startOfDay(new Date());
+            const end = startOfDay(new Date(task.end_date));
+            const daysToEnd = daysBetween(today, end);
+            let statusLine;
+            if (pct >= 100) {
+                statusLine = '<span class="tt-status tt-status-good">Completed</span>';
+            } else if (daysToEnd < 0) {
+                statusLine = '<span class="tt-status tt-status-bad">Overdue by ' + Math.abs(daysToEnd) + ' day' + (Math.abs(daysToEnd) === 1 ? '' : 's') + '</span>';
+            } else if (daysToEnd <= 7) {
+                statusLine = '<span class="tt-status tt-status-warn">Due in ' + daysToEnd + ' day' + (daysToEnd === 1 ? '' : 's') + '</span>';
+            } else {
+                statusLine = '<span class="tt-status tt-status-ok">Due in ' + daysToEnd + ' days</span>';
+            }
+
+            const color = typeColor(task.type);
+            return JSON.stringify({
+                header: '<div class="tt-header" style="--tt-accent:' + color + '">' +
+                            '<span class="tt-dot" style="background:' + color + '"></span>' +
+                            '<span class="tt-title">' + escapeHtml(task.title) + '</span>' +
+                        '</div>',
+                body:
+                    '<div class="tt-row"><span class="tt-key">Type</span><span class="tt-val">' + escapeHtml(task.type || 'task') + '</span></div>' +
+                    '<div class="tt-row"><span class="tt-key">Dates</span><span class="tt-val">' + escapeHtml(fmt(task.start_date)) + ' → ' + escapeHtml(fmt(task.end_date)) + '</span></div>' +
+                    '<div class="tt-row"><span class="tt-key">Duration</span><span class="tt-val">' + days + ' day' + (days === 1 ? '' : 's') + '</span></div>' +
+                    '<div class="tt-row"><span class="tt-key">Hours</span><span class="tt-val">' + hoursLogged + ' / ' + hoursReq + ' hrs</span></div>' +
+                    '<div class="tt-progress"><div class="tt-progress-fill" style="width:' + Math.min(100, pct) + '%; background:' + color + '"></div></div>' +
+                    '<div class="tt-row"><span class="tt-key">Progress</span><span class="tt-val">' + pct + '%</span></div>' +
+                    (dep ? '<div class="tt-row"><span class="tt-key">After</span><span class="tt-val">' + escapeHtml(dep.title) + '</span></div>' : '') +
+                    '<div class="tt-footer">' + statusLine + '</div>'
+            });
+        }
+
+        function buildDeadlineTooltip(module, tasksInModule) {
+            const today = startOfDay(new Date());
+            const dl = startOfDay(new Date(module.deadline));
+            const daysToDl = daysBetween(today, dl);
+            const total = tasksInModule.length;
+            const done = tasksInModule.filter(t => (t.percentage || 0) >= 100).length;
+            const avgPct = total === 0 ? 0 :
+                Math.round(tasksInModule.reduce((a, t) => a + (t.percentage || 0), 0) / total);
+
+            let statusLine;
+            if (daysToDl < 0) {
+                statusLine = '<span class="tt-status tt-status-bad">Passed ' + Math.abs(daysToDl) + ' day' + (Math.abs(daysToDl) === 1 ? '' : 's') + ' ago</span>';
+            } else if (daysToDl === 0) {
+                statusLine = '<span class="tt-status tt-status-warn">Due today</span>';
+            } else if (daysToDl <= 7) {
+                statusLine = '<span class="tt-status tt-status-warn">' + daysToDl + ' day' + (daysToDl === 1 ? '' : 's') + ' to go</span>';
+            } else {
+                statusLine = '<span class="tt-status tt-status-ok">' + daysToDl + ' days to go</span>';
+            }
+
+            return JSON.stringify({
+                header: '<div class="tt-header tt-header-deadline">' +
+                            '<span class="tt-deadline-icon"></span>' +
+                            '<span class="tt-title">Module deadline</span>' +
+                        '</div>',
+                body:
+                    '<div class="tt-row"><span class="tt-key">Module</span><span class="tt-val">' + escapeHtml(module.module_code) + ' · ' + escapeHtml(module.module_name) + '</span></div>' +
+                    '<div class="tt-row"><span class="tt-key">Deadline</span><span class="tt-val">' + escapeHtml(fmt(module.deadline, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) + '</span></div>' +
+                    '<div class="tt-row"><span class="tt-key">Tasks</span><span class="tt-val">' + done + ' of ' + total + ' complete</span></div>' +
+                    '<div class="tt-progress"><div class="tt-progress-fill" style="width:' + avgPct + '%; background: var(--primary)"></div></div>' +
+                    '<div class="tt-row"><span class="tt-key">Avg progress</span><span class="tt-val">' + avgPct + '%</span></div>' +
+                    '<div class="tt-footer">' + statusLine + '</div>'
+            });
+        }
+
+        function attachHover(el) {
+            el.addEventListener('mouseenter', showTooltip);
+            el.addEventListener('mousemove', moveTooltip);
+            el.addEventListener('mouseleave', hideTooltip);
+        }
+
+        function showTooltip(e) {
+            const tt = document.getElementById('ganttTooltip');
+            const data = e.currentTarget.dataset.tooltip;
+            if (!data) return;
+            const parsed = JSON.parse(data);
+            tt.innerHTML = parsed.header + '<div class="tt-body">' + parsed.body + '</div>';
+            tt.classList.remove('hidden');
+            moveTooltip(e);
+        }
+
+        function moveTooltip(e) {
+            const tt = document.getElementById('ganttTooltip');
+            if (tt.classList.contains('hidden')) return;
+            const pad = 14;
+            const rect = tt.getBoundingClientRect();
+            let x = e.clientX + pad;
+            let y = e.clientY + pad;
+            if (x + rect.width > window.innerWidth - 8) x = e.clientX - rect.width - pad;
+            if (y + rect.height > window.innerHeight - 8) y = e.clientY - rect.height - pad;
+            tt.style.left = x + 'px';
+            tt.style.top  = y + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('ganttTooltip').classList.add('hidden');
         }
 
         async function loadGantt() {
