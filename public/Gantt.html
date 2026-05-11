@@ -76,15 +76,8 @@
             </div>
 
             <div class="gantt-toolbar">
-                <span class="gantt-toolbar-label">View</span>
-                <div class="gantt-zoom" role="tablist">
-                    <button class="gantt-zoom-btn" data-zoom="30">30 days</button>
-                    <button class="gantt-zoom-btn active" data-zoom="90">90 days</button>
-                    <button class="gantt-zoom-btn" data-zoom="all">Full range</button>
-                </div>
-                <div class="gantt-toolbar-spacer"></div>
                 <label class="gantt-toggle">
-                    <input type="checkbox" id="hideEmptyToggle" checked />
+                    <input type="checkbox" id="hideEmptyToggle" />
                     Hide modules with no dated tasks
                 </label>
             </div>
@@ -115,13 +108,8 @@
         }
 
         // pixel width per day for each zoom preset. lower = denser timeline.
-        const ZOOM_PRESETS = {
-            '30':  { days: 30,  dayPx: 28 },
-            '90':  { days: 90,  dayPx: 12 },
-            'all': { days: null, dayPx: 8 },
-        };
-        let currentZoom = '90';
-        let hideEmpty = true;
+        const DAY_PX = 14;
+        let hideEmpty = false;
         let cachedData = null;
 
         function escapeHtml(str) {
@@ -158,20 +146,8 @@
             return new Date(d).toLocaleDateString('en-GB', opts || { day: 'numeric', month: 'short' });
         }
 
-        function computeRange(modules, tasks, zoom) {
+        function computeRange(modules, tasks) {
             const today = startOfDay(new Date());
-            const preset = ZOOM_PRESETS[zoom];
-
-            if (preset.days) {
-                // Anchor at today, span N days forward
-                const start = new Date(today);
-                start.setDate(start.getDate() - 3);
-                const end = new Date(today);
-                end.setDate(end.getDate() + preset.days);
-                return { start, end, totalDays: daysBetween(start, end) + 1, dayPx: preset.dayPx };
-            }
-
-            // 'all' — fit everything
             const candidates = [today];
             const endCandidates = [today];
             tasks.forEach(t => {
@@ -185,7 +161,7 @@
             const end   = new Date(Math.max.apply(null, endCandidates));
             start.setDate(start.getDate() - 3);
             end.setDate(end.getDate() + 3);
-            return { start, end, totalDays: daysBetween(start, end) + 1, dayPx: preset.dayPx };
+            return { start, end, totalDays: daysBetween(start, end) + 1, dayPx: DAY_PX };
         }
 
         function renderHeader(range) {
@@ -262,7 +238,7 @@
             labelRows.innerHTML = '';
 
             const { modules, tasks } = data;
-            const range = computeRange(modules, tasks, currentZoom);
+            const range = computeRange(modules, tasks);
 
             document.getElementById('ganttRangeLabel').textContent =
                 fmt(range.start, { day: 'numeric', month: 'short' }) + ' – ' +
@@ -485,14 +461,6 @@
         }
 
         function wireToolbar() {
-            document.querySelectorAll('.gantt-zoom-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.gantt-zoom-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentZoom = btn.dataset.zoom;
-                    if (cachedData) renderGantt(cachedData);
-                });
-            });
             document.getElementById('hideEmptyToggle').addEventListener('change', (e) => {
                 hideEmpty = e.target.checked;
                 if (cachedData) renderGantt(cachedData);
