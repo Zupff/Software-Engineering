@@ -279,51 +279,42 @@
             
             const errors = [];
             
-            // Validate module_code: 2-10 alphanumeric characters
+            // Validate module_code: required, ≤20 chars (matches backend)
             if (!code) {
                 errors.push(`Row ${rowNum}: module_code is required`);
-            } else if (!/^[a-zA-Z0-9]{2,10}$/.test(code)) {
-                errors.push(`Row ${rowNum}: module_code must be 2-10 alphanumeric characters (got "${code}")`);
+            } else if (code.length > 20) {
+                errors.push(`Row ${rowNum}: module_code must be 20 characters or fewer (got "${code}")`);
             }
-            
-            // Validate module_name: 1-255 characters
+
+            // Validate module_name: required, ≤200 chars (matches backend)
             if (!name) {
                 errors.push(`Row ${rowNum}: module_name is required`);
-            } else if (name.length > 255) {
-                errors.push(`Row ${rowNum}: module_name must be 1-255 characters (got ${name.length})`);
+            } else if (name.length > 200) {
+                errors.push(`Row ${rowNum}: module_name must be 200 characters or fewer (got ${name.length})`);
             }
-            
-            // Validate assessment_type: must be exam, coursework, or project
-            const validAssessments = ['exam', 'coursework', 'project'];
+
+            // Validate assessment_type: required, any non-empty string (matches backend)
             if (!assessment) {
                 errors.push(`Row ${rowNum}: assessment_type is required`);
-            } else if (!validAssessments.includes(assessment.toLowerCase())) {
-                errors.push(`Row ${rowNum}: assessment_type must be exam, coursework, or project (got "${assessment}")`);
             }
-            
-            // Validate deadline: valid ISO date format YYYY-MM-DD, not in past
+
+            // Validate deadline: required, parseable as date (matches backend — past dates allowed
+            // so users can import a CSV partway through a semester)
             if (!deadline) {
                 errors.push(`Row ${rowNum}: deadline is required`);
-            } else if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
-                errors.push(`Row ${rowNum}: deadline must be in YYYY-MM-DD format (got "${deadline}")`);
-            } else {
-                const deadlineDate = new Date(deadline);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                if (isNaN(deadlineDate.getTime())) {
-                    errors.push(`Row ${rowNum}: deadline is not a valid date (got "${deadline}")`);
-                } else if (deadlineDate < today) {
-                    errors.push(`Row ${rowNum}: deadline cannot be in the past (${deadline})`);
-                }
+            } else if (isNaN(new Date(deadline).getTime())) {
+                errors.push(`Row ${rowNum}: deadline is not a valid date (got "${deadline}")`);
             }
-            
-            // Validate weighting: number 0-100
+
+            // Validate weighting: integer 0-100 (matches backend)
             if (weighting === '') {
                 errors.push(`Row ${rowNum}: weighting is required`);
             } else {
-                const weightNum = parseFloat(weighting);
-                if (isNaN(weightNum) || weightNum < 0 || weightNum > 100) {
-                    errors.push(`Row ${rowNum}: weighting must be a number between 0-100 (got "${weighting}")`);
+                const weightNum = Number(weighting);
+                if (!Number.isFinite(weightNum) || !Number.isInteger(weightNum)) {
+                    errors.push(`Row ${rowNum}: weighting must be a whole number (got "${weighting}")`);
+                } else if (weightNum < 0 || weightNum > 100) {
+                    errors.push(`Row ${rowNum}: weighting must be between 0 and 100 (got "${weighting}")`);
                 }
             }
             
