@@ -281,42 +281,45 @@
     position: absolute;
     top: 6px;
     height: calc(var(--gantt-row-h) - 12px);
-    background: color-mix(in srgb, var(--primary) 16%, var(--surface));
-    border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+    /* base colour is set inline per task from typeColor(); this is just
+       a fallback. */
+    background: #3b82f6;
+    border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 6px;
     overflow: hidden;
     cursor: default;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.10);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
     z-index: 1;
 }
 .gantt-bar:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14);
-    border-color: var(--primary);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.20);
+    filter: brightness(1.04);
     z-index: 4;
 }
 .gantt-bar-fill {
+    /* darker "logged hours" overlay on the left N% of the bar. Colour set
+       inline per task from typeColorDark(). */
     position: absolute;
     top: 0; left: 0; bottom: 0;
-    background: linear-gradient(180deg,
-        color-mix(in srgb, currentColor 100%, transparent) 0%,
-        color-mix(in srgb, currentColor 88%, black) 100%);
-    opacity: 0.95;
+    background: rgba(0, 0, 0, 0.22);
 }
 .gantt-bar-label {
     position: relative;
     z-index: 1;
     display: block;
-    padding: 0 8px;
+    padding: 0 9px;
     line-height: calc(var(--gantt-row-h) - 14px);
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     font-weight: 600;
-    color: var(--text);
+    color: #ffffff;
+    letter-spacing: 0.01em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    /* dark shadow keeps the label readable on every colour we use */
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
 }
 
 /* ── Markers (scoped to a module band, not full chart) ── */

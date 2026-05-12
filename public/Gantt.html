@@ -364,15 +364,30 @@
             syncScroll();
         }
 
+        // Vivid mids — saturated enough that white labels read well on top,
+        // dark enough that the darker progress-fill variant still differs.
+        // Keep keys aligned with the Tasks page <select> options.
         function typeColor(type) {
             switch ((type || '').toLowerCase()) {
-                case 'lecture':    return '#1e3a8a';
-                case 'lab':        return '#15803d';
-                case 'assignment': return '#b45309';
-                case 'revision':   return '#7c3aed';
-                case 'reading':    return '#0891b2';
-                case 'exam':       return '#b91c1c';
-                default:           return '#64748b';
+                case 'studying':    return '#3b82f6';  // bright blue
+                case 'reading':     return '#06b6d4';  // teal
+                case 'writing':     return '#8b5cf6';  // purple
+                case 'programming': return '#10b981';  // emerald
+                case 'planning':    return '#f59e0b';  // amber
+                case 'reviewing':   return '#f43f5e';  // rose
+                default:            return '#64748b';  // slate fallback
+            }
+        }
+        // Darker variant of the same hue, used for the "logged hours" portion.
+        function typeColorDark(type) {
+            switch ((type || '').toLowerCase()) {
+                case 'studying':    return '#1d4ed8';
+                case 'reading':     return '#0e7490';
+                case 'writing':     return '#6d28d9';
+                case 'programming': return '#047857';
+                case 'planning':    return '#b45309';
+                case 'reviewing':   return '#be123c';
+                default:            return '#334155';
             }
         }
 
@@ -411,17 +426,24 @@
             if (clippedEnd <= 0 || clippedStart >= range.totalDays) return row;
 
             const visibleSpan = clippedEnd - clippedStart;
+            const base = typeColor(task.type);
+            const dark = typeColorDark(task.type);
             const bar = document.createElement('div');
             bar.className = 'gantt-bar';
             bar.style.left  = (clippedStart * range.dayPx) + 'px';
             bar.style.width = Math.max(4, visibleSpan * range.dayPx - 2) + 'px';
-            bar.style.borderColor = typeColor(task.type);
-            bar.style.background = 'color-mix(in srgb, ' + typeColor(task.type) + ' 12%, var(--surface))';
+            // Solid vivid base — the "remaining" portion of the work.
+            bar.style.background = base;
+            bar.style.borderColor = dark;
+            bar.style.color = '#ffffff'; // label inherits
 
+            // "Logged hours" overlay — a darker shade of the same hue on the
+            // left, sized by percentage complete. Both light and dark
+            // sections take white text comfortably.
             const fill = document.createElement('div');
             fill.className = 'gantt-bar-fill';
             fill.style.width = (task.percentage || 0) + '%';
-            fill.style.background = typeColor(task.type);
+            fill.style.background = dark;
             bar.appendChild(fill);
 
             const label = document.createElement('span');
