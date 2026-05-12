@@ -69,9 +69,26 @@ const getGantt = async (req, res) => {
       };
     });
 
+    // Milestones with their linked task ids — rendered on the Gantt at
+    // their deadline within the owning module's band. Brief: "Visualise
+    // activities, dependencies, intermediate milestones and deadlines in
+    // a Gantt chart representation".
+    const milestonesResult = await pool.query(
+      `SELECT mi.id, mi.module_id, mi.title, mi.deadline,
+              COALESCE(
+                (SELECT array_agg(mt.task_id) FROM milestone_tasks mt WHERE mt.milestone_id = mi.id),
+                ARRAY[]::int[]
+              ) AS task_ids
+         FROM milestones mi
+        WHERE mi.module_id = ANY($1::int[])
+        ORDER BY mi.deadline ASC`,
+      [moduleIds]
+    );
+
     return res.status(200).json({
       modules: modulesResult.rows,
       tasks,
+      milestones: milestonesResult.rows,
     });
   } catch (error) {
     console.error('get gantt error', error);

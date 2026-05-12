@@ -346,6 +346,33 @@
     border-left-width: 3px;
 }
 
+/* Milestone marker — small navy diamond at the milestone's deadline.
+   Sits above the deadline line in z-order and has its own hit area. */
+.gantt-milestone {
+    position: absolute;
+    top: 8px;
+    width: 12px;
+    height: 12px;
+    background: var(--primary);
+    transform: translateX(-50%) rotate(45deg);
+    border: 1.5px solid var(--surface);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+    z-index: 4;
+    cursor: help;
+    transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+.gantt-milestone:hover {
+    background: var(--primary-hover);
+    transform: translateX(-50%) rotate(45deg) scale(1.18);
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.28);
+}
+/* Wider hit-zone — the 12px diamond is small to click on otherwise */
+.gantt-milestone::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+}
+
 /* today line spans the full body */
 .gantt-today-line {
     position: absolute;
@@ -378,8 +405,16 @@
 }
 .lg-bar      { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent); }
 .lg-bar-fill { background: var(--primary); }
-.lg-deadline { width: 0; border-left: 2px dashed var(--red); height: 12px; }
-.lg-today    { width: 0; border-left: 2px solid color-mix(in srgb, var(--primary) 70%, transparent); height: 12px; }
+.lg-deadline  { width: 0; border-left: 2px dashed var(--red); height: 12px; }
+.lg-today     { width: 0; border-left: 2px solid color-mix(in srgb, var(--primary) 70%, transparent); height: 12px; }
+.lg-milestone {
+    width: 8px; height: 8px;
+    background: var(--primary);
+    border-radius: 1px;
+    transform: rotate(45deg);
+    margin-right: 4px;
+    margin-left: 1px;
+}
 
 /* ── Empty state inside card ── */
 .empty-state {
@@ -426,6 +461,20 @@
     background: linear-gradient(to right,
         color-mix(in srgb, var(--red) 10%, var(--surface)) 0%,
         var(--surface) 70%);
+}
+.tt-header-milestone {
+    background: linear-gradient(to right,
+        color-mix(in srgb, var(--primary) 12%, var(--surface)) 0%,
+        var(--surface) 70%);
+}
+.tt-milestone-icon {
+    width: 10px;
+    height: 10px;
+    background: var(--primary);
+    transform: rotate(45deg);
+    border-radius: 1px;
+    flex-shrink: 0;
+    margin-left: 2px;
 }
 .tt-dot {
     width: 10px;

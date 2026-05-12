@@ -97,6 +97,7 @@
             <div class="gantt-legend">
                 <span><span class="lg-swatch lg-bar"></span>Task</span>
                 <span><span class="lg-swatch lg-bar-fill"></span>Logged hours</span>
+                <span><span class="lg-swatch lg-milestone"></span>Milestone</span>
                 <span><span class="lg-swatch lg-deadline"></span>Module deadline</span>
                 <span><span class="lg-swatch lg-today"></span>Today</span>
             </div>
@@ -238,6 +239,7 @@
             labelRows.innerHTML = '';
 
             const { modules, tasks } = data;
+            const milestones = Array.isArray(data.milestones) ? data.milestones : [];
             const range = computeRange(modules, tasks);
 
             document.getElementById('ganttRangeLabel').textContent =
@@ -351,6 +353,21 @@
                         band.appendChild(marker);
                     }
                 }
+
+                // milestone markers for THIS module — small navy diamonds
+                // sitting at the milestone's deadline date inside the band.
+                const moduleMilestones = milestones.filter(ms => ms.module_id === m.id);
+                moduleMilestones.forEach(ms => {
+                    if (!ms.deadline) return;
+                    const msOffset = daysBetween(range.start, ms.deadline);
+                    if (msOffset < 0 || msOffset > range.totalDays) return;
+                    const flag = document.createElement('div');
+                    flag.className = 'gantt-milestone';
+                    flag.style.left = (msOffset * range.dayPx + range.dayPx / 2) + 'px';
+                    flag.dataset.tooltip = buildMilestoneTooltip(ms, moduleTasks, taskById);
+                    attachHover(flag);
+                    band.appendChild(flag);
+                });
 
                 body.appendChild(band);
                 totalHeight += band.offsetHeight; // not used for layout, kept for ref
@@ -529,6 +546,45 @@
                     '<div class="tt-row"><span class="tt-key">Tasks</span><span class="tt-val">' + done + ' of ' + total + ' complete</span></div>' +
                     '<div class="tt-progress"><div class="tt-progress-fill" style="width:' + avgPct + '%; background: var(--primary)"></div></div>' +
                     '<div class="tt-row"><span class="tt-key">Avg progress</span><span class="tt-val">' + avgPct + '%</span></div>' +
+                    '<div class="tt-footer">' + statusLine + '</div>'
+            });
+        }
+
+        function buildMilestoneTooltip(ms, moduleTasks, taskById) {
+            const today = startOfDay(new Date());
+            const dl = startOfDay(new Date(ms.deadline));
+            const daysToDl = daysBetween(today, dl);
+            const linkedIds = (ms.task_ids || []).map(Number);
+            const linked = linkedIds.map(id => taskById[id]).filter(Boolean);
+            const total = linked.length;
+            const done  = linked.filter(t => (t.percentage || 0) >= 100).length;
+            const avgPct = total === 0 ? 0 :
+                Math.round(linked.reduce((a, t) => a + (t.percentage || 0), 0) / total);
+
+            let statusLine;
+            if (total > 0 && done === total) {
+                statusLine = '<span class="tt-status tt-status-good">Achieved</span>';
+            } else if (daysToDl < 0) {
+                statusLine = '<span class="tt-status tt-status-bad">Missed ' + Math.abs(daysToDl) + ' day' + (Math.abs(daysToDl) === 1 ? '' : 's') + ' ago</span>';
+            } else if (daysToDl === 0) {
+                statusLine = '<span class="tt-status tt-status-warn">Due today</span>';
+            } else if (daysToDl <= 7) {
+                statusLine = '<span class="tt-status tt-status-warn">' + daysToDl + ' day' + (daysToDl === 1 ? '' : 's') + ' to go</span>';
+            } else {
+                statusLine = '<span class="tt-status tt-status-ok">' + daysToDl + ' days to go</span>';
+            }
+
+            return JSON.stringify({
+                header: '<div class="tt-header tt-header-milestone">' +
+                            '<span class="tt-milestone-icon"></span>' +
+                            '<span class="tt-title">' + escapeHtml(ms.title) + '</span>' +
+                        '</div>',
+                body:
+                    '<div class="tt-row"><span class="tt-key">Milestone</span><span class="tt-val">' + escapeHtml(ms.title) + '</span></div>' +
+                    '<div class="tt-row"><span class="tt-key">Deadline</span><span class="tt-val">' + escapeHtml(fmt(ms.deadline, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) + '</span></div>' +
+                    '<div class="tt-row"><span class="tt-key">Tasks</span><span class="tt-val">' + done + ' of ' + total + ' complete</span></div>' +
+                    '<div class="tt-progress"><div class="tt-progress-fill" style="width:' + avgPct + '%; background: var(--primary)"></div></div>' +
+                    '<div class="tt-row"><span class="tt-key">Progress</span><span class="tt-val">' + avgPct + '%</span></div>' +
                     '<div class="tt-footer">' + statusLine + '</div>'
             });
         }
