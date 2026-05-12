@@ -248,9 +248,11 @@
 }
 .gantt-module-band {
     position: relative;
-    border-bottom: 1px solid var(--border);
+    /* No border-bottom here — it would add 1px outside the band's box
+       (no border-box on this element) while the left label pane has no
+       matching extra pixel. Each band's header row has its own border-top
+       which already provides the visual divider between modules. */
 }
-.gantt-module-band:last-child { border-bottom: none; }
 .gantt-module-header-row {
     height: var(--gantt-mod-head-h);
     background: linear-gradient(to right,
