@@ -110,7 +110,8 @@ const importCSV = async (req, res) => {
       );
       if (existing.rows.length > 0) {
         await client.query('ROLLBACK');
-        client.release();
+        // NOTE: don't release here — the outer `finally` does it. Calling
+        // release() twice throws and surfaces as a generic 500.
         return res.status(409).json({
           message: `A semester named "${semesterName}" already exists. ` +
                    'Pick a different name, or delete the existing semester from the sidebar switcher first.',

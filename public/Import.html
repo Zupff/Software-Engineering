@@ -530,7 +530,15 @@
                 const step3 = document.getElementById('step-3');
                 const existingAlert = step3.querySelector('.alert-danger');
                 if (existingAlert) existingAlert.remove();
-                step3.insertBefore(alertDiv, step3.querySelector('.preview-table-wrap'));
+                // anchor the alert above the preview table when it exists,
+                // otherwise just append — insertBefore throws if the anchor
+                // isn't a direct child of step3
+                const anchor = step3.querySelector('.preview-table-wrap');
+                if (anchor && anchor.parentElement === step3) {
+                    step3.insertBefore(alertDiv, anchor);
+                } else {
+                    step3.appendChild(alertDiv);
+                }
             });
         }
     </script>
