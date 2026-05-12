@@ -1,0 +1,9 @@
+module_code,module_name,assessment_type,deadline,weighting
+CMP-5042B,Data Structures and Algorithms,coursework,2026-04-10,40
+CMP-5031A,Computer Systems and Architecture,exam,2026-04-28,50%
+CMP-5012B,Software Engineering,coursework,2026-05-15,90%
+CMP-5023B,Programming Languages,coursework,2026-05-18,60
+CMP-5044A,Database Systems Engineering,coursework,2026-05-29,65
+CMP-5018A,Theory of Computation,exam,2026-06-05,50
+CMP-5067A,Operating Systems,coursework,2026-06-12,55%
+CMP-5099A,"Human-Computer Interaction, Design Project",project,2026-06-19,70

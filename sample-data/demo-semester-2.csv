@@ -1,0 +1,9 @@
+module_code,module_name,assessment_type,deadline,weighting
+CMP-6013A,Advanced Programming Concepts,coursework,2026-10-02,45
+CMP-6028B,Machine Learning,coursework,2026-10-23,55%
+CMP-6034A,Computer Networks and Security,exam,2026-11-06,60
+CMP-6051B,Cloud and Distributed Computing,project,2026-11-20,70%
+CMP-6076A,Compiler Construction,coursework,2026-11-27,50
+CMP-6089A,"Computer Graphics, Rendering and Animation",coursework,2026-12-04,55
+CMP-6107B,Artificial Intelligence,exam,2026-12-11,65%
+CMP-6121B,Final Year Project (Part 1),report,2026-12-18,30
