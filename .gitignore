@@ -3,7 +3,8 @@ local-state/
 **/.env
 node_modules/
 
-# Presentation build artefacts (the .pptx itself is committed; intermediates are not)
+# Presentation build artefacts (the .pptx + DevelopmentNotes.pdf are committed; intermediates are not)
 brief.pdf
 Presentation.pdf
 slide-*.jpg
+devnotes-*.jpg
