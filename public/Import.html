@@ -462,6 +462,7 @@
                         const msg = data.message || data.error || 'Failed to import modules';
                         const err = new Error(detail ? msg + ': ' + detail : msg);
                         err.rowErrors = data.errors;
+                        err.status = response.status;
                         throw err;
                     });
                 }
@@ -499,6 +500,20 @@
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = originalText;
                 const fallback = 'Network error. Please check your connection and try again.';
+
+                // 409 means the semester name is already taken — send the user
+                // back to step 1 so they can rename it without losing the file
+                if (error.status === 409) {
+                    goToStep(1);
+                    const nameField = document.getElementById('semesterName');
+                    nameField.focus();
+                    nameField.select();
+                    const nameError = document.getElementById('nameError');
+                    nameError.textContent = error.message || 'Pick a different semester name.';
+                    nameError.classList.add('visible');
+                    return;
+                }
+
                 const alertDiv = document.createElement('div');
                 alertDiv.className = 'alert alert-danger';
                 if (Array.isArray(error.rowErrors) && error.rowErrors.length) {

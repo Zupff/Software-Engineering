@@ -100,14 +100,26 @@ const importCSV = async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      // upsert the semester for this user — same name from the same user
-      // returns the existing id, so re-importing into the same semester
-      // appends modules rather than creating duplicates.
+      // Semester names must be unique per user. Re-importing the same CSV
+      // into an existing semester is rejected — the user has to pick a new
+      // name (or delete the existing semester first) so they don't
+      // accidentally overwrite data.
+      const existing = await client.query(
+        'SELECT id FROM semesters WHERE user_id = $1 AND name = $2',
+        [userId, semesterName]
+      );
+      if (existing.rows.length > 0) {
+        await client.query('ROLLBACK');
+        client.release();
+        return res.status(409).json({
+          message: `A semester named "${semesterName}" already exists. ` +
+                   'Pick a different name, or delete the existing semester from the sidebar switcher first.',
+          existing_semester_id: existing.rows[0].id,
+        });
+      }
       const semResult = await client.query(
         `INSERT INTO semesters (user_id, name, academic_year)
          VALUES ($1, $2, $3)
-         ON CONFLICT (user_id, name) DO UPDATE
-           SET academic_year = COALESCE(EXCLUDED.academic_year, semesters.academic_year)
          RETURNING id`,
         [userId, semesterName, academicYear]
       );
