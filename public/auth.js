@@ -62,14 +62,16 @@ function withActiveSemester(url) {
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         if (!isLoggedIn()) return;
-        if (!document.querySelector('[data-current-semester]')) return;
+        if (!document.querySelector('[data-current-semester]') &&
+            !document.querySelector('[data-current-semester-name]')) return;
         renderSemesterSwitcher();
     });
 }
 
 async function renderSemesterSwitcher() {
-    const targets = Array.from(document.querySelectorAll('[data-current-semester]'));
-    if (targets.length === 0) return;
+    const switcherTargets = Array.from(document.querySelectorAll('[data-current-semester]'));
+    const nameTargets     = Array.from(document.querySelectorAll('[data-current-semester-name]'));
+    if (switcherTargets.length === 0 && nameTargets.length === 0) return;
 
     let semesters = [];
     try {
@@ -78,7 +80,8 @@ async function renderSemesterSwitcher() {
     } catch (_e) { /* fall through to empty state */ }
 
     if (semesters.length === 0) {
-        targets.forEach(el => { el.textContent = 'No semester yet'; });
+        switcherTargets.forEach(el => { el.textContent = 'No semester yet'; });
+        nameTargets.forEach(el => { el.textContent = 'no semester yet'; });
         return;
     }
 
@@ -91,7 +94,9 @@ async function renderSemesterSwitcher() {
     }
     const active = semesters.find(s => s.id === activeId) || semesters[0];
 
-    targets.forEach(el => attachSwitcher(el, semesters, active));
+    switcherTargets.forEach(el => attachSwitcher(el, semesters, active));
+    // plain text-only badges (used in page headers and pane heads)
+    nameTargets.forEach(el => { el.textContent = active.name; });
 }
 
 function attachSwitcher(el, semesters, active) {

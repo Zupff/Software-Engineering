@@ -53,7 +53,10 @@
         <header class="topbar">
             <div>
                 <h1 class="page-title">Tasks</h1>
-                <p class="page-sub">Plan study tasks for each module and log progress as you work</p>
+                <p class="page-sub">
+                    Planning tasks for
+                    <strong data-current-semester-name>your active semester</strong>
+                </p>
             </div>
         </header>
 
@@ -70,7 +73,9 @@
 
         <div class="tasks-grid hidden" id="tasksGrid">
             <aside class="modules-pane">
-                <div class="pane-head">Modules</div>
+                <div class="pane-head">
+                    Modules <span data-current-semester-name class="semester-tag-inline"></span>
+                </div>
                 <ul class="modules-list" id="moduleList"></ul>
             </aside>
 

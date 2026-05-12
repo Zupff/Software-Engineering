@@ -53,6 +53,20 @@ body { height: 100vh; }
     letter-spacing: 0.06em;
     color: var(--muted);
 }
+.semester-tag-inline {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    vertical-align: middle;
+}
+.semester-tag-inline:empty { display: none; }
 .pane-head-row {
     display: flex;
     align-items: center;
