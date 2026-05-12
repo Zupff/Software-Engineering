@@ -242,6 +242,46 @@ body { height: 100vh; }
     border: 1px solid var(--border);
     border-radius: var(--radius);
 }
+
+/* Chip-based multi-task picker inside the Log Session form. */
+.task-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 2px;
+}
+.task-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    user-select: none;
+}
+.task-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.task-chip:hover { color: var(--text); border-color: color-mix(in srgb, var(--primary) 30%, var(--border)); }
+.task-chip:has(input:checked) {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+}
+.task-chip-locked {
+    cursor: default;
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+    opacity: 0.92;
+}
+.task-chip-locked:hover { color: var(--primary); border-color: var(--primary); }
 .form-row {
     display: flex;
     flex-wrap: wrap;

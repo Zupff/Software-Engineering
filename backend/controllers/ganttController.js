@@ -32,12 +32,16 @@ const getGantt = async (req, res) => {
       [moduleIds]
     );
 
-    // hours logged per task in one query — cheaper than N extra round-trips
+    // Hours logged per task in one query — sessions now link to tasks
+    // via the session_tasks junction, and each linked task receives full
+    // credit for the session's duration.
     const sessionsResult = await pool.query(
-      `SELECT task_id, COALESCE(SUM(duration_hours), 0) AS hours_logged
-         FROM study_sessions
-        WHERE user_id = $1 AND task_id IS NOT NULL
-        GROUP BY task_id`,
+      `SELECT st.task_id,
+              COALESCE(SUM(s.duration_hours), 0) AS hours_logged
+         FROM study_sessions s
+         JOIN session_tasks  st ON st.session_id = s.id
+        WHERE s.user_id = $1
+        GROUP BY st.task_id`,
       [userId]
     );
 

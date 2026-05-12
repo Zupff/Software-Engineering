@@ -1,22 +1,19 @@
 const pool = require('../db');
 
-// log a new study session
+// Log a new study session. The brief allows an activity to contribute to
+// multiple tasks at once, so the API accepts task_ids (array). Each
+// linked task receives full credit for duration_hours (not a split).
 const logSession = async (req, res) => {
   try {
-    const { module_id, task_id, duration_hours, date_logged, notes } = req.body;
+    const { module_id, task_ids, duration_hours, date_logged, notes } = req.body;
     const userId = req.user.id;
 
-    // validate required fields are present
     if (module_id === undefined || duration_hours === undefined || !date_logged) {
       return res.status(400).json({ message: 'module_id duration_hours and date_logged are required' });
     }
-
-    // validate duration_hours is a positive number greater than 0
     if (isNaN(duration_hours) || duration_hours <= 0) {
       return res.status(400).json({ message: 'duration_hours must be a positive number greater than 0' });
     }
-
-    // validate date_logged is a valid date
     const sessionDate = new Date(date_logged);
     if (isNaN(sessionDate.getTime())) {
       return res.status(400).json({ message: 'date_logged must be a valid date' });
@@ -31,48 +28,80 @@ const logSession = async (req, res) => {
       return res.status(404).json({ message: 'module not found' });
     }
 
-    // if task_id provided, verify it belongs to that same module.
-    // (Soft dependency rule: the frontend surfaces a "this task depends on
-    // X" notice in the UI, but we don't reject the log here — the user is
-    // allowed to record hours against a task whose dependency isn't yet
-    // complete.)
-    if (task_id) {
-      const taskCheck = await pool.query(
-        'SELECT id FROM tasks WHERE id = $1 AND module_id = $2',
-        [task_id, module_id]
-      );
-      if (taskCheck.rows.length === 0) {
-        return res.status(404).json({ message: 'task not found in this module' });
-      }
+    // Normalise task_ids: must be a non-empty array of task ids belonging
+    // to this module. Brief requires every activity to be linked to at
+    // least one task.
+    const ids = Array.isArray(task_ids)
+      ? Array.from(new Set(task_ids.map(n => Number(n)).filter(Number.isFinite)))
+      : [];
+    if (ids.length === 0) {
+      return res.status(400).json({ message: 'task_ids must be a non-empty array' });
+    }
+    const taskCheck = await pool.query(
+      'SELECT id FROM tasks WHERE id = ANY($1::int[]) AND module_id = $2',
+      [ids, module_id]
+    );
+    if (taskCheck.rows.length !== ids.length) {
+      return res.status(404).json({ message: 'one or more tasks do not belong to this module' });
     }
 
-    // insert session into study_sessions table
-    const result = await pool.query(
-      'INSERT INTO study_sessions (user_id, module_id, task_id, duration_hours, date_logged, notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [userId, module_id, task_id || null, duration_hours, date_logged, notes || null]
-    );
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    return res.status(201).json(result.rows[0]);
+      const insertSession = await client.query(
+        `INSERT INTO study_sessions (user_id, module_id, duration_hours, date_logged, notes)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, user_id, module_id, duration_hours, date_logged, notes`,
+        [userId, module_id, duration_hours, date_logged, notes || null]
+      );
+      const session = insertSession.rows[0];
+
+      // insert junction rows; ON CONFLICT DO NOTHING in case dedupe misses anything
+      for (const tid of ids) {
+        await client.query(
+          'INSERT INTO session_tasks (session_id, task_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [session.id, tid]
+        );
+      }
+
+      await client.query('COMMIT');
+      session.task_ids = ids;
+      return res.status(201).json(session);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('log session error', error);
     return res.status(500).json({ message: 'internal server error' });
   }
 };
 
-// get all sessions for a specific module
+// All sessions for a module, with their linked task ids aggregated as an
+// array so the frontend can compute task-level totals without a second roundtrip.
 const getSessionsByModule = async (req, res) => {
   try {
     const { module_id } = req.query;
     const userId = req.user.id;
 
-    // validate module_id query parameter is present
     if (!module_id) {
       return res.status(400).json({ message: 'module_id query parameter is required' });
     }
 
-    // query study_sessions for all sessions matching module_id and user_id
     const result = await pool.query(
-      'SELECT * FROM study_sessions WHERE module_id = $1 AND user_id = $2 ORDER BY date_logged DESC',
+      `SELECT s.id, s.user_id, s.module_id, s.duration_hours, s.date_logged, s.notes,
+              COALESCE(
+                ARRAY_AGG(st.task_id) FILTER (WHERE st.task_id IS NOT NULL),
+                ARRAY[]::int[]
+              ) AS task_ids
+         FROM study_sessions s
+         LEFT JOIN session_tasks st ON st.session_id = s.id
+        WHERE s.module_id = $1 AND s.user_id = $2
+        GROUP BY s.id
+        ORDER BY s.date_logged DESC, s.id DESC`,
       [module_id, userId]
     );
 

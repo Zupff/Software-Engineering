@@ -287,7 +287,10 @@
         function hoursLoggedFor(taskId) {
             const sessions = sessionsByModule[selectedModuleId] || [];
             return sessions
-                .filter(s => s.task_id === taskId)
+                // a session contributes to a task if the task is in its
+                // task_ids array. each linked task gets full credit, so
+                // the same hours can count toward multiple tasks.
+                .filter(s => Array.isArray(s.task_ids) && s.task_ids.includes(taskId))
                 .reduce((sum, s) => sum + parseFloat(s.duration_hours || 0), 0);
         }
 
@@ -408,6 +411,7 @@
                             '<input type="text" name="notes" placeholder="What did you work on?" maxlength="500">' +
                         '</div>' +
                     '</div>' +
+                    buildSessionTaskPicker(task, allTasks) +
                     '<div class="form-actions">' +
                         '<button type="button" class="btn-ghost" onclick="toggleSessionForm(' + task.id + ')">Cancel</button>' +
                         '<button type="submit" class="btn-primary btn-compact">Log session</button>' +
@@ -416,6 +420,36 @@
                 buildEditForm(task, allTasks);
 
             return row;
+        }
+
+        // Chip-based multi-select shown under the Hours/Date/Notes row of
+        // the Log Session form. The originating task (the row the user
+        // clicked) is pre-checked and locked. Other tasks in the same
+        // module can be toggled to also receive credit for this activity.
+        function buildSessionTaskPicker(originatingTask, allTasks) {
+            const others = allTasks.filter(t => t.id !== originatingTask.id);
+            const lockedChip =
+                '<label class="task-chip task-chip-locked" title="The task you\'re logging on — can\'t be unlinked">' +
+                    '<input type="checkbox" name="taskId" value="' + originatingTask.id + '" checked disabled>' +
+                    '<span class="task-chip-label">' + escapeHtml(originatingTask.title) + '</span>' +
+                '</label>';
+            const otherChips = others.map(t =>
+                '<label class="task-chip">' +
+                    '<input type="checkbox" name="taskId" value="' + t.id + '">' +
+                    '<span class="task-chip-label">' + escapeHtml(t.title) + '</span>' +
+                '</label>'
+            ).join('');
+            if (others.length === 0) {
+                return ''; // no other tasks to link — keep the form compact
+            }
+            return (
+                '<div class="form-row session-task-row">' +
+                    '<div class="form-field form-field-grow">' +
+                        '<label>Also contributes to</label>' +
+                        '<div class="task-chip-row">' + lockedChip + otherChips + '</div>' +
+                    '</div>' +
+                '</div>'
+            );
         }
 
         // Inline edit form. Pre-filled from current task values. Dependency
@@ -616,9 +650,18 @@
         async function logSession(event, taskId) {
             event.preventDefault();
             const form = event.target;
+
+            // Collect every checked task chip (including the locked
+            // originating task). Disabled inputs aren't submitted via
+            // FormData natively, so we read .checked directly. The
+            // originating task is always force-included as a safety net.
+            const checkBoxes = form.querySelectorAll('input[name="taskId"]');
+            const taskIds = new Set([taskId]);
+            checkBoxes.forEach(cb => { if (cb.checked) taskIds.add(Number(cb.value)); });
+
             const payload = {
                 module_id: selectedModuleId,
-                task_id: taskId,
+                task_ids: Array.from(taskIds),
                 duration_hours: parseFloat(form.hours.value),
                 date_logged: form.date.value,
                 notes: form.notes.value.trim() || null

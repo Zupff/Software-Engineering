@@ -541,11 +541,16 @@
             document.getElementById('msWeighting').textContent  = (module.weighting != null ? module.weighting + '%' : '—');
 
             // hours-logged per task lookup (also stashed at module scope so
-            // the milestones card can compute task completion without refetching)
+            // the milestones card can compute task completion without refetching).
+            // A session can be linked to multiple tasks via task_ids — each
+            // linked task gets full credit for the session's duration.
             const hoursByTask = {};
             sessions.forEach(s => {
-                if (s.task_id == null) return;
-                hoursByTask[s.task_id] = (hoursByTask[s.task_id] || 0) + parseFloat(s.duration_hours || 0);
+                const dur = parseFloat(s.duration_hours || 0);
+                const ids = Array.isArray(s.task_ids) ? s.task_ids : [];
+                ids.forEach(tid => {
+                    hoursByTask[tid] = (hoursByTask[tid] || 0) + dur;
+                });
             });
 
             const tasks = module.tasks || [];
@@ -637,15 +642,22 @@
             sorted.slice(0, 20).forEach(s => {
                 const li = document.createElement('li');
                 li.className = 'session-item';
-                const taskName = s.task_id ? taskTitleById[s.task_id] : null;
+                // a session can contribute to multiple tasks — list each one.
+                const ids = Array.isArray(s.task_ids) ? s.task_ids : [];
+                const names = ids
+                    .map(tid => taskTitleById[tid])
+                    .filter(Boolean);
+                const taskLine = names.length
+                    ? '<span class="session-task">on ' +
+                        names.map(n => '<strong>' + escapeHtml(n) + '</strong>').join(', ') +
+                      '</span>'
+                    : '<span class="session-task muted">unattached</span>';
                 li.innerHTML =
                     '<div class="session-date">' + shortDate(s.date_logged) + '</div>' +
                     '<div class="session-body">' +
                         '<div class="session-top">' +
                             '<span class="session-hours">' + parseFloat(s.duration_hours).toFixed(1) + ' hrs</span>' +
-                            (taskName
-                                ? '<span class="session-task">on <strong>' + escapeHtml(taskName) + '</strong></span>'
-                                : '<span class="session-task muted">unattached</span>') +
+                            taskLine +
                         '</div>' +
                         (s.notes ? '<div class="session-notes">' + escapeHtml(s.notes) + '</div>' : '') +
                     '</div>';

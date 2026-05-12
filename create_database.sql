@@ -50,15 +50,24 @@ CREATE TABLE tasks (
   CONSTRAINT tasks_dates_order CHECK (start_date IS NULL OR end_date IS NULL OR start_date <= end_date)
 );
 
--- tracks study sessions logged by users for modules and tasks
+-- tracks study sessions logged by users for modules
 CREATE TABLE study_sessions (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
   module_id INTEGER REFERENCES modules(id) ON DELETE CASCADE,
-  task_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
   duration_hours NUMERIC NOT NULL,
   date_logged DATE NOT NULL,
   notes TEXT
+);
+
+-- m2m link from study_sessions to tasks: an activity can contribute to
+-- multiple tasks (brief: "An activity can be attached to multiple tasks
+-- and thereby contribute to the completion of both"). Each linked task
+-- gets full credit for the session's duration_hours.
+CREATE TABLE session_tasks (
+  session_id INTEGER NOT NULL REFERENCES study_sessions(id) ON DELETE CASCADE,
+  task_id    INTEGER NOT NULL REFERENCES tasks(id)          ON DELETE CASCADE,
+  PRIMARY KEY (session_id, task_id)
 );
 
 -- stores major milestones and checkpoints for modules
