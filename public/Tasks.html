@@ -518,7 +518,13 @@
 
         function toggleSessionForm(taskId) {
             const form = document.getElementById('sessionForm-' + taskId);
-            if (form) form.classList.toggle('hidden');
+            if (!form) return;
+            const willOpen = form.classList.contains('hidden');
+            form.classList.toggle('hidden');
+            // When opening, refresh the date to today. The default was baked
+            // in at render time; if the page sat open across midnight, that
+            // value would be stale.
+            if (willOpen && form.date) form.date.value = localDateString();
             // close any open edit form on the same row so the panes don't stack
             const edit = document.getElementById('editForm-' + taskId);
             if (edit) edit.classList.add('hidden');
@@ -607,6 +613,11 @@
                 return;
             }
 
+            // Disable the submit button so a double-click can't create two tasks
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalLabel = submitBtn ? submitBtn.textContent : '';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Creating…'; }
+
             try {
                 const res = await authenticatedFetch('/api/tasks', {
                     method: 'POST',
@@ -624,6 +635,11 @@
                 renderModules();
             } catch (err) {
                 showError(err.message);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalLabel;
+                }
             }
         }
 
@@ -676,6 +692,10 @@
                 ? tasks.find(t => t.id === thisTask.dependency_task_id) : null;
             const wasBlocked = !!(dep && !isTaskComplete(dep));
 
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalLabel = submitBtn ? submitBtn.textContent : '';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Logging…'; }
+
             try {
                 const res = await authenticatedFetch('/api/sessions', {
                     method: 'POST',
@@ -686,9 +706,9 @@
                     const err = res ? await res.json().catch(() => ({})) : {};
                     throw new Error(err.message || 'Could not log session');
                 }
-                form.reset();
-                form.hours.value = '1';
-                form.date.value = localDateString();
+                // The form (and its parent row) gets blown away by renderTasks
+                // below — no need to manually reset fields here. Just hide it
+                // so a brief visual flash doesn't show the stale values.
                 form.classList.add('hidden');
                 await loadSessions(selectedModuleId);
                 renderTasks();
@@ -702,6 +722,11 @@
                 }
             } catch (err) {
                 showError(err.message);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalLabel;
+                }
             }
         }
 

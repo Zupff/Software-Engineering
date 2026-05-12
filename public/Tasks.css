@@ -192,7 +192,8 @@ body { height: 100vh; }
     border: 1px solid color-mix(in srgb, var(--amber) 40%, transparent);
 }
 .task-dep.task-dep-blocked strong { color: var(--amber); }
-/* Disabled "Log session" button on blocked rows */
+/* Generic disabled state for ghost buttons — used when an action is
+   in-flight (e.g. submit button on a form during a fetch). */
 .btn-ghost:disabled {
     opacity: 0.55;
     cursor: not-allowed;
