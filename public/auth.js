@@ -70,15 +70,10 @@ function withActiveSemester(url) {
 }
 
 // Auto-populate any element with data-current-semester on logged-in pages,
-// and wire up a click-to-switch dropdown if the user has more than one.
-if (typeof document !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!isLoggedIn()) return;
-        if (!document.querySelector('[data-current-semester]') &&
-            !document.querySelector('[data-current-semester-name]')) return;
-        renderSemesterSwitcher();
-    });
-}
+// Semester switcher renders inside the bottom-left pill. The boot sequence
+// at the bottom of this file calls renderSemesterSwitcher AFTER
+// renderUserPill (which clones the pill) to avoid a race where the
+// switcher writes its text into a detached element.
 
 async function renderSemesterSwitcher() {
     const switcherTargets = Array.from(document.querySelectorAll('[data-current-semester]'));
@@ -722,9 +717,25 @@ function closeProfileEditor() {
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', async () => {
         if (!isLoggedIn()) return;
-        if (!document.querySelector('.user-pill')) return;
-        await loadProfile();
-        renderUserPill();
+
+        const hasPill = !!document.querySelector('.user-pill');
+        const hasSemesterTarget =
+            !!document.querySelector('[data-current-semester]') ||
+            !!document.querySelector('[data-current-semester-name]');
+        if (!hasPill && !hasSemesterTarget) return;
+
+        if (hasPill) {
+            await loadProfile();
+            // renderUserPill clones the pill (to reset listeners), so any
+            // semester switcher work MUST happen after this to write into
+            // the live element, not the detached clone source.
+            renderUserPill();
+        }
+
+        if (hasSemesterTarget) {
+            await renderSemesterSwitcher();
+        }
+
         // onboarding — fire only on the dashboard so a half-completed
         // profile doesn't keep popping up on every page navigation
         const onDashboard = /(^|\/)Dashboard\.html(\?|$)/i.test(window.location.pathname);
