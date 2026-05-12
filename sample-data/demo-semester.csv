@@ -1,0 +1,11 @@
+module_code,module_name,assessment_type,deadline,weighting
+CMP-4001A,Databases,coursework,2026-03-15,50
+CMP-3005C,Artificial Intelligence,coursework,2026-04-02,40
+CMP-2002D,Computer Networks,exam,2026-04-25,60
+CMP-5012B,Software Engineering,coursework,2026-05-15,90
+CMP-4002B,Operating Systems,coursework,2026-05-22,50
+CMP-6003A,Machine Learning,project,2026-06-04,70
+CMP-5001C,Web Development,coursework,2026-06-18,55
+CMP-7004B,Distributed Systems,exam,2026-07-02,65
+CMP-2003A,Data Structures and Algorithms,coursework,2026-07-15,45
+CMP-6011D,Cyber Security,project,2026-08-10,80
