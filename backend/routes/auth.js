@@ -17,8 +17,10 @@ function retryAfterMessage(prefix, req) {
   return prefix + '. Please try again in ' + hours + ' hour' + (hours === 1 ? '' : 's') + '.';
 }
 
-// 60 logins / 15 min per IP — classroom shared IP can re-sign-in repeatedly
-const loginLimiter = rateLimit({
+// 60 logins / 15 min per IP — classroom shared IP can re-sign-in repeatedly.
+// Counts every login response (success + fail) — this is the broad-spray
+// protection so one IP can't hammer the endpoint.
+const loginLimiterIp = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 60,
   standardHeaders: true,
@@ -26,6 +28,26 @@ const loginLimiter = rateLimit({
   handler: (req, res) => {
     res.status(429).json({
       message: retryAfterMessage('Too many login attempts', req),
+    });
+  },
+});
+
+// 10 FAILED logins / 10 min per username (case-insensitive). Defends
+// against targeted brute-force where an attacker rotates IPs to bypass
+// the IP limiter. Successful logins reset the counter so a teammate
+// typing the wrong password a few times during demo prep isn't punished
+// once they get it right.
+const loginLimiterUsername = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: false,
+  legacyHeaders: false,
+  keyGenerator: (req) =>
+    (req.body && req.body.username || '').toString().trim().toLowerCase() || ('ip:' + req.ip),
+  skipSuccessfulRequests: true,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: retryAfterMessage('Too many failed attempts for this username', req),
     });
   },
 });
@@ -45,6 +67,7 @@ const registerLimiter = rateLimit({
 });
 
 router.post('/api/register', registerLimiter, register);
-router.post('/api/login', loginLimiter, login);
+// IP limiter runs first as a coarse filter; username limiter is finer-grained
+router.post('/api/login', loginLimiterIp, loginLimiterUsername, login);
 
 module.exports = router;
