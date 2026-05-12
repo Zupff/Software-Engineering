@@ -54,7 +54,8 @@ function setActiveSemesterId(id) {
 // but a stray click on the clip itself no longer latches the sidebar.
 if (typeof document !== 'undefined') {
     document.addEventListener('mousedown', (ev) => {
-        const handle = ev.target.closest && ev.target.closest('.sidebar-handle');
+        const handle = ev.target.closest &&
+            ev.target.closest('.sidebar-handle, .sidebar-handle-back');
         if (handle) ev.preventDefault();
     });
 }
