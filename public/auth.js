@@ -421,6 +421,7 @@ async function refreshSettingsSemesterList(modal) {
                     throw new Error(err.message || 'Could not delete semester');
                 }
                 if (getActiveSemesterId() === s.id) localStorage.removeItem('activeSemesterId');
+                modal.dataset.dirty = '1';
                 refreshSettingsSemesterList(modal);
             } catch (err) {
                 await uiAlert({ title: 'Could not delete semester', body: err.message || 'Please try again in a moment.' });
@@ -499,6 +500,7 @@ async function clearAllSemesters(modal) {
             throw new Error(err.message || 'Could not clear semesters');
         }
         localStorage.removeItem('activeSemesterId');
+        modal.dataset.dirty = '1';
         refreshSettingsSemesterList(modal);
     } catch (err) {
         await uiAlert({ title: 'Could not clear semesters', body: err.message || 'Please try again in a moment.' });
@@ -690,7 +692,16 @@ async function saveProfileFromModal(modal) {
 
 function closeProfileEditor() {
     const modal = document.getElementById('profileEditorModal');
-    if (modal) modal.classList.add('hidden');
+    if (!modal) return;
+    // If a semester was deleted while the modal was open, the underlying page
+    // (Dashboard / Tasks / Gantt) still shows stale data. Reload so the new
+    // state propagates everywhere.
+    if (modal.dataset.dirty === '1') {
+        modal.dataset.dirty = '';
+        window.location.reload();
+        return;
+    }
+    modal.classList.add('hidden');
 }
 
 // Bootstrap on every logged-in page: pull the profile, paint the pill,
