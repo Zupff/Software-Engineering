@@ -47,6 +47,18 @@ function setActiveSemesterId(id) {
     }
 }
 
+// Prevent the sidebar paperclip from gaining focus on click — without this
+// the browser sticks focus on the button, sidebar :focus-within stays
+// truthy, and the sidebar pins open until the user clicks elsewhere.
+// Hover-to-peek still works, keyboard nav into the actual links still works,
+// but a stray click on the clip itself no longer latches the sidebar.
+if (typeof document !== 'undefined') {
+    document.addEventListener('mousedown', (ev) => {
+        const handle = ev.target.closest && ev.target.closest('.sidebar-handle');
+        if (handle) ev.preventDefault();
+    });
+}
+
 // Decorate a URL with ?semester_id=<active> if one is set. Pass-through if
 // the URL already specifies a semester_id or if no active semester exists.
 function withActiveSemester(url) {
