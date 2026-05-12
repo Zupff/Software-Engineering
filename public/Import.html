@@ -468,6 +468,12 @@
                 return response.json();
             })
             .then(data => {
+                // Make the newly imported semester the active one so Dashboard,
+                // Tasks, Gantt all show the modules we just uploaded instead of
+                // whatever was active before.
+                if (data.semester_id && typeof setActiveSemesterId === 'function') {
+                    setActiveSemesterId(data.semester_id);
+                }
                 document.getElementById('confirmedName').textContent = '"' + name + '"';
                 const statsContainer = document.getElementById('successStats');
                 statsContainer.innerHTML = '';

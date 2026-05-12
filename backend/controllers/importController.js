@@ -133,8 +133,14 @@ const importCSV = async (req, res) => {
       // commit transaction
       await client.query('COMMIT');
 
-      // return 201 with count of modules imported
-      return res.status(201).json({ message: `imported ${rows.length} modules`, count: rows.length });
+      // return 201 with the new semester id so the frontend can mark it as
+      // active — otherwise the user lands on the dashboard with their old
+      // semester still selected and the freshly imported modules look missing.
+      return res.status(201).json({
+        message: `imported ${rows.length} modules`,
+        count: rows.length,
+        semester_id: semesterId,
+      });
     } catch (error) {
       // rollback transaction on error
       await client.query('ROLLBACK');
