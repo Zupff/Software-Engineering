@@ -66,15 +66,17 @@ body {
 }
 
 /* ── Paperclip handle ────────────────────────────────────────────────
-   Lives inside the sidebar in the DOM (so :hover propagates), but
-   position: fixed pins it to the viewport corner. When the sidebar
-   slides open it animates across to the sidebar's right edge and
-   rotates, reading as "clipping on" to the open sidebar. */
+   Sibling of the sidebar in the DOM; position: fixed pins it to the
+   viewport. z-index is BELOW the sidebar so the sidebar's white
+   background paints over whichever part of the clip overlaps it —
+   in the closed state the clip pokes out from the left edge of the
+   page, in the open state it appears to clip onto the sidebar's right
+   edge with its "top" tucked behind the sidebar. */
 .sidebar-handle {
     position: fixed;
     top: 14px;
-    left: 16px;
-    z-index: 110;
+    left: -10px;            /* left ~10px off-screen so only right side shows */
+    z-index: 99;            /* below sidebar's z-index: 100 */
     width: 30px;
     height: 30px;
     padding: 0;
@@ -82,41 +84,42 @@ body {
     background: none;
     border: none;
     color: var(--primary);
-    cursor: pointer;
-    /* Subtle drop shadow so the icon stands out from a white background
-       without needing a pill behind it. */
-    filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.18));
-    transition: left 0.30s cubic-bezier(0.22, 1, 0.36, 1),
-                top  0.30s cubic-bezier(0.22, 1, 0.36, 1),
-                transform 0.30s cubic-bezier(0.22, 1, 0.36, 1),
+    cursor: default;        /* not actionable — purely an indicator */
+    outline: none;
+    filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.20));
+    /* Clip is held in a "stood up" orientation in both states; only the
+       fixed-position offset animates between closed and open. */
+    transform: rotate(-90deg);
+    transition: left 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+                top  0.32s cubic-bezier(0.22, 1, 0.36, 1),
                 color 0.18s ease,
                 filter 0.18s ease;
-    /* Stop the browser from "sticking" focus on it when clicked. The
-       sidebar still respects :focus-within for keyboard nav into the
-       links inside, but a click on the clip itself shouldn't pin the
-       sidebar open. */
-    outline: none;
 }
 .sidebar-handle:focus { outline: none; }
 .sidebar-handle svg {
     width: 100%;
     height: 100%;
     stroke-width: 2.2;
-    transition: transform 0.30s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.sidebar-handle:hover {
-    color: var(--primary-hover);
-    filter: drop-shadow(0 2px 5px rgba(30, 58, 138, 0.28));
 }
 
-/* Sidebar OPEN — clip travels to the sidebar's right edge and rotates
-   so it visually hooks onto the edge (long axis vertical, "opening"
-   facing up like it's been pinched over the top corner). */
-.sidebar:hover .sidebar-handle,
-.sidebar:focus-within .sidebar-handle {
-    left: calc(var(--sidebar-w) - 22px);
-    top: 12px;
-    transform: rotate(-95deg);
+/* Hovering the visible right portion of the clip opens the sidebar too,
+   so the indicator is also a peek trigger. */
+body:has(.sidebar-handle:hover) .sidebar {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.08);
+}
+body:has(.sidebar-handle:hover) .sidebar::before {
+    opacity: 0;
+}
+
+/* Sidebar OPEN — slide the clip to the sidebar's right edge. The leftmost
+   ~8px of the clip ends up inside the sidebar's painted area and is
+   hidden by the sidebar's white background (lower z-index), producing
+   the "top tucked behind the sidebar" look. */
+body:has(.sidebar:hover) .sidebar-handle,
+body:has(.sidebar:focus-within) .sidebar-handle {
+    left: calc(var(--sidebar-w) - 8px);
+    top: 14px;
 }
 .sidebar-brand {
     display: flex;
