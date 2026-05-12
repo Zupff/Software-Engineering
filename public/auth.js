@@ -478,7 +478,7 @@ function buildProfileEditorModal() {
 
             // ── Profile pane ──────────────────────────────────────────
             '<form id="peForm" class="pe-form" data-pane="profile">' +
-                '<div id="pePaneProfile">' +
+                '<div id="pePaneProfile" class="pe-pane-body">' +
                     '<div class="pe-field">' +
                         '<label for="peName">Display name</label>' +
                         '<input type="text" id="peName" required maxlength="60" placeholder="What should we call you?">' +
@@ -495,36 +495,43 @@ function buildProfileEditorModal() {
                         '<label>Colour</label>' +
                         '<div class="pe-grid pe-grid-colors">' + colorBtns + '</div>' +
                     '</div>' +
-                    '<div class="pe-actions">' +
-                        '<button type="button" class="pe-btn pe-btn-ghost" id="peCancel">Cancel</button>' +
-                        '<button type="submit" class="pe-btn pe-btn-primary">Save profile</button>' +
-                    '</div>' +
+                '</div>' +
+                '<div class="pe-actions">' +
+                    '<button type="button" class="pe-btn pe-btn-ghost" id="peCancel">Cancel</button>' +
+                    '<button type="submit" class="pe-btn pe-btn-primary">Save profile</button>' +
                 '</div>' +
             '</form>' +
 
             // ── Settings pane ─────────────────────────────────────────
             '<div id="pePaneSettings" class="pe-form hidden">' +
-                '<div class="pe-section">' +
-                    '<h3>Your semesters</h3>' +
-                    '<p class="pe-section-sub">Newest first. Delete individual semesters or wipe them all below.</p>' +
-                    '<div id="peSemesterList" class="pe-sem-list"></div>' +
-                    '<div id="peSemesterEmpty" class="pe-sem-empty hidden">No semesters yet — import a CSV to create one.</div>' +
-                '</div>' +
-                '<div class="pe-section pe-danger">' +
-                    '<h3>Danger zone</h3>' +
-                    '<div class="pe-danger-row">' +
-                        '<div>' +
-                            '<div class="pe-danger-title">Delete all semesters</div>' +
-                            '<div class="pe-danger-sub">Removes every semester (and all its modules, tasks, and study sessions). Your account stays.</div>' +
+                '<div class="pe-pane-body">' +
+                    '<div class="pe-section">' +
+                        '<div class="pe-section-head">' +
+                            '<h3>Your semesters</h3>' +
+                            '<p class="pe-section-sub">Newest first</p>' +
                         '</div>' +
-                        '<button type="button" class="pe-btn pe-btn-danger" id="peClearSemesters">Clear all</button>' +
+                        '<div id="peSemesterList" class="pe-sem-list"></div>' +
+                        '<div id="peSemesterEmpty" class="pe-sem-empty hidden">No semesters yet — import a CSV to create one.</div>' +
                     '</div>' +
-                    '<div class="pe-danger-row">' +
-                        '<div>' +
-                            '<div class="pe-danger-title">Delete account</div>' +
-                            '<div class="pe-danger-sub">Wipes your profile and every piece of data you own. You\'ll be signed out.</div>' +
+                    '<div class="pe-section pe-danger">' +
+                        '<div class="pe-section-head">' +
+                            '<h3>Danger zone</h3>' +
+                            '<p class="pe-section-sub">These actions can\'t be undone.</p>' +
                         '</div>' +
-                        '<button type="button" class="pe-btn pe-btn-danger" id="peDeleteAccount">Delete account</button>' +
+                        '<div class="pe-danger-row">' +
+                            '<div class="pe-danger-info">' +
+                                '<div class="pe-danger-title">Clear all semesters</div>' +
+                                '<div class="pe-danger-sub">Removes every semester and all its modules, tasks, and sessions. Account stays.</div>' +
+                            '</div>' +
+                            '<button type="button" class="pe-btn pe-btn-danger" id="peClearSemesters">Clear all</button>' +
+                        '</div>' +
+                        '<div class="pe-danger-row">' +
+                            '<div class="pe-danger-info">' +
+                                '<div class="pe-danger-title">Delete account</div>' +
+                                '<div class="pe-danger-sub">Wipes your profile and everything you own. You\'ll be signed out.</div>' +
+                            '</div>' +
+                            '<button type="button" class="pe-btn pe-btn-danger" id="peDeleteAccount">Delete</button>' +
+                        '</div>' +
                     '</div>' +
                 '</div>' +
                 '<div class="pe-actions">' +

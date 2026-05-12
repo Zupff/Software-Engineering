@@ -249,13 +249,18 @@ body {
     background: var(--surface);
     border-radius: var(--radius-lg);
     width: 100%;
-    max-width: 480px;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-width: 520px;
+    /* fixed-ish height: tabs swap in/out without the card jumping size */
+    height: min(640px, 90vh);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
 }
 .pe-head {
-    padding: 22px 24px 6px;
+    padding: 22px 24px 0;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
 }
 .pe-head h2 {
     font-size: 1.1rem;
@@ -265,14 +270,42 @@ body {
 }
 .pe-head p {
     margin-top: 4px;
+    margin-bottom: 14px;
     font-size: 0.8rem;
     color: var(--muted);
 }
+/* both panes fill the body area equally — modal stays the same size */
 .pe-form {
-    padding: 16px 24px 22px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+.pe-form > #pePaneProfile,
+#pePaneSettings.pe-form {
+    /* override .pe-form's flex behaviour for the inner scroll region */
+    flex: 1;
+    min-height: 0;
+}
+/* the actual scrollable content area inside each pane */
+.pe-pane-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 24px;
     display: flex;
     flex-direction: column;
     gap: 14px;
+}
+/* actions row pinned at the bottom of every pane */
+.pe-actions {
+    flex-shrink: 0;
+    padding: 12px 24px 18px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    margin: 0;
 }
 .pe-field { display: flex; flex-direction: column; }
 .pe-field > label {
@@ -383,7 +416,7 @@ body {
 /* ── Profile/Settings tab toggle ── */
 .pe-tabs {
     display: inline-flex;
-    margin-top: 14px;
+    margin: 4px 0 16px;
     padding: 3px;
     background: var(--bg);
     border: 1px solid var(--border);
@@ -410,30 +443,36 @@ body {
 
 /* ── Settings pane ── */
 .pe-section {
-    padding: 0 24px 14px;
+    display: flex;
+    flex-direction: column;
 }
-.pe-section h3 {
-    font-size: 0.95rem;
+.pe-section + .pe-section {
+    margin-top: 6px;
+}
+.pe-section-head {
+    margin-bottom: 10px;
+}
+.pe-section-head h3 {
+    font-size: 0.7rem;
     font-weight: 700;
-    color: var(--text);
-    margin-top: 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0;
 }
 .pe-section-sub {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     color: var(--muted);
-    margin: 4px 0 12px;
+    margin-top: 3px;
 }
 
-/* semester list inside settings */
+/* semester list — matches the .pe-field rhythm and the deadline-item style */
 .pe-sem-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    max-height: 260px;
-    overflow-y: auto;
-    padding-right: 4px;
+    gap: 6px;
 }
-.pe-sem-list.loading { min-height: 60px; opacity: 0.6; }
+.pe-sem-list.loading { min-height: 40px; opacity: 0.5; }
 .pe-sem-row {
     display: flex;
     align-items: center;
@@ -442,6 +481,11 @@ body {
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.pe-sem-row:hover {
+    border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 .pe-sem-info { flex: 1; min-width: 0; }
 .pe-sem-name {
@@ -472,32 +516,30 @@ body {
     font-size: 0.82rem;
     color: var(--muted);
     text-align: center;
-    padding: 18px 0;
+    padding: 22px 12px;
     background: var(--bg);
     border: 1px dashed var(--border);
     border-radius: var(--radius-sm);
 }
 
-/* danger zone block */
+/* danger zone — softer styling, white card with red tint instead of a slab */
 .pe-danger {
-    border: 1px solid color-mix(in srgb, var(--red) 30%, var(--border));
-    background: var(--red-lt);
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--red) 25%, var(--border));
     border-radius: var(--radius);
     padding: 14px;
-    margin: 14px 24px 8px;
 }
-.pe-danger h3 {
-    margin-top: 0;
-    color: var(--red);
-}
+.pe-danger .pe-section-head h3 { color: var(--red); }
 .pe-danger-row {
     display: flex;
     align-items: center;
     gap: 14px;
     padding: 10px 0;
-    border-top: 1px solid color-mix(in srgb, var(--red) 18%, var(--border));
+    border-top: 1px solid color-mix(in srgb, var(--red) 15%, var(--border));
 }
-.pe-danger-row:first-of-type { border-top: none; }
+.pe-danger-row:first-of-type { border-top: none; padding-top: 4px; }
+.pe-danger-row:last-of-type { padding-bottom: 4px; }
+.pe-danger-info { flex: 1; min-width: 0; }
 .pe-danger-title {
     font-size: 0.875rem;
     font-weight: 600;
@@ -507,13 +549,17 @@ body {
     font-size: 0.75rem;
     color: var(--muted);
     margin-top: 2px;
+    line-height: 1.4;
 }
 
 .pe-btn-danger {
     background: var(--surface);
     color: var(--red);
-    border: 1px solid color-mix(in srgb, var(--red) 35%, var(--border));
+    border: 1.5px solid color-mix(in srgb, var(--red) 35%, var(--border));
     flex-shrink: 0;
+    height: 34px;
+    padding: 0 14px;
+    font-size: 0.82rem;
 }
 .pe-btn-danger:hover {
     background: var(--red);
