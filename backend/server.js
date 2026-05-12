@@ -77,6 +77,14 @@ app.get('/api/health', (req, res) => {
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`server is running on port ${port}`);
+
+  // Ensure the demo user (demo / demo123) exists on every boot so any
+  // teammate can clone the repo, start the server, and log in immediately.
+  // Idempotent — won't duplicate an existing row.
+  const { ensureDemoUser, DEMO_USERNAME } = require('./scripts/seed');
+  ensureDemoUser()
+    .then(u => console.log(`demo user ready: ${DEMO_USERNAME} (id=${u.id})`))
+    .catch(err => console.error('demo user seed failed:', err.message));
 });
 
 module.exports = app;
