@@ -315,28 +315,32 @@
                 bandHeader.className = 'gantt-module-header-row';
                 band.appendChild(bandHeader);
 
-                if (moduleTasks.length === 0) {
+                // The Gantt is a time-based view — only tasks WITH dates make
+                // sense to show here. Undated tasks were producing orphaned
+                // ghost labels on the left with no matching bar on the right.
+                const datedTasks = moduleTasks.filter(taskHasDates);
+
+                if (datedTasks.length === 0) {
                     const labelRow = document.createElement('div');
                     labelRow.className = 'gantt-empty-label';
-                    labelRow.textContent = 'No tasks yet';
+                    labelRow.textContent = moduleTasks.length === 0
+                        ? 'No tasks yet'
+                        : 'No dated tasks';
                     labelRows.appendChild(labelRow);
 
                     const row = document.createElement('div');
                     row.className = 'gantt-row';
                     band.appendChild(row);
                 } else {
-                    moduleTasks.forEach(t => {
-                        // label-pane row for this task
+                    datedTasks.forEach(t => {
                         const labelRow = document.createElement('div');
                         labelRow.className = 'gantt-task-label';
-                        if (!taskHasDates(t)) labelRow.classList.add('undated');
                         labelRow.innerHTML =
                             '<span class="task-type-dot" style="background:' + typeColor(t.type) + '"></span>' +
                             escapeHtml(t.title);
                         labelRow.title = t.title + ' (' + (t.type || 'task') + ')';
                         labelRows.appendChild(labelRow);
 
-                        // timeline-pane row
                         band.appendChild(renderTaskRow(t, range, taskById));
                     });
                 }
@@ -357,13 +361,22 @@
                 // milestone markers for THIS module — small navy diamonds
                 // sitting at the milestone's deadline date inside the band.
                 const moduleMilestones = milestones.filter(ms => ms.module_id === m.id);
+                const moduleDeadlineISO = m.deadline ? String(m.deadline).slice(0, 10) : null;
                 moduleMilestones.forEach(ms => {
                     if (!ms.deadline) return;
                     const msOffset = daysBetween(range.start, ms.deadline);
                     if (msOffset < 0 || msOffset > range.totalDays) return;
                     const flag = document.createElement('div');
                     flag.className = 'gantt-milestone';
-                    flag.style.left = (msOffset * range.dayPx + range.dayPx / 2) + 'px';
+                    let xpx = msOffset * range.dayPx + range.dayPx / 2;
+                    // If a milestone shares its date with the module deadline,
+                    // nudge it ~10px to the left so the diamond doesn't sit
+                    // exactly on top of the dashed deadline line.
+                    if (moduleDeadlineISO &&
+                        String(ms.deadline).slice(0, 10) === moduleDeadlineISO) {
+                        xpx -= 10;
+                    }
+                    flag.style.left = xpx + 'px';
                     flag.dataset.tooltip = buildMilestoneTooltip(ms, moduleTasks, taskById);
                     attachHover(flag);
                     band.appendChild(flag);
@@ -448,7 +461,11 @@
             const bar = document.createElement('div');
             bar.className = 'gantt-bar';
             bar.style.left  = (clippedStart * range.dayPx) + 'px';
-            bar.style.width = Math.max(4, visibleSpan * range.dayPx - 2) + 'px';
+            const barWidth = Math.max(4, visibleSpan * range.dayPx - 2);
+            bar.style.width = barWidth + 'px';
+            // bars too narrow to read text on — show only the colour, no
+            // truncated single character. The hover tooltip still works.
+            if (barWidth < 50) bar.classList.add('gantt-bar-compact');
             // Solid vivid base — the "remaining" portion of the work.
             bar.style.background = base;
             bar.style.borderColor = dark;
@@ -609,11 +626,16 @@
             const tt = document.getElementById('ganttTooltip');
             if (tt.classList.contains('hidden')) return;
             const pad = 14;
+            const edge = 8;
             const rect = tt.getBoundingClientRect();
             let x = e.clientX + pad;
             let y = e.clientY + pad;
-            if (x + rect.width > window.innerWidth - 8) x = e.clientX - rect.width - pad;
-            if (y + rect.height > window.innerHeight - 8) y = e.clientY - rect.height - pad;
+            if (x + rect.width  > window.innerWidth  - edge) x = e.clientX - rect.width  - pad;
+            if (y + rect.height > window.innerHeight - edge) y = e.clientY - rect.height - pad;
+            // hard-clamp so even a too-wide tooltip near a narrow viewport
+            // can't slip off the visible area
+            x = Math.max(edge, Math.min(x, window.innerWidth  - rect.width  - edge));
+            y = Math.max(edge, Math.min(y, window.innerHeight - rect.height - edge));
             tt.style.left = x + 'px';
             tt.style.top  = y + 'px';
         }

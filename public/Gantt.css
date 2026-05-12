@@ -323,6 +323,9 @@
     /* dark shadow keeps the label readable on every colour we use */
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
 }
+/* Compact bars are too narrow to read text — hide the label so the colour
+   communicates the type and the hover tooltip handles the detail. */
+.gantt-bar-compact .gantt-bar-label { display: none; }
 
 /* ── Markers (scoped to a module band, not full chart) ── */
 .gantt-deadline {
