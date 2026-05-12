@@ -188,7 +188,7 @@
                 </div>
                 <div class="btn-row space-between">
                     <button class="btn-ghost" onclick="goToStep(2)">← Back</button>
-                    <button class="btn-primary" onclick="confirmImport()">Confirm &amp; Create Profile</button>
+                    <button class="btn-primary" onclick="confirmImport(event)">Confirm &amp; Create Profile</button>
                 </div>
             </div>
         </div>
@@ -252,6 +252,7 @@
         function handleFileSelect(e) { const file = e.target.files[0]; if (file) validateAndSetFile(file); }
         function removeFile() {
             selectedFile = null;
+            parsedModules = [];   // forget rows parsed from the previous file
             document.getElementById('fileSelected').classList.add('hidden');
             document.getElementById('dropzone').classList.remove('hidden');
             document.getElementById('uploadBtn').disabled = true;
@@ -367,49 +368,74 @@
 
         function processFile() {
             if (!selectedFile) return;
+            // Disable the Preview button while we're parsing — a rapid
+            // double-click would otherwise kick off two FileReader operations
+            // and double-show step 3.
+            const uploadBtn = document.getElementById('uploadBtn');
+            const originalLabel = uploadBtn.innerHTML;
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Reading…';
+            const restoreBtn = () => {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = originalLabel;
+            };
+
             const reader = new FileReader();
+            reader.onerror = () => {
+                showFileError('Could not read the file. Please try again.');
+                restoreBtn();
+            };
             reader.onload = function(e) {
-                const rows = parseCSV(e.target.result);
-                if (rows.length < 2) { showFileError('File appears to be empty or has no data rows.'); return; }
-                const headers = rows[0].map(h => h.toLowerCase());
-                const required = ['module_code','module_name','assessment_type','deadline','weighting'];
-                const missing = required.filter(h => !headers.includes(h));
-                if (missing.length > 0) { showFileError('Missing columns: ' + missing.join(', ')); return; }
-                
-                // Validate all rows
-                const allErrors = [];
-                const validRows = [];
-                
-                for (let i = 1; i < rows.length; i++) {
-                    if (rows[i].length <= 1) continue; // Skip empty rows
-                    const rowErrors = validateCSVRow(rows[i], i, headers);
-                    if (rowErrors.length > 0) {
-                        allErrors.push(...rowErrors);
-                    } else {
-                        validRows.push({
-                            code: rows[i][headers.indexOf('module_code')],
-                            name: rows[i][headers.indexOf('module_name')],
-                            assessment: rows[i][headers.indexOf('assessment_type')],
-                            deadline: rows[i][headers.indexOf('deadline')],
-                            weighting: rows[i][headers.indexOf('weighting')]
-                        });
+                try {
+                    const rows = parseCSV(e.target.result);
+                    if (rows.length < 2) { showFileError('File appears to be empty or has no data rows.'); return; }
+                    const headers = rows[0].map(h => h.toLowerCase());
+                    const required = ['module_code','module_name','assessment_type','deadline','weighting'];
+                    const missing = required.filter(h => !headers.includes(h));
+                    if (missing.length > 0) { showFileError('Missing columns: ' + missing.join(', ')); return; }
+
+                    const allErrors = [];
+                    const validRows = [];
+
+                    for (let i = 1; i < rows.length; i++) {
+                        // Skip rows where every cell is empty (handles trailing
+                        // blank lines and rows that are nothing but commas).
+                        // `length <= 1` from before missed rows like ",,,,,".
+                        const isAllBlank = rows[i].every(c => String(c || '').trim() === '');
+                        if (isAllBlank) continue;
+
+                        const rowErrors = validateCSVRow(rows[i], i, headers);
+                        if (rowErrors.length > 0) {
+                            allErrors.push(...rowErrors);
+                        } else {
+                            validRows.push({
+                                code:       rows[i][headers.indexOf('module_code')],
+                                name:       rows[i][headers.indexOf('module_name')],
+                                assessment: rows[i][headers.indexOf('assessment_type')],
+                                deadline:   rows[i][headers.indexOf('deadline')],
+                                weighting:  rows[i][headers.indexOf('weighting')]
+                            });
+                        }
                     }
+
+                    if (allErrors.length > 0) {
+                        showFileError(allErrors.join(' • '));
+                        return;
+                    }
+                    if (validRows.length === 0) {
+                        showFileError('No valid data rows found in CSV file.');
+                        return;
+                    }
+
+                    parsedModules = validRows;
+                    buildPreview();
+                    goToStep(3);
+                } finally {
+                    // Always restore the button — whether we reached step 3,
+                    // hit a validation error, or threw. Without this the user
+                    // would have to remove + re-add the file to unstick it.
+                    restoreBtn();
                 }
-                
-                // If there are errors, show them and don't proceed
-                if (allErrors.length > 0) {
-                    showFileError(allErrors.join(' • '));
-                    return;
-                }
-                
-                if (validRows.length === 0) {
-                    showFileError('No valid data rows found in CSV file.');
-                    return;
-                }
-                
-                parsedModules = validRows;
-                buildPreview();
-                goToStep(3);
             };
             reader.readAsText(selectedFile);
         }
@@ -433,11 +459,15 @@
             tbody.innerHTML = tableHtml;
             document.getElementById('successMsg').textContent = parsedModules.length + ' module' + (parsedModules.length !== 1 ? 's' : '') + ' successfully parsed from your file.';
         }
-        function confirmImport() {
+        function confirmImport(ev) {
             const name = document.getElementById('semesterName').value.trim();
             const academicYear = document.getElementById('semesterYear').value;
 
-            const confirmBtn = event.target;
+            // Use the explicit event arg passed from onclick="confirmImport(event)"
+            // rather than the deprecated global window.event. Fall back to a
+            // querySelector lookup if a future caller forgets to pass it.
+            const confirmBtn = (ev && ev.target) ||
+                document.querySelector('#step-3 .btn-primary');
             confirmBtn.disabled = true;
             const originalText = confirmBtn.textContent;
             confirmBtn.textContent = 'Importing…';
