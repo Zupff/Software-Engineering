@@ -355,7 +355,10 @@ async function openProfileEditor(initialTab) {
 function setEditorTab(modal, name) {
     modal.dataset.activeTab = name;
     modal.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-    modal.querySelector('#pePaneProfile').classList.toggle('hidden', name !== 'profile');
+    // toggle the OUTER pane wrappers — these own the actions row at the bottom,
+    // so hiding only the inner body would leave the Cancel/Save buttons stuck
+    // on the Settings tab and create an empty flex slot above the content.
+    modal.querySelector('#peForm').classList.toggle('hidden', name !== 'profile');
     modal.querySelector('#pePaneSettings').classList.toggle('hidden', name !== 'settings');
 }
 
@@ -420,7 +423,7 @@ async function refreshSettingsSemesterList(modal) {
 }
 
 async function clearAllSemesters(modal) {
-    if (!confirm('Delete every semester and all their data?\n\nThis cannot be undone. Your account stays.')) return;
+    if (!confirm('Delete every semester and all their data?\n\nThis cannot be undone.')) return;
     try {
         const res = await authenticatedFetch('/api/semesters', { method: 'DELETE' });
         if (!res || !res.ok) {
@@ -508,20 +511,15 @@ function buildProfileEditorModal() {
                     '<div class="pe-section">' +
                         '<div class="pe-section-head">' +
                             '<h3>Your semesters</h3>' +
-                            '<p class="pe-section-sub">Newest first</p>' +
                         '</div>' +
                         '<div id="peSemesterList" class="pe-sem-list"></div>' +
                         '<div id="peSemesterEmpty" class="pe-sem-empty hidden">No semesters yet — import a CSV to create one.</div>' +
                     '</div>' +
                     '<div class="pe-section pe-danger">' +
-                        '<div class="pe-section-head">' +
-                            '<h3>Danger zone</h3>' +
-                            '<p class="pe-section-sub">These actions can\'t be undone.</p>' +
-                        '</div>' +
                         '<div class="pe-danger-row">' +
                             '<div class="pe-danger-info">' +
                                 '<div class="pe-danger-title">Clear all semesters</div>' +
-                                '<div class="pe-danger-sub">Removes every semester and all its modules, tasks, and sessions. Account stays.</div>' +
+                                '<div class="pe-danger-sub">Removes every semester and all its modules, tasks, and sessions.</div>' +
                             '</div>' +
                             '<button type="button" class="pe-btn pe-btn-danger" id="peClearSemesters">Clear all</button>' +
                         '</div>' +
