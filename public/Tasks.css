@@ -175,6 +175,30 @@ body { height: 100vh; }
 }
 .task-dep { color: var(--muted); }
 .task-dep strong { color: var(--text); font-weight: 600; }
+/* Blocked styling — dependency not yet complete. The whole row gets a
+   soft amber tint and the "Blocked by …" pill stands out. */
+.task-row-blocked {
+    background: var(--amber-lt);
+    border-color: color-mix(in srgb, var(--amber) 30%, var(--border));
+}
+.task-row-blocked .task-bar-wrap { background: color-mix(in srgb, var(--amber) 18%, var(--surface)); }
+.task-dep.task-dep-blocked {
+    background: var(--amber-lt);
+    color: var(--amber);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border: 1px solid color-mix(in srgb, var(--amber) 40%, transparent);
+}
+.task-dep.task-dep-blocked strong { color: var(--amber); }
+/* Disabled "Log session" button on blocked rows */
+.btn-ghost:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: var(--surface);
+    color: var(--muted);
+}
 .task-actions {
     display: flex;
     gap: 6px;

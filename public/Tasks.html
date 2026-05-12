@@ -339,6 +339,13 @@
             return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
         }
 
+        // a task is "complete" when its sum of logged hours >= required hours
+        function isTaskComplete(t) {
+            const req = parseFloat(t.required_hours);
+            if (!(req > 0)) return false;
+            return hoursLoggedFor(t.id) >= req;
+        }
+
         function renderTaskRow(task, allTasks) {
             const hoursLogged = hoursLoggedFor(task.id);
             const required = parseFloat(task.required_hours);
@@ -346,6 +353,8 @@
             const dep = task.dependency_task_id
                 ? (allTasks.find(t => t.id === task.dependency_task_id) || null)
                 : null;
+            // Brief: a task cannot be started before its dependency is complete.
+            const blocked = !!(dep && !isTaskComplete(dep));
             const today = localDateString();
 
             const startStr = fmtShortDate(task.start_date);
@@ -355,8 +364,12 @@
                 : '';
 
             const row = document.createElement('div');
-            row.className = 'task-row';
+            row.className = 'task-row' + (blocked ? ' task-row-blocked' : '');
             row.dataset.taskId = task.id;
+
+            const logBtn = blocked
+                ? '<button class="btn-ghost btn-compact" disabled title="Complete &quot;' + escapeHtml(dep.title) + '&quot; first">Log session</button>'
+                : '<button class="btn-ghost btn-compact" onclick="toggleSessionForm(' + task.id + ')">Log session</button>';
 
             row.innerHTML =
                 '<div class="task-row-top">' +
@@ -366,11 +379,13 @@
                             '<span class="task-pill">' + escapeHtml(task.type) + '</span>' +
                             '<span>' + hoursLogged.toFixed(1) + ' / ' + required.toFixed(1) + ' hrs</span>' +
                             (dateRange ? '<span class="task-dates">' + dateRange + '</span>' : '') +
-                            (dep ? '<span class="task-dep">depends on <strong>' + escapeHtml(dep.title) + '</strong></span>' : '') +
+                            (dep ? '<span class="task-dep' + (blocked ? ' task-dep-blocked' : '') + '">' +
+                                (blocked ? 'Blocked by ' : 'after ') +
+                                '<strong>' + escapeHtml(dep.title) + '</strong></span>' : '') +
                         '</div>' +
                     '</div>' +
                     '<div class="task-actions">' +
-                        '<button class="btn-ghost btn-compact" onclick="toggleSessionForm(' + task.id + ')">Log session</button>' +
+                        logBtn +
                         '<button class="btn-ghost btn-compact" onclick="toggleEditForm(' + task.id + ')">Edit</button>' +
                         '<button class="btn-ghost btn-compact btn-danger" onclick="deleteTaskConfirm(' + task.id + ')">Delete</button>' +
                     '</div>' +
@@ -616,6 +631,15 @@
                 });
                 if (!res || !res.ok) {
                     const err = res ? await res.json().catch(() => ({})) : {};
+                    // 409 = blocked by dependency. Use themed dialog so it
+                    // doesn't show as a native alert.
+                    if (res && res.status === 409 && typeof uiAlert === 'function') {
+                        await uiAlert({
+                            title: 'Task is blocked',
+                            body: err.message || 'Complete the dependency task first.',
+                        });
+                        return;
+                    }
                     throw new Error(err.message || 'Could not log session');
                 }
                 form.reset();

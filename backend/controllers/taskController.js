@@ -172,7 +172,8 @@ const updateTask = async (req, res) => {
     }
 
     // if a new dependency is provided, validate it: must not be self,
-    // must exist, and must belong to the same module as this task
+    // must exist, must belong to the same module, AND must not introduce
+    // a transitive cycle (A -> B -> A).
     if (dependency_task_id !== undefined && dependency_task_id !== null) {
       if (Number(dependency_task_id) === Number(id)) {
         return res.status(400).json({ message: 'task cannot depend on itself' });
@@ -185,6 +186,23 @@ const updateTask = async (req, res) => {
 
       if (dependencyResult.rows.length === 0) {
         return res.status(404).json({ message: 'dependency task not found in this module' });
+      }
+
+      // Walk the chain: starting from the proposed dependency, follow each
+      // task's own dependency_task_id. If we ever land back on the task
+      // being updated, it's a cycle — reject. Cap at 50 hops just in case.
+      let cursor = Number(dependency_task_id);
+      for (let i = 0; i < 50 && cursor; i++) {
+        if (cursor === Number(id)) {
+          return res.status(400).json({
+            message: 'this dependency would create a circular chain',
+          });
+        }
+        const step = await pool.query(
+          'SELECT dependency_task_id FROM tasks WHERE id = $1',
+          [cursor]
+        );
+        cursor = step.rows[0] && step.rows[0].dependency_task_id;
       }
     }
 
