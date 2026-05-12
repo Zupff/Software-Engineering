@@ -152,23 +152,24 @@ function attachSwitcher(el, semesters, active) {
         delBtn.innerHTML = '×';
         delBtn.addEventListener('click', async (ev) => {
             ev.stopPropagation();
-            const msg = 'Delete semester "' + s.name + '"?\n\n' +
-                'This permanently removes all modules, tasks, and study sessions in this semester. ' +
-                'This cannot be undone.';
-            if (!confirm(msg)) return;
+            const ok = await uiConfirm({
+                title: 'Delete this semester?',
+                body: 'Removes "' + s.name + '" and all its modules, tasks and study sessions. This cannot be undone.',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                danger: true,
+            });
+            if (!ok) return;
             try {
                 const res = await authenticatedFetch('/api/semesters/' + s.id, { method: 'DELETE' });
                 if (!res || (!res.ok && res.status !== 204)) {
                     const err = res ? await res.json().catch(() => ({})) : {};
                     throw new Error(err.message || 'Could not delete semester');
                 }
-                // if we deleted the active one, clear it so the next render picks a new one
-                if (s.id === active.id) {
-                    localStorage.removeItem('activeSemesterId');
-                }
+                if (s.id === active.id) localStorage.removeItem('activeSemesterId');
                 window.location.reload();
             } catch (err) {
-                alert(err.message || 'Could not delete semester');
+                await uiAlert({ title: 'Could not delete semester', body: err.message || 'Please try again in a moment.' });
             }
         });
         item.appendChild(delBtn);
@@ -405,7 +406,14 @@ async function refreshSettingsSemesterList(modal) {
         if (s.created_at) metaBits.push('Created ' + formatCreatedDate(s.created_at));
         row.querySelector('.pe-sem-meta').textContent = metaBits.join(' · ');
         row.querySelector('.pe-sem-delete').addEventListener('click', async () => {
-            if (!confirm('Delete semester "' + s.name + '"?\n\nThis removes all its modules, tasks and study sessions. This cannot be undone.')) return;
+            const ok = await uiConfirm({
+                title: 'Delete this semester?',
+                body: 'Removes "' + s.name + '" and all its modules, tasks and study sessions. This cannot be undone.',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                danger: true,
+            });
+            if (!ok) return;
             try {
                 const res = await authenticatedFetch('/api/semesters/' + s.id, { method: 'DELETE' });
                 if (!res || (!res.ok && res.status !== 204)) {
@@ -415,15 +423,75 @@ async function refreshSettingsSemesterList(modal) {
                 if (getActiveSemesterId() === s.id) localStorage.removeItem('activeSemesterId');
                 refreshSettingsSemesterList(modal);
             } catch (err) {
-                alert(err.message || 'Could not delete semester');
+                await uiAlert({ title: 'Could not delete semester', body: err.message || 'Please try again in a moment.' });
             }
         });
         list.appendChild(row);
     });
 }
 
+// ── Custom dialogs (replace native confirm/alert so the UI matches the
+//    rest of the site). Promise-based: `await uiConfirm({...})`.
+function uiDialog({ title, body, confirmText, cancelText, danger }) {
+    return new Promise(resolve => {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'ui-dialog-backdrop';
+        backdrop.innerHTML =
+            '<div class="ui-dialog" role="dialog" aria-modal="true">' +
+                '<div class="ui-dialog-head">' +
+                    '<h3></h3>' +
+                '</div>' +
+                '<div class="ui-dialog-body"></div>' +
+                '<div class="ui-dialog-actions">' +
+                    (cancelText !== null
+                        ? '<button type="button" class="pe-btn pe-btn-ghost" data-act="cancel"></button>'
+                        : '') +
+                    '<button type="button" class="pe-btn ' +
+                        (danger ? 'pe-btn-danger' : 'pe-btn-primary') +
+                        '" data-act="confirm"></button>' +
+                '</div>' +
+            '</div>';
+        backdrop.querySelector('h3').textContent = title;
+        backdrop.querySelector('.ui-dialog-body').textContent = body;
+        if (cancelText !== null) {
+            backdrop.querySelector('[data-act="cancel"]').textContent = cancelText || 'Cancel';
+        }
+        backdrop.querySelector('[data-act="confirm"]').textContent = confirmText || 'OK';
+
+        function close(value) {
+            backdrop.remove();
+            document.removeEventListener('keydown', onKey);
+            resolve(value);
+        }
+        function onKey(ev) {
+            if (ev.key === 'Escape') close(false);
+            if (ev.key === 'Enter')  close(true);
+        }
+        backdrop.addEventListener('click', ev => {
+            if (ev.target === backdrop) close(false);
+        });
+        const cancelBtn = backdrop.querySelector('[data-act="cancel"]');
+        if (cancelBtn) cancelBtn.addEventListener('click', () => close(false));
+        backdrop.querySelector('[data-act="confirm"]').addEventListener('click', () => close(true));
+        document.addEventListener('keydown', onKey);
+
+        document.body.appendChild(backdrop);
+        // focus the primary button so Enter confirms by default
+        setTimeout(() => backdrop.querySelector('[data-act="confirm"]').focus(), 30);
+    });
+}
+function uiConfirm(opts)  { return uiDialog(opts); }
+function uiAlert(opts)    { return uiDialog({ ...opts, cancelText: null, confirmText: opts.confirmText || 'Close' }); }
+
 async function clearAllSemesters(modal) {
-    if (!confirm('Delete every semester and all their data?\n\nThis cannot be undone.')) return;
+    const ok = await uiConfirm({
+        title: 'Clear all semesters?',
+        body: 'This removes every semester and all of its modules, tasks, and study sessions. This cannot be undone.',
+        confirmText: 'Clear all',
+        cancelText: 'Cancel',
+        danger: true,
+    });
+    if (!ok) return;
     try {
         const res = await authenticatedFetch('/api/semesters', { method: 'DELETE' });
         if (!res || !res.ok) {
@@ -433,14 +501,27 @@ async function clearAllSemesters(modal) {
         localStorage.removeItem('activeSemesterId');
         refreshSettingsSemesterList(modal);
     } catch (err) {
-        alert(err.message || 'Could not clear semesters');
+        await uiAlert({ title: 'Could not clear semesters', body: err.message || 'Please try again in a moment.' });
     }
 }
 
 async function deleteAccount() {
-    if (!confirm('Permanently delete your account?\n\nThis wipes your profile and every semester, module, task, milestone and study session you own. This cannot be undone.')) return;
-    // double-confirm because it's catastrophic
-    if (!confirm('Are you absolutely sure? Last chance to back out.')) return;
+    const ok1 = await uiConfirm({
+        title: 'Delete your account?',
+        body: 'This wipes your profile and every semester, module, task, milestone and study session you own. This cannot be undone.',
+        confirmText: 'Continue',
+        cancelText: 'Cancel',
+        danger: true,
+    });
+    if (!ok1) return;
+    const ok2 = await uiConfirm({
+        title: 'Last chance',
+        body: 'Are you absolutely sure? Click delete to permanently remove your account.',
+        confirmText: 'Delete account',
+        cancelText: 'Keep account',
+        danger: true,
+    });
+    if (!ok2) return;
     try {
         const res = await authenticatedFetch('/api/account', { method: 'DELETE' });
         if (!res || (!res.ok && res.status !== 204)) {
@@ -451,7 +532,7 @@ async function deleteAccount() {
         localStorage.clear();
         window.location.href = 'Login.html';
     } catch (err) {
-        alert(err.message || 'Could not delete account');
+        await uiAlert({ title: 'Could not delete account', body: err.message || 'Please try again in a moment.' });
     }
 }
 
@@ -603,7 +684,7 @@ async function saveProfileFromModal(modal) {
         closeProfileEditor();
         renderUserPill();
     } catch (err) {
-        alert(err.message);
+        await uiAlert({ title: 'Could not save profile', body: err.message || 'Please try again in a moment.' });
     }
 }
 
