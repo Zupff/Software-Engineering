@@ -71,4 +71,20 @@ const deleteSemester = async (req, res) => {
   }
 };
 
-module.exports = { listSemesters, createSemester, deleteSemester };
+// delete every semester for the current user. Modules, tasks, sessions
+// and milestones cascade-delete via the existing FK chain.
+const deleteAllSemesters = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await pool.query(
+      'DELETE FROM semesters WHERE user_id = $1 RETURNING id',
+      [userId]
+    );
+    return res.status(200).json({ deleted: result.rows.length });
+  } catch (error) {
+    console.error('delete all semesters error', error);
+    return res.status(500).json({ message: 'internal server error' });
+  }
+};
+
+module.exports = { listSemesters, createSemester, deleteSemester, deleteAllSemesters };

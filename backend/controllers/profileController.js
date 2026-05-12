@@ -98,4 +98,27 @@ const listCourses = (_req, res) => {
   return res.status(200).json(KNOWN_COURSES);
 };
 
-module.exports = { getProfile, updateProfile, listCourses, ALLOWED_AVATARS, ALLOWED_COLORS };
+// Delete the current user and every row owned by them. The cascade chain
+// (users → semesters → modules → tasks → study_sessions, and milestones)
+// is handled by the existing FK ON DELETE CASCADE clauses in the schema.
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await pool.query(
+      'DELETE FROM users WHERE id = $1 RETURNING id',
+      [userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'user not found' });
+    }
+    return res.status(204).send();
+  } catch (error) {
+    console.error('delete account error', error);
+    return res.status(500).json({ message: 'internal server error' });
+  }
+};
+
+module.exports = {
+  getProfile, updateProfile, listCourses, deleteAccount,
+  ALLOWED_AVATARS, ALLOWED_COLORS,
+};

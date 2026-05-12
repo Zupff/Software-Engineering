@@ -289,6 +289,7 @@ function attachProfilePopover(pill) {
             courseLine +
         '</div>' +
         '<button type="button" class="pm-action" data-action="edit">Edit profile</button>' +
+        '<button type="button" class="pm-action" data-action="settings">Settings</button>' +
         '<button type="button" class="pm-action pm-signout" data-action="signout">Sign out</button>';
 
     menu.querySelector('.pm-name').textContent = d.name;
@@ -296,7 +297,11 @@ function attachProfilePopover(pill) {
 
     menu.querySelector('[data-action="edit"]').addEventListener('click', () => {
         menu.classList.add('hidden');
-        openProfileEditor();
+        openProfileEditor('profile');
+    });
+    menu.querySelector('[data-action="settings"]').addEventListener('click', () => {
+        menu.classList.add('hidden');
+        openProfileEditor('settings');
     });
     menu.querySelector('[data-action="signout"]').addEventListener('click', () => logout());
 
@@ -322,7 +327,7 @@ async function loadCourses() {
     } catch (_e) { return []; }
 }
 
-async function openProfileEditor() {
+async function openProfileEditor(initialTab) {
     let modal = document.getElementById('profileEditorModal');
     if (!modal) modal = buildProfileEditorModal();
 
@@ -337,8 +342,114 @@ async function openProfileEditor() {
     setSelectedAvatar(modal, p.avatar_id || 'cap');
     setSelectedColor(modal,  p.avatar_color || 'navy');
 
+    setEditorTab(modal, initialTab === 'settings' ? 'settings' : 'profile');
+    // refresh the semester list every open so additions/deletions stay current
+    refreshSettingsSemesterList(modal);
+
     modal.classList.remove('hidden');
-    setTimeout(() => modal.querySelector('#peName').focus(), 30);
+    if (initialTab !== 'settings') {
+        setTimeout(() => modal.querySelector('#peName').focus(), 30);
+    }
+}
+
+function setEditorTab(modal, name) {
+    modal.dataset.activeTab = name;
+    modal.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    modal.querySelector('#pePaneProfile').classList.toggle('hidden', name !== 'profile');
+    modal.querySelector('#pePaneSettings').classList.toggle('hidden', name !== 'settings');
+}
+
+// fmt a 'YYYY-MM-DD...'-style timestamp into a friendly date string
+function formatCreatedDate(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+async function refreshSettingsSemesterList(modal) {
+    const list = modal.querySelector('#peSemesterList');
+    const empty = modal.querySelector('#peSemesterEmpty');
+    list.innerHTML = '';
+    list.classList.add('loading');
+
+    let semesters = [];
+    try {
+        const res = await authenticatedFetch('/api/semesters');
+        if (res && res.ok) semesters = await res.json();
+    } catch (_e) { /* leave empty */ }
+    list.classList.remove('loading');
+
+    if (semesters.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+
+    // already returned newest-first by the server; render as-is
+    semesters.forEach(s => {
+        const row = document.createElement('div');
+        row.className = 'pe-sem-row';
+        row.innerHTML =
+            '<div class="pe-sem-info">' +
+                '<div class="pe-sem-name"></div>' +
+                '<div class="pe-sem-meta"></div>' +
+            '</div>' +
+            '<button type="button" class="pe-btn pe-btn-ghost pe-sem-delete" aria-label="Delete semester">Delete</button>';
+        row.querySelector('.pe-sem-name').textContent = s.name;
+        const metaBits = [];
+        if (s.academic_year) metaBits.push(s.academic_year);
+        if (s.created_at) metaBits.push('Created ' + formatCreatedDate(s.created_at));
+        row.querySelector('.pe-sem-meta').textContent = metaBits.join(' · ');
+        row.querySelector('.pe-sem-delete').addEventListener('click', async () => {
+            if (!confirm('Delete semester "' + s.name + '"?\n\nThis removes all its modules, tasks and study sessions. This cannot be undone.')) return;
+            try {
+                const res = await authenticatedFetch('/api/semesters/' + s.id, { method: 'DELETE' });
+                if (!res || (!res.ok && res.status !== 204)) {
+                    const err = res ? await res.json().catch(() => ({})) : {};
+                    throw new Error(err.message || 'Could not delete semester');
+                }
+                if (getActiveSemesterId() === s.id) localStorage.removeItem('activeSemesterId');
+                refreshSettingsSemesterList(modal);
+            } catch (err) {
+                alert(err.message || 'Could not delete semester');
+            }
+        });
+        list.appendChild(row);
+    });
+}
+
+async function clearAllSemesters(modal) {
+    if (!confirm('Delete every semester and all their data?\n\nThis cannot be undone. Your account stays.')) return;
+    try {
+        const res = await authenticatedFetch('/api/semesters', { method: 'DELETE' });
+        if (!res || !res.ok) {
+            const err = res ? await res.json().catch(() => ({})) : {};
+            throw new Error(err.message || 'Could not clear semesters');
+        }
+        localStorage.removeItem('activeSemesterId');
+        refreshSettingsSemesterList(modal);
+    } catch (err) {
+        alert(err.message || 'Could not clear semesters');
+    }
+}
+
+async function deleteAccount() {
+    if (!confirm('Permanently delete your account?\n\nThis wipes your profile and every semester, module, task, milestone and study session you own. This cannot be undone.')) return;
+    // double-confirm because it's catastrophic
+    if (!confirm('Are you absolutely sure? Last chance to back out.')) return;
+    try {
+        const res = await authenticatedFetch('/api/account', { method: 'DELETE' });
+        if (!res || (!res.ok && res.status !== 204)) {
+            const err = res ? await res.json().catch(() => ({})) : {};
+            throw new Error(err.message || 'Could not delete account');
+        }
+        // user is gone — clear local state and bounce to login
+        localStorage.clear();
+        window.location.href = 'Login.html';
+    } catch (err) {
+        alert(err.message || 'Could not delete account');
+    }
 }
 
 function buildProfileEditorModal() {
@@ -359,32 +470,75 @@ function buildProfileEditorModal() {
             '<div class="pe-head">' +
                 '<h2 id="peTitle">Set up your profile</h2>' +
                 '<p>This is just for you — you can change it any time.</p>' +
+                '<div class="pe-tabs" role="tablist">' +
+                    '<button type="button" class="pe-tab active" data-tab="profile" role="tab">Profile</button>' +
+                    '<button type="button" class="pe-tab"        data-tab="settings" role="tab">Settings</button>' +
+                '</div>' +
             '</div>' +
-            '<form id="peForm" class="pe-form">' +
-                '<div class="pe-field">' +
-                    '<label for="peName">Display name</label>' +
-                    '<input type="text" id="peName" required maxlength="60" placeholder="What should we call you?">' +
-                '</div>' +
-                '<div class="pe-field">' +
-                    '<label for="peCourse">Course</label>' +
-                    '<select id="peCourse"></select>' +
-                '</div>' +
-                '<div class="pe-field">' +
-                    '<label>Avatar</label>' +
-                    '<div class="pe-grid pe-grid-avatars">' + avatarBtns + '</div>' +
-                '</div>' +
-                '<div class="pe-field">' +
-                    '<label>Colour</label>' +
-                    '<div class="pe-grid pe-grid-colors">' + colorBtns + '</div>' +
-                '</div>' +
-                '<div class="pe-actions">' +
-                    '<button type="button" class="pe-btn pe-btn-ghost" id="peCancel">Cancel</button>' +
-                    '<button type="submit" class="pe-btn pe-btn-primary">Save profile</button>' +
+
+            // ── Profile pane ──────────────────────────────────────────
+            '<form id="peForm" class="pe-form" data-pane="profile">' +
+                '<div id="pePaneProfile">' +
+                    '<div class="pe-field">' +
+                        '<label for="peName">Display name</label>' +
+                        '<input type="text" id="peName" required maxlength="60" placeholder="What should we call you?">' +
+                    '</div>' +
+                    '<div class="pe-field">' +
+                        '<label for="peCourse">Course</label>' +
+                        '<select id="peCourse"></select>' +
+                    '</div>' +
+                    '<div class="pe-field">' +
+                        '<label>Avatar</label>' +
+                        '<div class="pe-grid pe-grid-avatars">' + avatarBtns + '</div>' +
+                    '</div>' +
+                    '<div class="pe-field">' +
+                        '<label>Colour</label>' +
+                        '<div class="pe-grid pe-grid-colors">' + colorBtns + '</div>' +
+                    '</div>' +
+                    '<div class="pe-actions">' +
+                        '<button type="button" class="pe-btn pe-btn-ghost" id="peCancel">Cancel</button>' +
+                        '<button type="submit" class="pe-btn pe-btn-primary">Save profile</button>' +
+                    '</div>' +
                 '</div>' +
             '</form>' +
+
+            // ── Settings pane ─────────────────────────────────────────
+            '<div id="pePaneSettings" class="pe-form hidden">' +
+                '<div class="pe-section">' +
+                    '<h3>Your semesters</h3>' +
+                    '<p class="pe-section-sub">Newest first. Delete individual semesters or wipe them all below.</p>' +
+                    '<div id="peSemesterList" class="pe-sem-list"></div>' +
+                    '<div id="peSemesterEmpty" class="pe-sem-empty hidden">No semesters yet — import a CSV to create one.</div>' +
+                '</div>' +
+                '<div class="pe-section pe-danger">' +
+                    '<h3>Danger zone</h3>' +
+                    '<div class="pe-danger-row">' +
+                        '<div>' +
+                            '<div class="pe-danger-title">Delete all semesters</div>' +
+                            '<div class="pe-danger-sub">Removes every semester (and all its modules, tasks, and study sessions). Your account stays.</div>' +
+                        '</div>' +
+                        '<button type="button" class="pe-btn pe-btn-danger" id="peClearSemesters">Clear all</button>' +
+                    '</div>' +
+                    '<div class="pe-danger-row">' +
+                        '<div>' +
+                            '<div class="pe-danger-title">Delete account</div>' +
+                            '<div class="pe-danger-sub">Wipes your profile and every piece of data you own. You\'ll be signed out.</div>' +
+                        '</div>' +
+                        '<button type="button" class="pe-btn pe-btn-danger" id="peDeleteAccount">Delete account</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="pe-actions">' +
+                    '<button type="button" class="pe-btn pe-btn-ghost" id="peSettingsClose">Close</button>' +
+                '</div>' +
+            '</div>' +
         '</div>';
 
     document.body.appendChild(modal);
+
+    // tab toggles
+    modal.querySelectorAll('.pe-tab').forEach(t => {
+        t.addEventListener('click', () => setEditorTab(modal, t.dataset.tab));
+    });
 
     // wire selection toggles + live preview
     modal.querySelectorAll('.pe-avatar').forEach(b => {
@@ -395,12 +549,16 @@ function buildProfileEditorModal() {
     });
 
     modal.querySelector('#peCancel').addEventListener('click', () => closeProfileEditor());
+    modal.querySelector('#peSettingsClose').addEventListener('click', () => closeProfileEditor());
     modal.addEventListener('click', (ev) => { if (ev.target === modal) closeProfileEditor(); });
 
     modal.querySelector('#peForm').addEventListener('submit', async (ev) => {
         ev.preventDefault();
         await saveProfileFromModal(modal);
     });
+
+    modal.querySelector('#peClearSemesters').addEventListener('click', () => clearAllSemesters(modal));
+    modal.querySelector('#peDeleteAccount').addEventListener('click', () => deleteAccount());
 
     return modal;
 }

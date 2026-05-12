@@ -379,3 +379,145 @@ body {
     border-color: var(--primary-hover);
     transform: translateY(-1px);
 }
+
+/* ── Profile/Settings tab toggle ── */
+.pe-tabs {
+    display: inline-flex;
+    margin-top: 14px;
+    padding: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.pe-tab {
+    background: none;
+    border: none;
+    padding: 7px 16px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.pe-tab:hover { color: var(--text); }
+.pe-tab.active {
+    background: var(--surface);
+    color: var(--primary);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+/* ── Settings pane ── */
+.pe-section {
+    padding: 0 24px 14px;
+}
+.pe-section h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-top: 14px;
+}
+.pe-section-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin: 4px 0 12px;
+}
+
+/* semester list inside settings */
+.pe-sem-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+.pe-sem-list.loading { min-height: 60px; opacity: 0.6; }
+.pe-sem-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.pe-sem-info { flex: 1; min-width: 0; }
+.pe-sem-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pe-sem-meta {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+.pe-sem-delete {
+    flex-shrink: 0;
+    height: 30px;
+    padding: 0 12px;
+    font-size: 0.75rem;
+}
+.pe-sem-delete:hover {
+    color: var(--red);
+    border-color: color-mix(in srgb, var(--red) 30%, var(--border));
+    background: var(--red-lt);
+}
+.pe-sem-empty {
+    font-size: 0.82rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 18px 0;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+}
+
+/* danger zone block */
+.pe-danger {
+    border: 1px solid color-mix(in srgb, var(--red) 30%, var(--border));
+    background: var(--red-lt);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin: 14px 24px 8px;
+}
+.pe-danger h3 {
+    margin-top: 0;
+    color: var(--red);
+}
+.pe-danger-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    border-top: 1px solid color-mix(in srgb, var(--red) 18%, var(--border));
+}
+.pe-danger-row:first-of-type { border-top: none; }
+.pe-danger-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.pe-danger-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.pe-btn-danger {
+    background: var(--surface);
+    color: var(--red);
+    border: 1px solid color-mix(in srgb, var(--red) 35%, var(--border));
+    flex-shrink: 0;
+}
+.pe-btn-danger:hover {
+    background: var(--red);
+    color: white;
+    border-color: var(--red);
+    transform: translateY(-1px);
+}
