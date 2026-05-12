@@ -105,11 +105,16 @@ body:has(.sidebar-handle:hover) .sidebar::before {
 }
 
 /* Sidebar OPEN — fade the clip out. The clip itself doesn't move at all,
-   so there's no hover trap and no oscillation. */
+   so there's no hover trap and no oscillation.
+   Note: also fades when the clip itself is hovered, since the clip sits
+   in front of the sidebar (z-110) and would otherwise intercept the
+   sidebar:hover detection while you're still on it. pointer-events stays
+   auto so the invisible clip continues holding the sidebar open until
+   the cursor moves off — no oscillation. */
 body:has(.sidebar:hover) .sidebar-handle,
-body:has(.sidebar:focus-within) .sidebar-handle {
+body:has(.sidebar:focus-within) .sidebar-handle,
+body:has(.sidebar-handle:hover) .sidebar-handle {
     opacity: 0;
-    pointer-events: none;
 }
 .sidebar-brand {
     display: flex;
