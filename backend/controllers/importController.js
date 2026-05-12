@@ -77,14 +77,17 @@ const importCSV = async (req, res) => {
         errors.push(`row ${rowNum}: deadline is not a valid date`);
       }
 
-      const weighting = Number(weightingRaw);
-      if (weightingRaw === '' || !Number.isFinite(weighting) || !Number.isInteger(weighting)) {
-        errors.push(`row ${rowNum}: weighting must be an integer`);
+      // Accept '50', '50%', ' 50 % ' — strip trailing percent sign and
+      // surrounding whitespace before parsing.
+      const weightingClean = weightingRaw.replace(/%/g, '').trim();
+      const weighting = Number(weightingClean);
+      if (weightingClean === '' || !Number.isFinite(weighting) || !Number.isInteger(weighting)) {
+        errors.push(`row ${rowNum}: weighting must be a whole number`);
       } else if (weighting < 0 || weighting > 100) {
         errors.push(`row ${rowNum}: weighting must be between 0 and 100`);
       }
 
-      cleanRows.push({ code, name, type, deadline, weighting });
+      cleanRows.push({ code, name, type, deadline, weighting: Number.isFinite(weighting) ? weighting : 0 });
     });
 
     if (errors.length > 0) {

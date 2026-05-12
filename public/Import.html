@@ -310,7 +310,9 @@
             if (weighting === '') {
                 errors.push(`Row ${rowNum}: weighting is required`);
             } else {
-                const weightNum = Number(weighting);
+                // Accept '50', '50%', '50 %' — strip the percent sign before parsing
+                const weightClean = String(weighting).replace(/%/g, '').trim();
+                const weightNum = Number(weightClean);
                 if (!Number.isFinite(weightNum) || !Number.isInteger(weightNum)) {
                     errors.push(`Row ${rowNum}: weighting must be a whole number (got "${weighting}")`);
                 } else if (weightNum < 0 || weightNum > 100) {
