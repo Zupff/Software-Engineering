@@ -347,13 +347,26 @@
 
         function toggleDeadlineEdit(moduleId) {
             const form = document.getElementById('deadlineForm-' + moduleId);
-            if (form) form.classList.toggle('hidden');
+            if (!form) return;
+            const willOpen = form.classList.contains('hidden');
+            form.classList.toggle('hidden');
+            // Focus the date input on open so the user can edit straight away.
+            if (willOpen) {
+                const dateInput = form.querySelector('input[type="date"]');
+                if (dateInput) setTimeout(() => dateInput.focus(), 20);
+            }
         }
 
         async function saveDeadline(event, moduleId) {
             event.preventDefault();
             const form = event.target;
             const newDeadline = form.deadline.value;
+
+            // Lock the Save button so a double-click can't fire two PATCHes
+            const saveBtn = form.querySelector('button[type="submit"]');
+            const originalLabel = saveBtn ? saveBtn.textContent : '';
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+
             try {
                 const res = await authenticatedFetch('/api/modules/' + moduleId, {
                     method: 'PATCH',
@@ -361,16 +374,43 @@
                     body: JSON.stringify({ deadline: newDeadline })
                 });
                 if (!res || !res.ok) {
-                    const err = res ? await res.json().catch(() => ({})) : {};
+                    // Fall back to a sensible default if the server returned
+                    // a non-JSON body (e.g. an HTML 500 page) — previously
+                    // the user could see literal "undefined" in the error.
+                    const err = res
+                        ? await res.json().catch(() => ({ message: 'Server returned an error' }))
+                        : { message: 'No response from server' };
                     throw new Error(err.message || 'Could not update deadline');
                 }
                 await loadDashboard();
             } catch (err) {
-                const container = document.getElementById('alerts');
-                container.innerHTML =
-                    '<div class="alert alert-danger"><span class="alert-dot"></span>' +
-                    '<span>' + escapeHtml(err.message) + '</span></div>';
+                // Show this error as an EXTRA alert appended above the
+                // existing deadline-summary banners, so we don't blow away
+                // the "N deadlines missed" / "N approaching" messages.
+                showDashboardError(err.message || 'Could not update deadline');
+                // Re-enable the button so the user can retry
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = originalLabel;
+                }
             }
+        }
+
+        function showDashboardError(msg) {
+            const container = document.getElementById('alerts');
+            if (!container) return;
+            // Remove any previous transient error so we don't stack them up,
+            // but leave the missed/approaching banners alone.
+            container.querySelectorAll('.alert-danger[data-transient="1"]')
+                .forEach(el => el.remove());
+            const div = document.createElement('div');
+            div.className = 'alert alert-danger';
+            div.dataset.transient = '1';
+            div.innerHTML =
+                '<span class="alert-dot"></span>' +
+                '<span>' + escapeHtml(msg) + '</span>' +
+                '<button class="alert-close" onclick="this.parentElement.remove()" aria-label="Dismiss">×</button>';
+            container.appendChild(div);
         }
 
         async function loadDashboard() {
