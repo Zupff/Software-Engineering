@@ -367,9 +367,10 @@
             row.className = 'task-row' + (blocked ? ' task-row-blocked' : '');
             row.dataset.taskId = task.id;
 
-            const logBtn = blocked
-                ? '<button class="btn-ghost btn-compact" disabled title="Complete &quot;' + escapeHtml(dep.title) + '&quot; first">Log session</button>'
-                : '<button class="btn-ghost btn-compact" onclick="toggleSessionForm(' + task.id + ')">Log session</button>';
+            // Log session is always enabled — dependencies are advisory.
+            // The badge + (optional) post-submit notice tell the user the
+            // task is on a chain.
+            const logBtn = '<button class="btn-ghost btn-compact" onclick="toggleSessionForm(' + task.id + ')">Log session</button>';
 
             row.innerHTML =
                 '<div class="task-row-top">' +
@@ -623,6 +624,15 @@
                 notes: form.notes.value.trim() || null
             };
 
+            // Remember whether the task was blocked by an incomplete dependency
+            // at the moment of submission, so we can show a soft notice after
+            // the session has been logged successfully.
+            const tasks = tasksByModule[selectedModuleId] || [];
+            const thisTask = tasks.find(t => t.id === taskId);
+            const dep = thisTask && thisTask.dependency_task_id
+                ? tasks.find(t => t.id === thisTask.dependency_task_id) : null;
+            const wasBlocked = !!(dep && !isTaskComplete(dep));
+
             try {
                 const res = await authenticatedFetch('/api/sessions', {
                     method: 'POST',
@@ -631,15 +641,6 @@
                 });
                 if (!res || !res.ok) {
                     const err = res ? await res.json().catch(() => ({})) : {};
-                    // 409 = blocked by dependency. Use themed dialog so it
-                    // doesn't show as a native alert.
-                    if (res && res.status === 409 && typeof uiAlert === 'function') {
-                        await uiAlert({
-                            title: 'Task is blocked',
-                            body: err.message || 'Complete the dependency task first.',
-                        });
-                        return;
-                    }
                     throw new Error(err.message || 'Could not log session');
                 }
                 form.reset();
@@ -648,6 +649,14 @@
                 form.classList.add('hidden');
                 await loadSessions(selectedModuleId);
                 renderTasks();
+
+                // Heads-up after the fact: this task is on a dependency chain.
+                if (wasBlocked && typeof uiAlert === 'function') {
+                    await uiAlert({
+                        title: 'Session logged — heads up',
+                        body: 'This task depends on "' + dep.title + '", which isn\'t complete yet. Hours were still recorded.',
+                    });
+                }
             } catch (err) {
                 showError(err.message);
             }

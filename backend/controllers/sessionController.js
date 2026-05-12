@@ -31,44 +31,18 @@ const logSession = async (req, res) => {
       return res.status(404).json({ message: 'module not found' });
     }
 
-    // if task_id provided, verify it belongs to that same module AND that
-    // its dependency (if any) is fully complete. Brief: "a task cannot be
-    // started before another has been completed".
+    // if task_id provided, verify it belongs to that same module.
+    // (Soft dependency rule: the frontend surfaces a "this task depends on
+    // X" notice in the UI, but we don't reject the log here — the user is
+    // allowed to record hours against a task whose dependency isn't yet
+    // complete.)
     if (task_id) {
       const taskCheck = await pool.query(
-        'SELECT id, dependency_task_id FROM tasks WHERE id = $1 AND module_id = $2',
+        'SELECT id FROM tasks WHERE id = $1 AND module_id = $2',
         [task_id, module_id]
       );
       if (taskCheck.rows.length === 0) {
         return res.status(404).json({ message: 'task not found in this module' });
-      }
-
-      const depId = taskCheck.rows[0].dependency_task_id;
-      if (depId) {
-        // dependency is complete when sum(study_sessions.duration_hours) on
-        // it is >= its required_hours
-        const depResult = await pool.query(
-          `SELECT t.title, t.required_hours,
-                  COALESCE(SUM(s.duration_hours), 0) AS logged
-             FROM tasks t
-             LEFT JOIN study_sessions s ON s.task_id = t.id
-            WHERE t.id = $1
-            GROUP BY t.id, t.title, t.required_hours`,
-          [depId]
-        );
-        if (depResult.rows.length > 0) {
-          const dep = depResult.rows[0];
-          const required = parseFloat(dep.required_hours);
-          const logged   = parseFloat(dep.logged);
-          if (required > 0 && logged < required) {
-            return res.status(409).json({
-              message: 'Blocked: "' + dep.title + '" must be completed first.',
-              dependency_title: dep.title,
-              dependency_required: required,
-              dependency_logged: logged,
-            });
-          }
-        }
       }
     }
 
