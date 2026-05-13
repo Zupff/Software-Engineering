@@ -25,9 +25,20 @@ const getGantt = async (req, res) => {
 
     const tasksResult = await pool.query(
       `SELECT t.id, t.module_id, t.title, t.type, t.required_hours,
-              t.start_date, t.end_date, t.dependency_task_id, t.notes
-         FROM tasks t
+              t.start_date, t.end_date, t.dependency_task_id, t.notes,  -- gather task information
+              -- dependencies are stored in a junction table so a task can
+              -- depend on more than one prerequisite task.
+              COALESCE(
+                ARRAY_AGG(td.dependency_task_id) FILTER (WHERE td.dependency_task_id IS NOT NULL), 
+                CASE WHEN t.dependency_task_id IS NOT NULL
+                  THEN ARRAY[t.dependency_task_id]              -- place dependencies into an array
+                  ELSE ARRAY[]::int[]        
+                END
+              ) AS dependency_task_ids
+         FROM tasks t                               
+         LEFT JOIN task_dependencies td ON td.task_id = t.id
         WHERE t.module_id = ANY($1::int[])
+        GROUP BY t.id
         ORDER BY t.start_date NULLS LAST, t.id`,
       [moduleIds]
     );
@@ -65,6 +76,7 @@ const getGantt = async (req, res) => {
         start_date: t.start_date,
         end_date: t.end_date,
         dependency_task_id: t.dependency_task_id,
+        dependency_task_ids: t.dependency_task_ids || [],
         notes: t.notes,
       };
     });
