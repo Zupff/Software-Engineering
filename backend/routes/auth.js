@@ -1,5 +1,5 @@
 const express = require('express');
-const rateLimit = require('express-rate-limit');
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const { register, login } = require('../controllers/authController');
 
 const router = express.Router();
@@ -42,8 +42,9 @@ const loginLimiterUsername = rateLimit({
   max: 10,
   standardHeaders: false,
   legacyHeaders: false,
+  // Use express-rate-limit's IPv6-safe helper when falling back to IP.
   keyGenerator: (req) =>
-    (req.body && req.body.username || '').toString().trim().toLowerCase() || ('ip:' + req.ip),
+    (req.body && req.body.username || '').toString().trim().toLowerCase() || ('ip:' + ipKeyGenerator(req.ip)),
   skipSuccessfulRequests: true,
   handler: (req, res) => {
     res.status(429).json({
