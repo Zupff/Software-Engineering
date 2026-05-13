@@ -1,14 +1,9 @@
-local-state/
 .env
 **/.env
 node_modules/
 
 # Presentation + internal docs — kept local only, not pushed to git
 brief.pdf
-Presentation.pptx
 Presentation.pdf
-DevelopmentNotes.pdf
-build_presentation.js
-build_dev_notes.py
 slide-*.jpg
 devnotes-*.jpg
