@@ -8,10 +8,10 @@
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="Dashboard.css">
     <link rel="stylesheet" href="Import.css">
+      <script src="darkmode.js"></script>
     <script src="auth.js"></script>
 </head>
 <body>
-    <div class="sidebar-handle"      aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
     <aside class="sidebar">
         <div class="sidebar-brand">
             <div class="brand-icon" aria-hidden="true">
@@ -188,7 +188,7 @@
                 </div>
                 <div class="btn-row space-between">
                     <button class="btn-ghost" onclick="goToStep(2)">← Back</button>
-                    <button class="btn-primary" onclick="confirmImport(event)">Confirm &amp; Create Profile</button>
+                    <button class="btn-primary" onclick="confirmImport()">Confirm &amp; Create Profile</button>
                 </div>
             </div>
         </div>
@@ -252,7 +252,6 @@
         function handleFileSelect(e) { const file = e.target.files[0]; if (file) validateAndSetFile(file); }
         function removeFile() {
             selectedFile = null;
-            parsedModules = [];   // forget rows parsed from the previous file
             document.getElementById('fileSelected').classList.add('hidden');
             document.getElementById('dropzone').classList.remove('hidden');
             document.getElementById('uploadBtn').disabled = true;
@@ -312,9 +311,7 @@
             if (weighting === '') {
                 errors.push(`Row ${rowNum}: weighting is required`);
             } else {
-                // Accept '50', '50%', '50 %' — strip the percent sign before parsing
-                const weightClean = String(weighting).replace(/%/g, '').trim();
-                const weightNum = Number(weightClean);
+                const weightNum = Number(weighting);
                 if (!Number.isFinite(weightNum) || !Number.isInteger(weightNum)) {
                     errors.push(`Row ${rowNum}: weighting must be a whole number (got "${weighting}")`);
                 } else if (weightNum < 0 || weightNum > 100) {
@@ -368,74 +365,49 @@
 
         function processFile() {
             if (!selectedFile) return;
-            // Disable the Preview button while we're parsing — a rapid
-            // double-click would otherwise kick off two FileReader operations
-            // and double-show step 3.
-            const uploadBtn = document.getElementById('uploadBtn');
-            const originalLabel = uploadBtn.innerHTML;
-            uploadBtn.disabled = true;
-            uploadBtn.textContent = 'Reading…';
-            const restoreBtn = () => {
-                uploadBtn.disabled = false;
-                uploadBtn.innerHTML = originalLabel;
-            };
-
             const reader = new FileReader();
-            reader.onerror = () => {
-                showFileError('Could not read the file. Please try again.');
-                restoreBtn();
-            };
             reader.onload = function(e) {
-                try {
-                    const rows = parseCSV(e.target.result);
-                    if (rows.length < 2) { showFileError('File appears to be empty or has no data rows.'); return; }
-                    const headers = rows[0].map(h => h.toLowerCase());
-                    const required = ['module_code','module_name','assessment_type','deadline','weighting'];
-                    const missing = required.filter(h => !headers.includes(h));
-                    if (missing.length > 0) { showFileError('Missing columns: ' + missing.join(', ')); return; }
-
-                    const allErrors = [];
-                    const validRows = [];
-
-                    for (let i = 1; i < rows.length; i++) {
-                        // Skip rows where every cell is empty (handles trailing
-                        // blank lines and rows that are nothing but commas).
-                        // `length <= 1` from before missed rows like ",,,,,".
-                        const isAllBlank = rows[i].every(c => String(c || '').trim() === '');
-                        if (isAllBlank) continue;
-
-                        const rowErrors = validateCSVRow(rows[i], i, headers);
-                        if (rowErrors.length > 0) {
-                            allErrors.push(...rowErrors);
-                        } else {
-                            validRows.push({
-                                code:       rows[i][headers.indexOf('module_code')],
-                                name:       rows[i][headers.indexOf('module_name')],
-                                assessment: rows[i][headers.indexOf('assessment_type')],
-                                deadline:   rows[i][headers.indexOf('deadline')],
-                                weighting:  rows[i][headers.indexOf('weighting')]
-                            });
-                        }
+                const rows = parseCSV(e.target.result);
+                if (rows.length < 2) { showFileError('File appears to be empty or has no data rows.'); return; }
+                const headers = rows[0].map(h => h.toLowerCase());
+                const required = ['module_code','module_name','assessment_type','deadline','weighting'];
+                const missing = required.filter(h => !headers.includes(h));
+                if (missing.length > 0) { showFileError('Missing columns: ' + missing.join(', ')); return; }
+                
+                // Validate all rows
+                const allErrors = [];
+                const validRows = [];
+                
+                for (let i = 1; i < rows.length; i++) {
+                    if (rows[i].length <= 1) continue; // Skip empty rows
+                    const rowErrors = validateCSVRow(rows[i], i, headers);
+                    if (rowErrors.length > 0) {
+                        allErrors.push(...rowErrors);
+                    } else {
+                        validRows.push({
+                            code: rows[i][headers.indexOf('module_code')],
+                            name: rows[i][headers.indexOf('module_name')],
+                            assessment: rows[i][headers.indexOf('assessment_type')],
+                            deadline: rows[i][headers.indexOf('deadline')],
+                            weighting: rows[i][headers.indexOf('weighting')]
+                        });
                     }
-
-                    if (allErrors.length > 0) {
-                        showFileError(allErrors.join(' • '));
-                        return;
-                    }
-                    if (validRows.length === 0) {
-                        showFileError('No valid data rows found in CSV file.');
-                        return;
-                    }
-
-                    parsedModules = validRows;
-                    buildPreview();
-                    goToStep(3);
-                } finally {
-                    // Always restore the button — whether we reached step 3,
-                    // hit a validation error, or threw. Without this the user
-                    // would have to remove + re-add the file to unstick it.
-                    restoreBtn();
                 }
+                
+                // If there are errors, show them and don't proceed
+                if (allErrors.length > 0) {
+                    showFileError(allErrors.join(' • '));
+                    return;
+                }
+                
+                if (validRows.length === 0) {
+                    showFileError('No valid data rows found in CSV file.');
+                    return;
+                }
+                
+                parsedModules = validRows;
+                buildPreview();
+                goToStep(3);
             };
             reader.readAsText(selectedFile);
         }
@@ -459,15 +431,11 @@
             tbody.innerHTML = tableHtml;
             document.getElementById('successMsg').textContent = parsedModules.length + ' module' + (parsedModules.length !== 1 ? 's' : '') + ' successfully parsed from your file.';
         }
-        function confirmImport(ev) {
+        function confirmImport() {
             const name = document.getElementById('semesterName').value.trim();
             const academicYear = document.getElementById('semesterYear').value;
 
-            // Use the explicit event arg passed from onclick="confirmImport(event)"
-            // rather than the deprecated global window.event. Fall back to a
-            // querySelector lookup if a future caller forgets to pass it.
-            const confirmBtn = (ev && ev.target) ||
-                document.querySelector('#step-3 .btn-primary');
+            const confirmBtn = event.target;
             confirmBtn.disabled = true;
             const originalText = confirmBtn.textContent;
             confirmBtn.textContent = 'Importing…';
@@ -493,19 +461,12 @@
                         const msg = data.message || data.error || 'Failed to import modules';
                         const err = new Error(detail ? msg + ': ' + detail : msg);
                         err.rowErrors = data.errors;
-                        err.status = response.status;
                         throw err;
                     });
                 }
                 return response.json();
             })
             .then(data => {
-                // Make the newly imported semester the active one so Dashboard,
-                // Tasks, Gantt all show the modules we just uploaded instead of
-                // whatever was active before.
-                if (data.semester_id && typeof setActiveSemesterId === 'function') {
-                    setActiveSemesterId(data.semester_id);
-                }
                 document.getElementById('confirmedName').textContent = '"' + name + '"';
                 const statsContainer = document.getElementById('successStats');
                 statsContainer.innerHTML = '';
@@ -531,20 +492,6 @@
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = originalText;
                 const fallback = 'Network error. Please check your connection and try again.';
-
-                // 409 means the semester name is already taken — send the user
-                // back to step 1 so they can rename it without losing the file
-                if (error.status === 409) {
-                    goToStep(1);
-                    const nameField = document.getElementById('semesterName');
-                    nameField.focus();
-                    nameField.select();
-                    const nameError = document.getElementById('nameError');
-                    nameError.textContent = error.message || 'Pick a different semester name.';
-                    nameError.classList.add('visible');
-                    return;
-                }
-
                 const alertDiv = document.createElement('div');
                 alertDiv.className = 'alert alert-danger';
                 if (Array.isArray(error.rowErrors) && error.rowErrors.length) {
@@ -561,15 +508,7 @@
                 const step3 = document.getElementById('step-3');
                 const existingAlert = step3.querySelector('.alert-danger');
                 if (existingAlert) existingAlert.remove();
-                // anchor the alert above the preview table when it exists,
-                // otherwise just append — insertBefore throws if the anchor
-                // isn't a direct child of step3
-                const anchor = step3.querySelector('.preview-table-wrap');
-                if (anchor && anchor.parentElement === step3) {
-                    step3.insertBefore(alertDiv, anchor);
-                } else {
-                    step3.appendChild(alertDiv);
-                }
+                step3.insertBefore(alertDiv, step3.querySelector('.preview-table-wrap'));
             });
         }
     </script>

@@ -9,11 +9,11 @@
     <link rel="stylesheet" href="Dashboard.css">
     <link rel="stylesheet" href="Tasks.css">
     <link rel="stylesheet" href="Gantt.css">
+      <script src="darkmode.js"></script>
     <script src="auth.js"></script>
 </head>
 <body>
 
-    <div class="sidebar-handle"      aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
     <aside class="sidebar">
         <div class="sidebar-brand">
             <div class="brand-icon" aria-hidden="true">
@@ -97,7 +97,6 @@
             <div class="gantt-legend">
                 <span><span class="lg-swatch lg-bar"></span>Task</span>
                 <span><span class="lg-swatch lg-bar-fill"></span>Logged hours</span>
-                <span><span class="lg-swatch lg-milestone"></span>Milestone</span>
                 <span><span class="lg-swatch lg-deadline"></span>Module deadline</span>
                 <span><span class="lg-swatch lg-today"></span>Today</span>
             </div>
@@ -239,7 +238,6 @@
             labelRows.innerHTML = '';
 
             const { modules, tasks } = data;
-            const milestones = Array.isArray(data.milestones) ? data.milestones : [];
             const range = computeRange(modules, tasks);
 
             document.getElementById('ganttRangeLabel').textContent =
@@ -315,32 +313,28 @@
                 bandHeader.className = 'gantt-module-header-row';
                 band.appendChild(bandHeader);
 
-                // The Gantt is a time-based view — only tasks WITH dates make
-                // sense to show here. Undated tasks were producing orphaned
-                // ghost labels on the left with no matching bar on the right.
-                const datedTasks = moduleTasks.filter(taskHasDates);
-
-                if (datedTasks.length === 0) {
+                if (moduleTasks.length === 0) {
                     const labelRow = document.createElement('div');
                     labelRow.className = 'gantt-empty-label';
-                    labelRow.textContent = moduleTasks.length === 0
-                        ? 'No tasks yet'
-                        : 'No dated tasks';
+                    labelRow.textContent = 'No tasks yet';
                     labelRows.appendChild(labelRow);
 
                     const row = document.createElement('div');
                     row.className = 'gantt-row';
                     band.appendChild(row);
                 } else {
-                    datedTasks.forEach(t => {
+                    moduleTasks.forEach(t => {
+                        // label-pane row for this task
                         const labelRow = document.createElement('div');
                         labelRow.className = 'gantt-task-label';
+                        if (!taskHasDates(t)) labelRow.classList.add('undated');
                         labelRow.innerHTML =
                             '<span class="task-type-dot" style="background:' + typeColor(t.type) + '"></span>' +
                             escapeHtml(t.title);
                         labelRow.title = t.title + ' (' + (t.type || 'task') + ')';
                         labelRows.appendChild(labelRow);
 
+                        // timeline-pane row
                         band.appendChild(renderTaskRow(t, range, taskById));
                     });
                 }
@@ -358,30 +352,6 @@
                     }
                 }
 
-                // milestone markers for THIS module — small navy diamonds
-                // sitting at the milestone's deadline date inside the band.
-                const moduleMilestones = milestones.filter(ms => ms.module_id === m.id);
-                const moduleDeadlineISO = m.deadline ? String(m.deadline).slice(0, 10) : null;
-                moduleMilestones.forEach(ms => {
-                    if (!ms.deadline) return;
-                    const msOffset = daysBetween(range.start, ms.deadline);
-                    if (msOffset < 0 || msOffset > range.totalDays) return;
-                    const flag = document.createElement('div');
-                    flag.className = 'gantt-milestone';
-                    let xpx = msOffset * range.dayPx + range.dayPx / 2;
-                    // If a milestone shares its date with the module deadline,
-                    // nudge it ~10px to the left so the diamond doesn't sit
-                    // exactly on top of the dashed deadline line.
-                    if (moduleDeadlineISO &&
-                        String(ms.deadline).slice(0, 10) === moduleDeadlineISO) {
-                        xpx -= 10;
-                    }
-                    flag.style.left = xpx + 'px';
-                    flag.dataset.tooltip = buildMilestoneTooltip(ms, moduleTasks, taskById);
-                    attachHover(flag);
-                    band.appendChild(flag);
-                });
-
                 body.appendChild(band);
                 totalHeight += band.offsetHeight; // not used for layout, kept for ref
             });
@@ -394,30 +364,15 @@
             syncScroll();
         }
 
-        // Vivid mids — saturated enough that white labels read well on top,
-        // dark enough that the darker progress-fill variant still differs.
-        // Keep keys aligned with the Tasks page <select> options.
         function typeColor(type) {
             switch ((type || '').toLowerCase()) {
-                case 'studying':    return '#3b82f6';  // bright blue
-                case 'reading':     return '#06b6d4';  // teal
-                case 'writing':     return '#8b5cf6';  // purple
-                case 'programming': return '#10b981';  // emerald
-                case 'planning':    return '#f59e0b';  // amber
-                case 'reviewing':   return '#f43f5e';  // rose
-                default:            return '#64748b';  // slate fallback
-            }
-        }
-        // Darker variant of the same hue, used for the "logged hours" portion.
-        function typeColorDark(type) {
-            switch ((type || '').toLowerCase()) {
-                case 'studying':    return '#1d4ed8';
-                case 'reading':     return '#0e7490';
-                case 'writing':     return '#6d28d9';
-                case 'programming': return '#047857';
-                case 'planning':    return '#b45309';
-                case 'reviewing':   return '#be123c';
-                default:            return '#334155';
+                case 'lecture':    return '#1e3a8a';
+                case 'lab':        return '#15803d';
+                case 'assignment': return '#b45309';
+                case 'revision':   return '#7c3aed';
+                case 'reading':    return '#0891b2';
+                case 'exam':       return '#b91c1c';
+                default:           return '#64748b';
             }
         }
 
@@ -456,28 +411,17 @@
             if (clippedEnd <= 0 || clippedStart >= range.totalDays) return row;
 
             const visibleSpan = clippedEnd - clippedStart;
-            const base = typeColor(task.type);
-            const dark = typeColorDark(task.type);
             const bar = document.createElement('div');
             bar.className = 'gantt-bar';
             bar.style.left  = (clippedStart * range.dayPx) + 'px';
-            const barWidth = Math.max(4, visibleSpan * range.dayPx - 2);
-            bar.style.width = barWidth + 'px';
-            // bars too narrow to read text on — show only the colour, no
-            // truncated single character. The hover tooltip still works.
-            if (barWidth < 50) bar.classList.add('gantt-bar-compact');
-            // Solid vivid base — the "remaining" portion of the work.
-            bar.style.background = base;
-            bar.style.borderColor = dark;
-            bar.style.color = '#ffffff'; // label inherits
+            bar.style.width = Math.max(4, visibleSpan * range.dayPx - 2) + 'px';
+            bar.style.borderColor = typeColor(task.type);
+            bar.style.background = 'color-mix(in srgb, ' + typeColor(task.type) + ' 12%, var(--surface))';
 
-            // "Logged hours" overlay — a darker shade of the same hue on the
-            // left, sized by percentage complete. Both light and dark
-            // sections take white text comfortably.
             const fill = document.createElement('div');
             fill.className = 'gantt-bar-fill';
             fill.style.width = (task.percentage || 0) + '%';
-            fill.style.background = dark;
+            fill.style.background = typeColor(task.type);
             bar.appendChild(fill);
 
             const label = document.createElement('span');
@@ -567,45 +511,6 @@
             });
         }
 
-        function buildMilestoneTooltip(ms, moduleTasks, taskById) {
-            const today = startOfDay(new Date());
-            const dl = startOfDay(new Date(ms.deadline));
-            const daysToDl = daysBetween(today, dl);
-            const linkedIds = (ms.task_ids || []).map(Number);
-            const linked = linkedIds.map(id => taskById[id]).filter(Boolean);
-            const total = linked.length;
-            const done  = linked.filter(t => (t.percentage || 0) >= 100).length;
-            const avgPct = total === 0 ? 0 :
-                Math.round(linked.reduce((a, t) => a + (t.percentage || 0), 0) / total);
-
-            let statusLine;
-            if (total > 0 && done === total) {
-                statusLine = '<span class="tt-status tt-status-good">Achieved</span>';
-            } else if (daysToDl < 0) {
-                statusLine = '<span class="tt-status tt-status-bad">Missed ' + Math.abs(daysToDl) + ' day' + (Math.abs(daysToDl) === 1 ? '' : 's') + ' ago</span>';
-            } else if (daysToDl === 0) {
-                statusLine = '<span class="tt-status tt-status-warn">Due today</span>';
-            } else if (daysToDl <= 7) {
-                statusLine = '<span class="tt-status tt-status-warn">' + daysToDl + ' day' + (daysToDl === 1 ? '' : 's') + ' to go</span>';
-            } else {
-                statusLine = '<span class="tt-status tt-status-ok">' + daysToDl + ' days to go</span>';
-            }
-
-            return JSON.stringify({
-                header: '<div class="tt-header tt-header-milestone">' +
-                            '<span class="tt-milestone-icon"></span>' +
-                            '<span class="tt-title">' + escapeHtml(ms.title) + '</span>' +
-                        '</div>',
-                body:
-                    '<div class="tt-row"><span class="tt-key">Milestone</span><span class="tt-val">' + escapeHtml(ms.title) + '</span></div>' +
-                    '<div class="tt-row"><span class="tt-key">Deadline</span><span class="tt-val">' + escapeHtml(fmt(ms.deadline, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) + '</span></div>' +
-                    '<div class="tt-row"><span class="tt-key">Tasks</span><span class="tt-val">' + done + ' of ' + total + ' complete</span></div>' +
-                    '<div class="tt-progress"><div class="tt-progress-fill" style="width:' + avgPct + '%; background: var(--primary)"></div></div>' +
-                    '<div class="tt-row"><span class="tt-key">Progress</span><span class="tt-val">' + avgPct + '%</span></div>' +
-                    '<div class="tt-footer">' + statusLine + '</div>'
-            });
-        }
-
         function attachHover(el) {
             el.addEventListener('mouseenter', showTooltip);
             el.addEventListener('mousemove', moveTooltip);
@@ -626,16 +531,11 @@
             const tt = document.getElementById('ganttTooltip');
             if (tt.classList.contains('hidden')) return;
             const pad = 14;
-            const edge = 8;
             const rect = tt.getBoundingClientRect();
             let x = e.clientX + pad;
             let y = e.clientY + pad;
-            if (x + rect.width  > window.innerWidth  - edge) x = e.clientX - rect.width  - pad;
-            if (y + rect.height > window.innerHeight - edge) y = e.clientY - rect.height - pad;
-            // hard-clamp so even a too-wide tooltip near a narrow viewport
-            // can't slip off the visible area
-            x = Math.max(edge, Math.min(x, window.innerWidth  - rect.width  - edge));
-            y = Math.max(edge, Math.min(y, window.innerHeight - rect.height - edge));
+            if (x + rect.width > window.innerWidth - 8) x = e.clientX - rect.width - pad;
+            if (y + rect.height > window.innerHeight - 8) y = e.clientY - rect.height - pad;
             tt.style.left = x + 'px';
             tt.style.top  = y + 'px';
         }

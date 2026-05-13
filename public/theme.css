@@ -1,5 +1,5 @@
-/* shared design tokens for every page. link this first so page-specific
-   styles can override or build on it. */
+
+
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -41,6 +41,56 @@
     --space-4: 16px;
     --space-5: 20px;
     --space-6: 24px;
+}
+
+/* ── Dark mode token overrides ───────────────────────────────────────────
+   Only the colour tokens that change between light and dark are listed here.
+   Geometry / spacing / radius tokens are theme-agnostic and stay in :root.  */
+[data-theme="dark"] {
+    /* primary blues — lighter so they're legible on dark surfaces */
+    --primary:        #3b82f6;
+    --primary-hover:  #60a5fa;
+    --primary-soft:   rgba(59, 130, 246, 0.15);
+    --accent:         #60a5fa;
+
+    /* legacy alias */
+    --blue:           #3b82f6;
+    --blue-lt:        rgba(59, 130, 246, 0.12);
+
+    /* status colours — lighter tints on dark */
+    --green:    #4ade80;
+    --green-lt: rgba(74, 222, 128, 0.12);
+    --amber:    #fbbf24;
+    --amber-lt: rgba(251, 191, 36, 0.12);
+    --red:      #f87171;
+    --red-lt:   rgba(248, 113, 113, 0.12);
+
+    /* neutrals */
+    --text:     #f1f5f9;
+    --muted:    #94a3b8;
+    --border:   #334155;
+    --bg:       #0f172a;
+    --surface:  #1e293b;
+}
+
+/* Smooth colour transitions when toggling — only animate colour-bearing
+   properties to keep layout/paint costs minimal.                        */
+*, *::before, *::after {
+    transition:
+        background-color 0.2s ease,
+        border-color     0.2s ease,
+        color            0.1s ease,
+        box-shadow       0.2s ease;
+}
+/* Don't animate things where a delay feels wrong */
+a, button, [class*="nav-item"], [class*="sidebar"] {
+    transition:
+        background-color 0.15s ease,
+        border-color     0.15s ease,
+        color            0.1s  ease,
+        transform        0.12s ease,
+        box-shadow       0.15s ease,
+        opacity          0.15s ease;
 }
 
 body {
@@ -231,6 +281,20 @@ body {
 }
 .pm-action:hover { background: var(--bg); }
 .pm-signout { color: var(--red); }
+
+/* ── Dark-mode toggle inside the profile popover ── */
+.dm-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dm-toggle .dm-icon {
+    display: flex;
+    align-items: center;
+    color: var(--muted);
+    flex-shrink: 0;
+}
+.dm-toggle:hover .dm-icon { color: var(--primary); }
 
 /* ── Profile editor modal ── */
 .profile-modal-backdrop {

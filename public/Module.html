@@ -9,11 +9,11 @@
     <link rel="stylesheet" href="Dashboard.css">
     <link rel="stylesheet" href="Tasks.css">
     <link rel="stylesheet" href="Module.css">
+      <script src="darkmode.js"></script>
     <script src="auth.js"></script>
 </head>
 <body>
 
-    <div class="sidebar-handle"      aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
     <aside class="sidebar">
         <div class="sidebar-brand">
             <div class="brand-icon" aria-hidden="true">
@@ -541,16 +541,11 @@
             document.getElementById('msWeighting').textContent  = (module.weighting != null ? module.weighting + '%' : '—');
 
             // hours-logged per task lookup (also stashed at module scope so
-            // the milestones card can compute task completion without refetching).
-            // A session can be linked to multiple tasks via task_ids — each
-            // linked task gets full credit for the session's duration.
+            // the milestones card can compute task completion without refetching)
             const hoursByTask = {};
             sessions.forEach(s => {
-                const dur = parseFloat(s.duration_hours || 0);
-                const ids = Array.isArray(s.task_ids) ? s.task_ids : [];
-                ids.forEach(tid => {
-                    hoursByTask[tid] = (hoursByTask[tid] || 0) + dur;
-                });
+                if (s.task_id == null) return;
+                hoursByTask[s.task_id] = (hoursByTask[s.task_id] || 0) + parseFloat(s.duration_hours || 0);
             });
 
             const tasks = module.tasks || [];
@@ -642,22 +637,15 @@
             sorted.slice(0, 20).forEach(s => {
                 const li = document.createElement('li');
                 li.className = 'session-item';
-                // a session can contribute to multiple tasks — list each one.
-                const ids = Array.isArray(s.task_ids) ? s.task_ids : [];
-                const names = ids
-                    .map(tid => taskTitleById[tid])
-                    .filter(Boolean);
-                const taskLine = names.length
-                    ? '<span class="session-task">on ' +
-                        names.map(n => '<strong>' + escapeHtml(n) + '</strong>').join(', ') +
-                      '</span>'
-                    : '<span class="session-task muted">unattached</span>';
+                const taskName = s.task_id ? taskTitleById[s.task_id] : null;
                 li.innerHTML =
                     '<div class="session-date">' + shortDate(s.date_logged) + '</div>' +
                     '<div class="session-body">' +
                         '<div class="session-top">' +
                             '<span class="session-hours">' + parseFloat(s.duration_hours).toFixed(1) + ' hrs</span>' +
-                            taskLine +
+                            (taskName
+                                ? '<span class="session-task">on <strong>' + escapeHtml(taskName) + '</strong></span>'
+                                : '<span class="session-task muted">unattached</span>') +
                         '</div>' +
                         (s.notes ? '<div class="session-notes">' + escapeHtml(s.notes) + '</div>' : '') +
                     '</div>';
