@@ -1,9 +1,83 @@
 const pool = require('../db');
 
-// allowed task types — kept in sync with the dropdown on the Tasks page.
+// allowed task types - kept in sync with the dropdown on the Tasks page.
 // validated on both create and update so a malicious or buggy client
 // can't insert arbitrary strings.
 const ALLOWED_TASK_TYPES = ['Studying', 'Reading', 'Writing', 'Programming', 'Planning', 'Reviewing'];
+
+function normaliseDependencyIds(body) {
+  const raw = Array.isArray(body.dependency_task_ids)
+    ? body.dependency_task_ids
+    : (body.dependency_task_id ? [body.dependency_task_id] : []);
+  return Array.from(new Set(raw.map(n => Number(n)).filter(Number.isFinite)));
+}
+
+// helper: returns a normalised ISO date string if `value` is a valid date,
+// or null if the value is missing/empty, or undefined to signal an error
+function parseDate(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return undefined;
+  return d.toISOString().slice(0, 10);
+}
+
+async function dependencyChainContains(startTaskId, targetTaskId) {
+  let frontier = [Number(startTaskId)];
+  const seen = new Set();
+
+  for (let depth = 0; depth < 50 && frontier.length > 0; depth++) {
+    if (frontier.includes(targetTaskId)) return true;
+    frontier = frontier.filter(id => !seen.has(id));
+    frontier.forEach(id => seen.add(id));
+    if (frontier.length === 0) return false;
+
+    const result = await pool.query(
+      'SELECT dependency_task_id FROM task_dependencies WHERE task_id = ANY($1::int[])',
+      [frontier]
+    );
+    frontier = result.rows.map(row => Number(row.dependency_task_id)).filter(Number.isFinite);
+  }
+
+  return false;
+}
+
+async function validateDependencies(ids, moduleId, taskId) {
+  if (ids.length === 0) return null;
+  if (taskId && ids.includes(Number(taskId))) {
+    return { status: 400, message: 'task cannot depend on itself' };
+  }
+
+  const dependencyResult = await pool.query(
+    'SELECT id FROM tasks WHERE id = ANY($1::int[]) AND module_id = $2',
+    [ids, moduleId]
+  );
+  if (dependencyResult.rows.length !== ids.length) {
+    return { status: 404, message: 'one or more dependency tasks were not found in this module' };
+  }
+
+  if (taskId) {
+    for (const dependencyId of ids) {
+      // Walk the chain: starting from each proposed dependency, follow its
+      // own dependencies. If we ever land back on the task being updated,
+      // it's a cycle - reject. Cap at 50 hops just in case.
+      if (await dependencyChainContains(dependencyId, Number(taskId))) {
+        return { status: 400, message: 'this dependency would create a circular chain' };
+      }
+    }
+  }
+
+  return null;
+}
+
+async function replaceDependencies(client, taskId, dependencyIds) {
+  await client.query('DELETE FROM task_dependencies WHERE task_id = $1', [taskId]);
+  for (const dependencyId of dependencyIds) {
+    await client.query(
+      'INSERT INTO task_dependencies (task_id, dependency_task_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [taskId, dependencyId]
+    );
+  }
+}
 
 // get all tasks for a specific module
 const getTasksByModule = async (req, res) => {
@@ -21,14 +95,25 @@ const getTasksByModule = async (req, res) => {
       'SELECT id FROM modules WHERE id = $1 AND user_id = $2',
       [module_id, userId]
     );
-
     if (moduleCheck.rows.length === 0) {
       return res.status(404).json({ message: 'module not found or unauthorized' });
     }
 
     // query tasks table for all tasks with matching module_id
     const result = await pool.query(
-      'SELECT * FROM tasks WHERE module_id = $1',
+      `SELECT t.*,
+              COALESCE(
+                ARRAY_AGG(td.dependency_task_id) FILTER (WHERE td.dependency_task_id IS NOT NULL),
+                CASE WHEN t.dependency_task_id IS NOT NULL
+                  THEN ARRAY[t.dependency_task_id]
+                  ELSE ARRAY[]::int[]
+                END
+              ) AS dependency_task_ids
+         FROM tasks t
+         LEFT JOIN task_dependencies td ON td.task_id = t.id
+        WHERE t.module_id = $1
+        GROUP BY t.id
+        ORDER BY t.id`,
       [module_id]
     );
 
@@ -39,20 +124,12 @@ const getTasksByModule = async (req, res) => {
   }
 };
 
-// helper: returns a normalised ISO date string if `value` is a valid date,
-// or null if the value is missing/empty, or undefined to signal an error
-function parseDate(value) {
-  if (value === undefined || value === null || value === '') return null;
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return undefined;
-  return d.toISOString().slice(0, 10);
-}
-
 // create a new task
 const createTask = async (req, res) => {
   try {
-    const { module_id, title, type, required_hours, start_date, end_date, dependency_task_id, notes } = req.body;
+    const { module_id, title, type, required_hours, start_date, end_date, notes } = req.body;
     const userId = req.user.id;
+    const dependencyIds = normaliseDependencyIds(req.body);
 
     // validate required fields are present
     if (!module_id || !title || !type || required_hours === undefined) {
@@ -61,9 +138,7 @@ const createTask = async (req, res) => {
 
     // validate type against the allowed set
     if (!ALLOWED_TASK_TYPES.includes(type)) {
-      return res.status(400).json({
-        message: 'type must be one of: ' + ALLOWED_TASK_TYPES.join(', ')
-      });
+      return res.status(400).json({ message: 'type must be one of: ' + ALLOWED_TASK_TYPES.join(', ') });
     }
 
     // validate required_hours is a positive number
@@ -73,13 +148,9 @@ const createTask = async (req, res) => {
 
     // validate start_date / end_date if provided, and that start <= end
     const startISO = parseDate(start_date);
-    const endISO   = parseDate(end_date);
-    if (startISO === undefined) {
-      return res.status(400).json({ message: 'start_date is not a valid date' });
-    }
-    if (endISO === undefined) {
-      return res.status(400).json({ message: 'end_date is not a valid date' });
-    }
+    const endISO = parseDate(end_date);
+    if (startISO === undefined) return res.status(400).json({ message: 'start_date is not a valid date' });
+    if (endISO === undefined) return res.status(400).json({ message: 'end_date is not a valid date' });
     if (startISO && endISO && startISO > endISO) {
       return res.status(400).json({ message: 'start_date must be on or before end_date' });
     }
@@ -89,30 +160,35 @@ const createTask = async (req, res) => {
       'SELECT id FROM modules WHERE id = $1 AND user_id = $2',
       [module_id, userId]
     );
-
     if (moduleCheck.rows.length === 0) {
       return res.status(404).json({ message: 'module not found' });
     }
 
-    // if dependency_task_id is provided validate it exists in the same module
-    if (dependency_task_id) {
-      const dependencyResult = await pool.query(
-        'SELECT id FROM tasks WHERE id = $1 AND module_id = $2',
-        [dependency_task_id, module_id]
-      );
-
-      if (dependencyResult.rows.length === 0) {
-        return res.status(404).json({ message: 'dependency task not found in this module' });
-      }
+    // if dependency ids are provided validate they exist in the same module
+    const dependencyError = await validateDependencies(dependencyIds, module_id);
+    if (dependencyError) {
+      return res.status(dependencyError.status).json({ message: dependencyError.message });
     }
 
-    // insert new task into tasks table
-    const result = await pool.query(
-      'INSERT INTO tasks (module_id, title, type, required_hours, start_date, end_date, dependency_task_id, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [module_id, title, type, required_hours, startISO, endISO, dependency_task_id || null, notes || null]
-    );
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    return res.status(201).json(result.rows[0]);
+      // insert new task into tasks table
+      const result = await client.query(
+        'INSERT INTO tasks (module_id, title, type, required_hours, start_date, end_date, dependency_task_id, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+        [module_id, title, type, required_hours, startISO, endISO, dependencyIds[0] || null, notes || null]
+      );
+      await replaceDependencies(client, result.rows[0].id, dependencyIds);
+      await client.query('COMMIT');
+      result.rows[0].dependency_task_ids = dependencyIds;
+      return res.status(201).json(result.rows[0]);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('create task error', error);
     return res.status(500).json({ message: 'internal server error' });
@@ -123,14 +199,14 @@ const createTask = async (req, res) => {
 const updateTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, type, required_hours, start_date, end_date, dependency_task_id, notes } = req.body;
+    const { title, type, required_hours, start_date, end_date, dependency_task_id, dependency_task_ids, notes } = req.body;
     const userId = req.user.id;
+    const dependencyIdsProvided = dependency_task_ids !== undefined || dependency_task_id !== undefined;
+    const dependencyIds = dependencyIdsProvided ? normaliseDependencyIds(req.body) : null;
 
     // validate type against the allowed set if provided
     if (type !== undefined && !ALLOWED_TASK_TYPES.includes(type)) {
-      return res.status(400).json({
-        message: 'type must be one of: ' + ALLOWED_TASK_TYPES.join(', ')
-      });
+      return res.status(400).json({ message: 'type must be one of: ' + ALLOWED_TASK_TYPES.join(', ') });
     }
 
     // validate required_hours is a positive number if provided
@@ -143,66 +219,35 @@ const updateTask = async (req, res) => {
       'SELECT t.* FROM tasks t JOIN modules m ON t.module_id = m.id WHERE t.id = $1 AND m.user_id = $2',
       [id, userId]
     );
-
     if (currentResult.rows.length === 0) {
       return res.status(404).json({ message: 'task not found' });
     }
-
     const current = currentResult.rows[0];
 
     // validate start_date / end_date if provided
     let startISO;
     if (start_date !== undefined) {
       startISO = parseDate(start_date);
-      if (startISO === undefined) {
-        return res.status(400).json({ message: 'start_date is not a valid date' });
-      }
+      if (startISO === undefined) return res.status(400).json({ message: 'start_date is not a valid date' });
     }
     let endISO;
     if (end_date !== undefined) {
       endISO = parseDate(end_date);
-      if (endISO === undefined) {
-        return res.status(400).json({ message: 'end_date is not a valid date' });
-      }
+      if (endISO === undefined) return res.status(400).json({ message: 'end_date is not a valid date' });
     }
     const finalStart = start_date !== undefined ? startISO : current.start_date;
-    const finalEnd   = end_date   !== undefined ? endISO   : current.end_date;
+    const finalEnd = end_date !== undefined ? endISO : current.end_date;
     if (finalStart && finalEnd && new Date(finalStart) > new Date(finalEnd)) {
       return res.status(400).json({ message: 'start_date must be on or before end_date' });
     }
 
-    // if a new dependency is provided, validate it: must not be self,
+    // if new dependencies are provided, validate them: must not be self,
     // must exist, must belong to the same module, AND must not introduce
-    // a transitive cycle (A -> B -> A).
-    if (dependency_task_id !== undefined && dependency_task_id !== null) {
-      if (Number(dependency_task_id) === Number(id)) {
-        return res.status(400).json({ message: 'task cannot depend on itself' });
-      }
-
-      const dependencyResult = await pool.query(
-        'SELECT id FROM tasks WHERE id = $1 AND module_id = $2',
-        [dependency_task_id, current.module_id]
-      );
-
-      if (dependencyResult.rows.length === 0) {
-        return res.status(404).json({ message: 'dependency task not found in this module' });
-      }
-
-      // Walk the chain: starting from the proposed dependency, follow each
-      // task's own dependency_task_id. If we ever land back on the task
-      // being updated, it's a cycle — reject. Cap at 50 hops just in case.
-      let cursor = Number(dependency_task_id);
-      for (let i = 0; i < 50 && cursor; i++) {
-        if (cursor === Number(id)) {
-          return res.status(400).json({
-            message: 'this dependency would create a circular chain',
-          });
-        }
-        const step = await pool.query(
-          'SELECT dependency_task_id FROM tasks WHERE id = $1',
-          [cursor]
-        );
-        cursor = step.rows[0] && step.rows[0].dependency_task_id;
+    // a transitive cycle.
+    if (dependencyIdsProvided) {
+      const dependencyError = await validateDependencies(dependencyIds, current.module_id, id);
+      if (dependencyError) {
+        return res.status(dependencyError.status).json({ message: dependencyError.message });
       }
     }
 
@@ -210,16 +255,30 @@ const updateTask = async (req, res) => {
     const updateTitle = title !== undefined ? title : current.title;
     const updateType = type !== undefined ? type : current.type;
     const updateRequiredHours = required_hours !== undefined ? required_hours : current.required_hours;
-    const updateDependencyTaskId = dependency_task_id !== undefined ? dependency_task_id : current.dependency_task_id;
+    const updateDependencyTaskId = dependencyIdsProvided ? (dependencyIds[0] || null) : current.dependency_task_id;
     const updateNotes = notes !== undefined ? notes : current.notes;
 
-    // update task in database
-    const result = await pool.query(
-      'UPDATE tasks SET title = $1, type = $2, required_hours = $3, start_date = $4, end_date = $5, dependency_task_id = $6, notes = $7 WHERE id = $8 RETURNING *',
-      [updateTitle, updateType, updateRequiredHours, finalStart, finalEnd, updateDependencyTaskId || null, updateNotes, id]
-    );
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    return res.status(200).json(result.rows[0]);
+      // update task in database
+      const result = await client.query(
+        'UPDATE tasks SET title = $1, type = $2, required_hours = $3, start_date = $4, end_date = $5, dependency_task_id = $6, notes = $7 WHERE id = $8 RETURNING *',
+        [updateTitle, updateType, updateRequiredHours, finalStart, finalEnd, updateDependencyTaskId, updateNotes, id]
+      );
+      if (dependencyIdsProvided) {
+        await replaceDependencies(client, id, dependencyIds);
+        result.rows[0].dependency_task_ids = dependencyIds;
+      }
+      await client.query('COMMIT');
+      return res.status(200).json(result.rows[0]);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('update task error', error);
     return res.status(500).json({ message: 'internal server error' });
