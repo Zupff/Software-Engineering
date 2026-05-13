@@ -50,6 +50,15 @@ CREATE TABLE tasks (
   CONSTRAINT tasks_dates_order CHECK (start_date IS NULL OR end_date IS NULL OR start_date <= end_date)
 );
 
+-- many-to-many dependencies between tasks. This allows one task to depend
+-- on several prerequisite tasks.
+CREATE TABLE task_dependencies (
+  task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  dependency_task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  PRIMARY KEY (task_id, dependency_task_id),
+  CONSTRAINT task_dependencies_not_self CHECK (task_id <> dependency_task_id)
+);
+
 -- tracks study sessions logged by users for modules
 CREATE TABLE study_sessions (
   id SERIAL PRIMARY KEY,
