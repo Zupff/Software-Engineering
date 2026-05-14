@@ -118,10 +118,8 @@
                             <input type="date" id="taskEnd" required>
                         </div>
                         <div class="form-field">
-                            <label for="taskDependency">Depends on (optional)</label>
-                            <select id="taskDependency">
-                                <option value="">None</option>
-                            </select>
+                            <label>Depends on (optional)</label>
+                            <div class="task-checkbox-row" id="taskDependencyList"></div>
                         </div>
                     </div>
                     <div class="form-row">
@@ -311,17 +309,31 @@
         }
 
         function populateDependencyOptions(tasks, excludeId) {
-            const sel = document.getElementById('taskDependency');
-            const current = sel.value;
-            sel.innerHTML = '<option value="">None</option>';
-            tasks.forEach(t => {
-                if (excludeId && t.id === excludeId) return;
-                const opt = document.createElement('option');
-                opt.value = t.id;
-                opt.textContent = t.title;
-                sel.appendChild(opt);
-            });
-            sel.value = current;
+            const list = document.getElementById('taskDependencyList');
+            const current = Array.from(list.querySelectorAll('input[name="dependency_task_ids"]:checked'))
+                .map(input => Number(input.value));
+            list.innerHTML = buildDependencyCheckboxes(tasks, current, excludeId);
+        }
+
+        function dependencyIdsFor(task) {
+            if (Array.isArray(task.dependency_task_ids)) {
+                return task.dependency_task_ids.map(Number).filter(Number.isFinite);
+            }
+            return task.dependency_task_id ? [Number(task.dependency_task_id)] : [];
+        }
+
+        function buildDependencyCheckboxes(tasks, selectedIds, excludeId) {
+            const availableTasks = tasks.filter(t => !excludeId || Number(t.id) !== Number(excludeId));
+            if (availableTasks.length === 0) {
+                return '<span class="task-checkbox-empty">None available</span>';
+            }
+            return availableTasks.map(t =>
+                '<label class="task-checkbox">' +
+                    '<input type="checkbox" name="dependency_task_ids" value="' + t.id + '"' +
+                        (selectedIds.includes(Number(t.id)) ? ' checked' : '') + '>' +
+                    '<span class="task-checkbox-label">' + escapeHtml(t.title) + '</span>' +
+                '</label>'
+            ).join('');
         }
 
         // Parse a 'YYYY-MM-DD' string as a local-midnight Date so display
@@ -353,11 +365,12 @@
             const hoursLogged = hoursLoggedFor(task.id);
             const required = parseFloat(task.required_hours);
             const pct = required > 0 ? Math.min(100, Math.round((hoursLogged / required) * 100)) : 0;
-            const dep = task.dependency_task_id
-                ? (allTasks.find(t => t.id === task.dependency_task_id) || null)
-                : null;
-            // Brief: a task cannot be started before its dependency is complete.
-            const blocked = !!(dep && !isTaskComplete(dep));
+            const deps = dependencyIdsFor(task)
+                .map(id => allTasks.find(t => Number(t.id) === Number(id)))
+                .filter(Boolean);
+            // Brief: a task cannot be started before its dependencies are complete.
+            const blockedDeps = deps.filter(dep => !isTaskComplete(dep));
+            const blocked = blockedDeps.length > 0;
             const today = localDateString();
 
             const startStr = fmtShortDate(task.start_date);
@@ -383,9 +396,9 @@
                             '<span class="task-pill">' + escapeHtml(task.type) + '</span>' +
                             '<span>' + hoursLogged.toFixed(1) + ' / ' + required.toFixed(1) + ' hrs</span>' +
                             (dateRange ? '<span class="task-dates">' + dateRange + '</span>' : '') +
-                            (dep ? '<span class="task-dep' + (blocked ? ' task-dep-blocked' : '') + '">' +
+                            (deps.length ? '<span class="task-dep' + (blocked ? ' task-dep-blocked' : '') + '">' +
                                 (blocked ? 'Blocked by ' : 'after ') +
-                                '<strong>' + escapeHtml(dep.title) + '</strong></span>' : '') +
+                                '<strong>' + escapeHtml(deps.map(dep => dep.title).join(', ')) + '</strong></span>' : '') +
                         '</div>' +
                     '</div>' +
                     '<div class="task-actions">' +
@@ -422,21 +435,21 @@
             return row;
         }
 
-        // Chip-based multi-select shown under the Hours/Date/Notes row of
+        // Checkbox-based multi-select shown under the Hours/Date/Notes row of
         // the Log Session form. The originating task (the row the user
         // clicked) is pre-checked and locked. Other tasks in the same
         // module can be toggled to also receive credit for this activity.
         function buildSessionTaskPicker(originatingTask, allTasks) {
             const others = allTasks.filter(t => t.id !== originatingTask.id);
-            const lockedChip =
-                '<label class="task-chip task-chip-locked" title="The task you\'re logging on — can\'t be unlinked">' +
+            const lockedCheckbox =
+                '<label class="task-checkbox task-checkbox-locked" title="The task you\'re logging on — can\'t be unlinked">' +
                     '<input type="checkbox" name="taskId" value="' + originatingTask.id + '" checked disabled>' +
-                    '<span class="task-chip-label">' + escapeHtml(originatingTask.title) + '</span>' +
+                    '<span class="task-checkbox-label">' + escapeHtml(originatingTask.title) + '</span>' +
                 '</label>';
-            const otherChips = others.map(t =>
-                '<label class="task-chip">' +
+            const otherCheckboxes = others.map(t =>
+                '<label class="task-checkbox">' +
                     '<input type="checkbox" name="taskId" value="' + t.id + '">' +
-                    '<span class="task-chip-label">' + escapeHtml(t.title) + '</span>' +
+                    '<span class="task-checkbox-label">' + escapeHtml(t.title) + '</span>' +
                 '</label>'
             ).join('');
             if (others.length === 0) {
@@ -446,7 +459,7 @@
                 '<div class="form-row session-task-row">' +
                     '<div class="form-field form-field-grow">' +
                         '<label>Also contributes to</label>' +
-                        '<div class="task-chip-row">' + lockedChip + otherChips + '</div>' +
+                        '<div class="task-checkbox-row">' + lockedCheckbox + otherCheckboxes + '</div>' +
                     '</div>' +
                 '</div>'
             );
@@ -459,15 +472,8 @@
             const typeOpts = types.map(t =>
                 '<option value="' + t + '"' + (t === task.type ? ' selected' : '') + '>' + t + '</option>'
             ).join('');
-            const depOpts = ['<option value="">None</option>'].concat(
-                allTasks
-                    .filter(t => t.id !== task.id)
-                    .map(t =>
-                        '<option value="' + t.id + '"' +
-                            (Number(task.dependency_task_id) === Number(t.id) ? ' selected' : '') +
-                        '>' + escapeHtml(t.title) + '</option>'
-                    )
-            ).join('');
+            const selectedDeps = dependencyIdsFor(task);
+            const depCheckboxes = buildDependencyCheckboxes(allTasks, selectedDeps, task.id);
             const startVal = task.start_date ? String(task.start_date).slice(0, 10) : '';
             const endVal   = task.end_date   ? String(task.end_date).slice(0, 10)   : '';
 
@@ -499,7 +505,7 @@
                         '</div>' +
                         '<div class="form-field">' +
                             '<label>Depends on (optional)</label>' +
-                            '<select name="dependency_task_id">' + depOpts + '</select>' +
+                            '<div class="task-checkbox-row">' + depCheckboxes + '</div>' +
                         '</div>' +
                     '</div>' +
                     '<div class="form-row">' +
@@ -546,8 +552,8 @@
                 required_hours: parseFloat(form.required_hours.value),
                 start_date: form.start_date.value || null,
                 end_date: form.end_date.value || null,
-                dependency_task_id: form.dependency_task_id.value
-                    ? Number(form.dependency_task_id.value) : null,
+                dependency_task_ids: Array.from(form.querySelectorAll('input[name="dependency_task_ids"]:checked'))
+                    .map(input => Number(input.value)),
                 notes: form.notes.value.trim() || null
             };
 
@@ -604,7 +610,8 @@
                 required_hours: parseFloat(document.getElementById('taskHours').value),
                 start_date: document.getElementById('taskStart').value || null,
                 end_date: document.getElementById('taskEnd').value || null,
-                dependency_task_id: document.getElementById('taskDependency').value || null,
+                dependency_task_ids: Array.from(document.querySelectorAll('#taskDependencyList input[name="dependency_task_ids"]:checked'))
+                    .map(input => Number(input.value)),
                 notes: document.getElementById('taskNotes').value.trim() || null
             };
 
@@ -667,7 +674,7 @@
             event.preventDefault();
             const form = event.target;
 
-            // Collect every checked task chip (including the locked
+            // Collect every checked task checkbox (including the locked
             // originating task). Disabled inputs aren't submitted via
             // FormData natively, so we read .checked directly. The
             // originating task is always force-included as a safety net.
@@ -688,9 +695,11 @@
             // the session has been logged successfully.
             const tasks = tasksByModule[selectedModuleId] || [];
             const thisTask = tasks.find(t => t.id === taskId);
-            const dep = thisTask && thisTask.dependency_task_id
-                ? tasks.find(t => t.id === thisTask.dependency_task_id) : null;
-            const wasBlocked = !!(dep && !isTaskComplete(dep));
+            const deps = thisTask
+                ? dependencyIdsFor(thisTask).map(id => tasks.find(t => Number(t.id) === Number(id))).filter(Boolean)
+                : [];
+            const blockedDeps = deps.filter(dep => !isTaskComplete(dep));
+            const wasBlocked = blockedDeps.length > 0;
 
             const submitBtn = form.querySelector('button[type="submit"]');
             const originalLabel = submitBtn ? submitBtn.textContent : '';
@@ -717,7 +726,7 @@
                 if (wasBlocked && typeof uiAlert === 'function') {
                     await uiAlert({
                         title: 'Session logged — heads up',
-                        body: 'This task depends on "' + dep.title + '", which isn\'t complete yet. Hours were still recorded.',
+                        body: 'This task depends on "' + blockedDeps.map(dep => dep.title).join(', ') + '", which is not complete yet. Hours were still recorded.',
                     });
                 }
             } catch (err) {

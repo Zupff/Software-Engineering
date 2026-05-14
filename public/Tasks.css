@@ -244,14 +244,14 @@ body { height: 100vh; }
     border-radius: var(--radius);
 }
 
-/* Chip-based multi-task picker inside the Log Session form. */
-.task-chip-row {
+/* Checkbox-based multi-task picker inside the Log Session form. */
+.task-checkbox-row {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     padding-top: 2px;
 }
-.task-chip {
+.task-checkbox {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -266,15 +266,15 @@ body { height: 100vh; }
     transition: background 0.15s, border-color 0.15s, color 0.15s;
     user-select: none;
 }
-.task-chip input { position: absolute; opacity: 0; pointer-events: none; }
-.task-chip:hover { color: var(--text); border-color: color-mix(in srgb, var(--primary) 30%, var(--border)); }
-.task-chip:has(input:checked) {
+.task-checkbox input { position: absolute; opacity: 0; pointer-events: none; }
+.task-checkbox:hover { color: var(--text); border-color: color-mix(in srgb, var(--primary) 30%, var(--border)); }
+.task-checkbox:has(input:checked) {
     background: var(--primary-soft);
     border-color: var(--primary);
     color: var(--primary);
     font-weight: 600;
 }
-.task-chip-locked {
+.task-checkbox-locked {
     cursor: default;
     background: var(--primary-soft);
     border-color: var(--primary);
@@ -282,9 +282,9 @@ body { height: 100vh; }
     font-weight: 600;
     opacity: 0.92;
 }
-.task-chip-locked:hover { color: var(--primary); border-color: var(--primary); }
+.task-checkbox-locked:hover { color: var(--primary); border-color: var(--primary); }
 /* Empty dependency picker state when there are no other tasks to choose. */
-.task-chip-empty {
+.task-checkbox-empty {
     font-size: 0.78rem;
     color: var(--muted);
     padding: 5px 0;
