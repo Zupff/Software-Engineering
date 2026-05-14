@@ -283,6 +283,12 @@ body { height: 100vh; }
     opacity: 0.92;
 }
 .task-chip-locked:hover { color: var(--primary); border-color: var(--primary); }
+/* Empty dependency picker state when there are no other tasks to choose. */
+.task-chip-empty {
+    font-size: 0.78rem;
+    color: var(--muted);
+    padding: 5px 0;
+}
 .form-row {
     display: flex;
     flex-wrap: wrap;
