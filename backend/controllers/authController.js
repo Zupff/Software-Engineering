@@ -5,7 +5,7 @@ const pool = require('../db');
 const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,32}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// JWT lifetime: 1 day instead of 7. Shorter window = smaller blast radius
+// JWT lifetime shortened to 1 day so that there is a lesser risk of login compromisation 
 // if a token leaks. authenticatedFetch on the client logs the user out
 
 const TOKEN_EXPIRY = '1d';
