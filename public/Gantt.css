@@ -1,13 +1,3 @@
-/* Gantt page – split-pane layout:
-   ┌──────────────┬──────────────────────────────────────────┐
-   │ LABEL PANE   │  TIMELINE (horizontally scrollable)      │
-   │ (sticky)     │  ┌───── months ─────┐                    │
-   │ - module     │  ├ days ────────────┤                    │
-   │   ├ task     │  │ ▓▓▓▓▓     bar    │                    │
-   │   └ task     │  │   ▓▓▓▓ bar       │                    │
-   └──────────────┴──────────────────────────────────────────┘
-*/
-
 :root {
     --gantt-label-w: 240px;
     --gantt-row-h: 36px;

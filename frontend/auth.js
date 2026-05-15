@@ -1,27 +1,26 @@
-/**
- * Authentication utility functions
- * Manages tokens, session state, and authenticated requests
- */
+
+
+//the purpose of this file is to manage user login authentication
 
 function saveToken(token) {
-    localStorage.setItem('authToken', token);
+    localStorage.setItem('authToken', token);     //save login token
 }
 
 function getToken() {
-    return localStorage.getItem('authToken');
+    return localStorage.getItem('authToken'); // retrieve saved login token
 }
 
 function isLoggedIn() {
-    return getToken() !== null;
+    return getToken() !== null; // check if the user has a login token saved to the browser if not return null
 }
 
 function logout() {
-    localStorage.removeItem('authToken');
-    window.location.href = 'index.html';
+    localStorage.removeItem('authToken');    //upon logging out remove the token from browser
+    window.location.href = 'index.html';   
 }
 
 function getAuthHeader() {
-    const token = getToken();
+    const token = getToken();          //create a header for authorisation using token
     if (token) {
         return { 'Authorization': 'Bearer ' + token };
     }
@@ -42,7 +41,7 @@ function authenticatedFetch(url, options = {}) {
     
     return fetch(url, mergedOptions).then(response => {
         if (response.status === 401) {
-            logout();
+            logout();                      //if the user doesnt have a token log them out
             return;
         }
         return response;
