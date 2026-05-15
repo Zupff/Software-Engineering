@@ -1,7 +1,7 @@
 const pool = require('../db');
 
-// helper function to calculate module progress and status. semesterId
-// is optional; when provided, only that semester's modules are returned.
+// helper function to calculate module progress and status. 
+// semesterId is optional; when provided, only that semester's modules are returned.
 const calculateProgress = async (userId, semesterId) => {
   const modulesResult = semesterId
     ? await pool.query(
@@ -24,8 +24,8 @@ const calculateProgress = async (userId, semesterId) => {
 
       const hoursLogged = parseFloat(hoursResult.rows[0].total_hours);
 
-      // sum required hours from this module's tasks. progress is measured
-      // against the workload the student has actually planned, not a
+      // sum required hours from this module's tasks. 
+      // progress is measured against the workload the student has actually planned, not a
       // hardcoded constant.
       const requiredResult = await pool.query(
         'SELECT COALESCE(SUM(required_hours), 0) as total_required FROM tasks WHERE module_id = $1',
@@ -48,10 +48,7 @@ const calculateProgress = async (userId, semesterId) => {
 
       // determine status. brief specifies completed / upcoming / missed;
       // 'Due Soon' is a sub-category of upcoming for deadlines within a
-      // week. 'Behind Schedule' was previously produced by dead code (the
-      // expected-progress calc was always negative, clamped to 0, so the
-      // check never fired) and required a module start date we don't
-      // track, so it is removed.
+      // week. 
       let status;
       if (percentage >= 100) {
         status = 'Completed';
@@ -86,7 +83,7 @@ const getDashboard = async (req, res) => {
     const userId = req.user.id;
     const { semester_id } = req.query;
 
-    // calculate progress for all modules (optionally scoped to a semester)
+    // calculate progress for all modules 
     const progress = await calculateProgress(userId, semester_id);
 
     // calculate summary counts
