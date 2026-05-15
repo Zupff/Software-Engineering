@@ -47,17 +47,8 @@ function setActiveSemesterId(id) {
     }
 }
 
-// Prevent the sidebar paperclip from gaining focus on click — without this
-// the browser sticks focus on the button, sidebar :focus-within stays
-// truthy, and the sidebar pins open until the user clicks elsewhere.
-// Hover-to-peek still works, keyboard nav into the actual links still works,
-// but a stray click on the clip itself no longer latches the sidebar.
-if (typeof document !== 'undefined') {
-    document.addEventListener('mousedown', (ev) => {
-        const handle = ev.target.closest && ev.target.closest('.sidebar-handle');
-        if (handle) ev.preventDefault();
-    });
-}
+
+
 
 // Decorate a URL with ?semester_id=<active> if one is set. Pass-through if
 // the URL already specifies a semester_id or if no active semester exists.
@@ -77,7 +68,7 @@ function withActiveSemester(url) {
 
 async function renderSemesterSwitcher() {
     const switcherTargets = Array.from(document.querySelectorAll('[data-current-semester]'));
-    const nameTargets     = Array.from(document.querySelectorAll('[data-current-semester-name]'));
+    const nameTargets = Array.from(document.querySelectorAll('[data-current-semester-name]'));
     if (switcherTargets.length === 0 && nameTargets.length === 0) return;
 
     let semesters = [];
@@ -206,21 +197,21 @@ function attachSwitcher(el, semesters, active) {
 // new users get an onboarding pass without clicking anything.
 
 const AVATAR_LIBRARY = {
-    cap:    '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
-    book:   '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
-    atom:   '<circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5z"/>',
-    code:   '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+    cap: '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
+    book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+    atom: '<circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5z"/>',
+    code: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
     pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
     rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
 };
 
 const COLOR_PRESETS = {
-    navy:  '#1e3a8a',
+    navy: '#1e3a8a',
     slate: '#475569',
-    teal:  '#0d9488',
+    teal: '#0d9488',
     amber: '#b45309',
-    rose:  '#be185d',
-    plum:  '#7c3aed',
+    rose: '#be185d',
+    plum: '#7c3aed',
 };
 
 let cachedProfile = null;
@@ -293,8 +284,8 @@ function attachProfilePopover(pill) {
     const courseLine = d.sub ? '<div class="pm-course"></div>' : '';
     menu.innerHTML =
         '<div class="pm-head">' +
-            '<div class="pm-name"></div>' +
-            courseLine +
+        '<div class="pm-name"></div>' +
+        courseLine +
         '</div>' +
         '<button type="button" class="pm-action" data-action="edit">Edit profile</button>' +
         '<button type="button" class="pm-action" data-action="settings">Settings</button>' +
@@ -345,10 +336,10 @@ async function openProfileEditor(initialTab) {
         courses.map(c => '<option value="' + c.replace(/"/g, '&quot;') + '">' + c + '</option>').join('');
 
     const p = cachedProfile || {};
-    modal.querySelector('#peName').value     = p.display_name || '';
+    modal.querySelector('#peName').value = p.display_name || '';
     courseSel.value = p.course || '';
     setSelectedAvatar(modal, p.avatar_id || 'cap');
-    setSelectedColor(modal,  p.avatar_color || 'navy');
+    setSelectedColor(modal, p.avatar_color || 'navy');
 
     setEditorTab(modal, initialTab === 'settings' ? 'settings' : 'profile');
     // refresh the semester list every open so additions/deletions stay current
@@ -403,8 +394,8 @@ async function refreshSettingsSemesterList(modal) {
         row.className = 'pe-sem-row';
         row.innerHTML =
             '<div class="pe-sem-info">' +
-                '<div class="pe-sem-name"></div>' +
-                '<div class="pe-sem-meta"></div>' +
+            '<div class="pe-sem-name"></div>' +
+            '<div class="pe-sem-meta"></div>' +
             '</div>' +
             '<button type="button" class="pe-btn pe-btn-ghost pe-sem-delete" aria-label="Delete semester">Delete</button>';
         row.querySelector('.pe-sem-name').textContent = s.name;
@@ -446,18 +437,18 @@ function uiDialog({ title, body, confirmText, cancelText, danger }) {
         backdrop.className = 'ui-dialog-backdrop';
         backdrop.innerHTML =
             '<div class="ui-dialog" role="dialog" aria-modal="true">' +
-                '<div class="ui-dialog-head">' +
-                    '<h3></h3>' +
-                '</div>' +
-                '<div class="ui-dialog-body"></div>' +
-                '<div class="ui-dialog-actions">' +
-                    (cancelText !== null
-                        ? '<button type="button" class="pe-btn pe-btn-ghost" data-act="cancel"></button>'
-                        : '') +
-                    '<button type="button" class="pe-btn ' +
-                        (danger ? 'pe-btn-danger' : 'pe-btn-primary') +
-                        '" data-act="confirm"></button>' +
-                '</div>' +
+            '<div class="ui-dialog-head">' +
+            '<h3></h3>' +
+            '</div>' +
+            '<div class="ui-dialog-body"></div>' +
+            '<div class="ui-dialog-actions">' +
+            (cancelText !== null
+                ? '<button type="button" class="pe-btn pe-btn-ghost" data-act="cancel"></button>'
+                : '') +
+            '<button type="button" class="pe-btn ' +
+            (danger ? 'pe-btn-danger' : 'pe-btn-primary') +
+            '" data-act="confirm"></button>' +
+            '</div>' +
             '</div>';
         backdrop.querySelector('h3').textContent = title;
         backdrop.querySelector('.ui-dialog-body').textContent = body;
@@ -473,7 +464,7 @@ function uiDialog({ title, body, confirmText, cancelText, danger }) {
         }
         function onKey(ev) {
             if (ev.key === 'Escape') close(false);
-            if (ev.key === 'Enter')  close(true);
+            if (ev.key === 'Enter') close(true);
         }
         backdrop.addEventListener('click', ev => {
             if (ev.target === backdrop) close(false);
@@ -488,8 +479,8 @@ function uiDialog({ title, body, confirmText, cancelText, danger }) {
         setTimeout(() => backdrop.querySelector('[data-act="confirm"]').focus(), 30);
     });
 }
-function uiConfirm(opts)  { return uiDialog(opts); }
-function uiAlert(opts)    { return uiDialog({ ...opts, cancelText: null, confirmText: opts.confirmText || 'Close' }); }
+function uiConfirm(opts) { return uiDialog(opts); }
+function uiAlert(opts) { return uiDialog({ ...opts, cancelText: null, confirmText: opts.confirmText || 'Close' }); }
 
 async function clearAllSemesters(modal) {
     const ok = await uiConfirm({
@@ -560,72 +551,72 @@ function buildProfileEditorModal() {
 
     modal.innerHTML =
         '<div class="profile-modal" role="dialog" aria-modal="true" aria-labelledby="peTitle">' +
-            '<div class="pe-head">' +
-                '<h2 id="peTitle">Set up your profile</h2>' +
-                '<p>This is just for you — you can change it any time.</p>' +
-                '<div class="pe-tabs" role="tablist">' +
-                    '<button type="button" class="pe-tab active" data-tab="profile" role="tab">Profile</button>' +
-                    '<button type="button" class="pe-tab"        data-tab="settings" role="tab">Settings</button>' +
-                '</div>' +
-            '</div>' +
+        '<div class="pe-head">' +
+        '<h2 id="peTitle">Set up your profile</h2>' +
+        '<p>This is just for you — you can change it any time.</p>' +
+        '<div class="pe-tabs" role="tablist">' +
+        '<button type="button" class="pe-tab active" data-tab="profile" role="tab">Profile</button>' +
+        '<button type="button" class="pe-tab"        data-tab="settings" role="tab">Settings</button>' +
+        '</div>' +
+        '</div>' +
 
-            // ── Profile pane ──────────────────────────────────────────
-            '<form id="peForm" class="pe-form" data-pane="profile">' +
-                '<div id="pePaneProfile" class="pe-pane-body">' +
-                    '<div class="pe-field">' +
-                        '<label for="peName">Display name</label>' +
-                        '<input type="text" id="peName" required maxlength="60" placeholder="What should we call you?">' +
-                    '</div>' +
-                    '<div class="pe-field">' +
-                        '<label for="peCourse">Course</label>' +
-                        '<select id="peCourse"></select>' +
-                    '</div>' +
-                    '<div class="pe-field">' +
-                        '<label>Avatar</label>' +
-                        '<div class="pe-grid pe-grid-avatars">' + avatarBtns + '</div>' +
-                    '</div>' +
-                    '<div class="pe-field">' +
-                        '<label>Colour</label>' +
-                        '<div class="pe-grid pe-grid-colors">' + colorBtns + '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="pe-actions">' +
-                    '<button type="button" class="pe-btn pe-btn-ghost" id="peCancel">Cancel</button>' +
-                    '<button type="submit" class="pe-btn pe-btn-primary">Save profile</button>' +
-                '</div>' +
-            '</form>' +
+        // ── Profile pane ──────────────────────────────────────────
+        '<form id="peForm" class="pe-form" data-pane="profile">' +
+        '<div id="pePaneProfile" class="pe-pane-body">' +
+        '<div class="pe-field">' +
+        '<label for="peName">Display name</label>' +
+        '<input type="text" id="peName" required maxlength="60" placeholder="What should we call you?">' +
+        '</div>' +
+        '<div class="pe-field">' +
+        '<label for="peCourse">Course</label>' +
+        '<select id="peCourse"></select>' +
+        '</div>' +
+        '<div class="pe-field">' +
+        '<label>Avatar</label>' +
+        '<div class="pe-grid pe-grid-avatars">' + avatarBtns + '</div>' +
+        '</div>' +
+        '<div class="pe-field">' +
+        '<label>Colour</label>' +
+        '<div class="pe-grid pe-grid-colors">' + colorBtns + '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="pe-actions">' +
+        '<button type="button" class="pe-btn pe-btn-ghost" id="peCancel">Cancel</button>' +
+        '<button type="submit" class="pe-btn pe-btn-primary">Save profile</button>' +
+        '</div>' +
+        '</form>' +
 
-            // ── Settings pane ─────────────────────────────────────────
-            '<div id="pePaneSettings" class="pe-form hidden">' +
-                '<div class="pe-pane-body">' +
-                    '<div class="pe-section">' +
-                        '<div class="pe-section-head">' +
-                            '<h3>Your semesters</h3>' +
-                        '</div>' +
-                        '<div id="peSemesterList" class="pe-sem-list"></div>' +
-                        '<div id="peSemesterEmpty" class="pe-sem-empty hidden">No semesters yet — import a CSV to create one.</div>' +
-                    '</div>' +
-                    '<div class="pe-section pe-danger">' +
-                        '<div class="pe-danger-row">' +
-                            '<div class="pe-danger-info">' +
-                                '<div class="pe-danger-title">Clear all semesters</div>' +
-                                '<div class="pe-danger-sub">Removes every semester and all its modules, tasks, and sessions.</div>' +
-                            '</div>' +
-                            '<button type="button" class="pe-btn pe-btn-danger" id="peClearSemesters">Clear all</button>' +
-                        '</div>' +
-                        '<div class="pe-danger-row">' +
-                            '<div class="pe-danger-info">' +
-                                '<div class="pe-danger-title">Delete account</div>' +
-                                '<div class="pe-danger-sub">Wipes your profile and everything you own. You\'ll be signed out.</div>' +
-                            '</div>' +
-                            '<button type="button" class="pe-btn pe-btn-danger" id="peDeleteAccount">Delete</button>' +
-                        '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="pe-actions">' +
-                    '<button type="button" class="pe-btn pe-btn-ghost" id="peSettingsClose">Close</button>' +
-                '</div>' +
-            '</div>' +
+        // ── Settings pane ─────────────────────────────────────────
+        '<div id="pePaneSettings" class="pe-form hidden">' +
+        '<div class="pe-pane-body">' +
+        '<div class="pe-section">' +
+        '<div class="pe-section-head">' +
+        '<h3>Your semesters</h3>' +
+        '</div>' +
+        '<div id="peSemesterList" class="pe-sem-list"></div>' +
+        '<div id="peSemesterEmpty" class="pe-sem-empty hidden">No semesters yet — import a CSV to create one.</div>' +
+        '</div>' +
+        '<div class="pe-section pe-danger">' +
+        '<div class="pe-danger-row">' +
+        '<div class="pe-danger-info">' +
+        '<div class="pe-danger-title">Clear all semesters</div>' +
+        '<div class="pe-danger-sub">Removes every semester and all its modules, tasks, and sessions.</div>' +
+        '</div>' +
+        '<button type="button" class="pe-btn pe-btn-danger" id="peClearSemesters">Clear all</button>' +
+        '</div>' +
+        '<div class="pe-danger-row">' +
+        '<div class="pe-danger-info">' +
+        '<div class="pe-danger-title">Delete account</div>' +
+        '<div class="pe-danger-sub">Wipes your profile and everything you own. You\'ll be signed out.</div>' +
+        '</div>' +
+        '<button type="button" class="pe-btn pe-btn-danger" id="peDeleteAccount">Delete</button>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="pe-actions">' +
+        '<button type="button" class="pe-btn pe-btn-ghost" id="peSettingsClose">Close</button>' +
+        '</div>' +
+        '</div>' +
         '</div>';
 
     document.body.appendChild(modal);
@@ -671,8 +662,8 @@ function setSelectedColor(modal, name) {
 async function saveProfileFromModal(modal) {
     const payload = {
         display_name: modal.querySelector('#peName').value.trim(),
-        course:       modal.querySelector('#peCourse').value || null,
-        avatar_id:    modal.dataset.selectedAvatar || 'cap',
+        course: modal.querySelector('#peCourse').value || null,
+        avatar_id: modal.dataset.selectedAvatar || 'cap',
         avatar_color: modal.dataset.selectedColor || 'navy',
     };
 
@@ -751,12 +742,12 @@ function authenticatedFetch(url, options = {}) {
         ...authHeader,
         ...(options.headers || {})
     };
-    
+
     const mergedOptions = {
         ...options,
         headers: headers
     };
-    
+
     return fetch(url, mergedOptions).then(response => {
         if (response.status === 401) {
             logout();
