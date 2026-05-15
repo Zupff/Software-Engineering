@@ -28,7 +28,6 @@ function getAuthHeader() {
     return {};
 }
 
-// ── Active semester ────────────────────────────────────────────────────
 // Pages that list modules append ?semester_id=<active> when fetching, so
 // the Dashboard / Tasks / Gantt are scoped to whichever semester the user
 // has selected. The active id lives in localStorage; if unset, we default
@@ -190,7 +189,7 @@ function attachSwitcher(el, semesters, active) {
     });
 }
 
-// ── Profile + onboarding ───────────────────────────────────────────────
+
 // On every logged-in page, take over the bottom-left user pill so it shows
 // the user's chosen avatar/colour and opens a popover with edit + sign out.
 // On the dashboard, if no display_name is set, open the editor modal so
@@ -354,9 +353,7 @@ async function openProfileEditor(initialTab) {
 function setEditorTab(modal, name) {
     modal.dataset.activeTab = name;
     modal.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-    // toggle the OUTER pane wrappers — these own the actions row at the bottom,
-    // so hiding only the inner body would leave the Cancel/Save buttons stuck
-    // on the Settings tab and create an empty flex slot above the content.
+    
     modal.querySelector('#peForm').classList.toggle('hidden', name !== 'profile');
     modal.querySelector('#pePaneSettings').classList.toggle('hidden', name !== 'settings');
 }
@@ -429,8 +426,7 @@ async function refreshSettingsSemesterList(modal) {
     });
 }
 
-// ── Custom dialogs (replace native confirm/alert so the UI matches the
-//    rest of the site). Promise-based: `await uiConfirm({...})`.
+// ── Custom dialogs
 function uiDialog({ title, body, confirmText, cancelText, danger }) {
     return new Promise(resolve => {
         const backdrop = document.createElement('div');
@@ -560,7 +556,7 @@ function buildProfileEditorModal() {
         '</div>' +
         '</div>' +
 
-        // ── Profile pane ──────────────────────────────────────────
+        //Profile pane
         '<form id="peForm" class="pe-form" data-pane="profile">' +
         '<div id="pePaneProfile" class="pe-pane-body">' +
         '<div class="pe-field">' +
@@ -586,7 +582,7 @@ function buildProfileEditorModal() {
         '</div>' +
         '</form>' +
 
-        // ── Settings pane ─────────────────────────────────────────
+        // Settings pane
         '<div id="pePaneSettings" class="pe-form hidden">' +
         '<div class="pe-pane-body">' +
         '<div class="pe-section">' +
@@ -691,9 +687,7 @@ async function saveProfileFromModal(modal) {
 function closeProfileEditor() {
     const modal = document.getElementById('profileEditorModal');
     if (!modal) return;
-    // If a semester was deleted while the modal was open, the underlying page
-    // (Dashboard / Tasks / Gantt) still shows stale data. Reload so the new
-    // state propagates everywhere.
+    
     if (modal.dataset.dirty === '1') {
         modal.dataset.dirty = '';
         window.location.reload();
@@ -717,9 +711,7 @@ if (typeof document !== 'undefined') {
 
         if (hasPill) {
             await loadProfile();
-            // renderUserPill clones the pill (to reset listeners), so any
-            // semester switcher work MUST happen after this to write into
-            // the live element, not the detached clone source.
+           
             renderUserPill();
         }
 

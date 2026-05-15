@@ -13,7 +13,7 @@ router.get('/api/modules/:id', authMiddleware, getModuleById);
 // update module deadline
 router.patch('/api/modules/:id', authMiddleware, updateModuleDeadline);
 
-// delete a module (cascades to tasks + study sessions)
+// delete a module
 router.delete('/api/modules/:id', authMiddleware, deleteModule);
 
 module.exports = router;

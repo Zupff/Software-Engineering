@@ -93,8 +93,7 @@ const updateModuleDeadline = async (req, res) => {
   }
 };
 
-// delete a module owned by the current user. tasks + study_sessions
-// cascade via FK ON DELETE CASCADE.
+// delete a module owned by the current user. 
 const deleteModule = async (req, res) => {
   try {
     const { id } = req.params;

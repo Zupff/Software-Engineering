@@ -5,7 +5,7 @@ const { register, login } = require('../controllers/authController');
 const router = express.Router();
 
 // Build a friendly retry-after message from the rate-limit info attached
-// to req. Express-rate-limit v7+ sets req.rateLimit.resetTime to a Date.
+// to req. 
 function retryAfterMessage(prefix, req) {
   const reset = req.rateLimit && req.rateLimit.resetTime;
   if (!reset) return prefix + '. Please try again later.';
@@ -18,8 +18,7 @@ function retryAfterMessage(prefix, req) {
 }
 
 // 60 logins / 15 min per IP — classroom shared IP can re-sign-in repeatedly.
-// Counts every login response (success + fail) — this is the broad-spray
-// protection so one IP can't hammer the endpoint.
+// Counts every login response success & fail 
 const loginLimiterIp = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 60,
@@ -32,8 +31,7 @@ const loginLimiterIp = rateLimit({
   },
 });
 
-// 10 FAILED logins / 10 min per username (case-insensitive). Defends
-// against targeted brute-force where an attacker rotates IPs to bypass
+// Defends against targeted brute-force where an attacker rotates IPs to bypass
 // the IP limiter. Successful logins reset the counter so a teammate
 // typing the wrong password a few times during demo prep isn't punished
 // once they get it right.
@@ -53,8 +51,7 @@ const loginLimiterUsername = rateLimit({
   },
 });
 
-// 30 registrations / hour per IP — bumped from 10 so demo prep doesn't lock
-// the team out of testing the signup flow
+
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 30,

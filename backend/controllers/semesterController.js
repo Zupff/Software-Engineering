@@ -48,8 +48,7 @@ const createSemester = async (req, res) => {
   }
 };
 
-// delete a semester owned by the current user. Modules cascade-delete via
-// FK ON DELETE CASCADE on semesters(id), so tasks and study_sessions go too.
+// delete a semester owned by the current user.
 const deleteSemester = async (req, res) => {
   try {
     const userId = req.user.id;

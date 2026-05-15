@@ -374,9 +374,7 @@
                     body: JSON.stringify({ deadline: newDeadline })
                 });
                 if (!res || !res.ok) {
-                    // Fall back to a sensible default if the server returned
-                    // a non-JSON body (e.g. an HTML 500 page) — previously
-                    // the user could see literal "undefined" in the error.
+                  
                     const err = res
                         ? await res.json().catch(() => ({ message: 'Server returned an error' }))
                         : { message: 'No response from server' };
@@ -384,9 +382,7 @@
                 }
                 await loadDashboard();
             } catch (err) {
-                // Show this error as an EXTRA alert appended above the
-                // existing deadline-summary banners, so we don't blow away
-                // the "N deadlines missed" / "N approaching" messages.
+        
                 showDashboardError(err.message || 'Could not update deadline');
                 // Re-enable the button so the user can retry
                 if (saveBtn) {

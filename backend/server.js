@@ -80,7 +80,6 @@ app.listen(port, () => {
 
   // Ensure the demo user (demo / demo123) exists on every boot so any
   // teammate can clone the repo, start the server, and log in immediately.
-  // Idempotent — won't duplicate an existing row.
   const { ensureDemoUser, DEMO_USERNAME } = require('./scripts/seed');
   ensureDemoUser()
     .then(u => console.log(`demo user ready: ${DEMO_USERNAME} (id=${u.id})`))

@@ -162,10 +162,7 @@
                 .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
-        // Local YYYY-MM-DD for <input type="date">. new Date().toISOString()
-        // returns UTC and shifts the day by ±1 for users west/east of UTC at
-        // the wrong time of day. If the input is already a 'YYYY-MM-DD'
-        // string (e.g. from the DB), return it as-is.
+  
         function localDateString(d) {
             if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10);
             const dt = d || new Date();
@@ -206,9 +203,7 @@
             }
         }
 
-        // Quick Action deep links from the dashboard:
-        //   ?action=new-task     → auto-open the new-task form
-        //   ?action=log-session  → auto-open the session form on the first task
+    
         function applyQuickAction() {
             const action = new URLSearchParams(window.location.search).get('action');
             if (!action) return;
@@ -384,8 +379,7 @@
             row.dataset.taskId = task.id;
 
             // Log session is always enabled — dependencies are advisory.
-            // The badge + (optional) post-submit notice tell the user the
-            // task is on a chain.
+            
             const logBtn = '<button class="btn-ghost btn-compact" onclick="toggleSessionForm(' + task.id + ')">Log session</button>';
 
             row.innerHTML =
@@ -436,9 +430,7 @@
         }
 
         // Checkbox-based multi-select shown under the Hours/Date/Notes row of
-        // the Log Session form. The originating task (the row the user
-        // clicked) is pre-checked and locked. Other tasks in the same
-        // module can be toggled to also receive credit for this activity.
+        // the Log Session form.
         function buildSessionTaskPicker(originatingTask, allTasks) {
             const others = allTasks.filter(t => t.id !== originatingTask.id);
             const lockedCheckbox =
@@ -527,9 +519,7 @@
             if (!form) return;
             const willOpen = form.classList.contains('hidden');
             form.classList.toggle('hidden');
-            // When opening, refresh the date to today. The default was baked
-            // in at render time; if the page sat open across midnight, that
-            // value would be stale.
+            // When opening, refresh the date to today. 
             if (willOpen && form.date) form.date.value = localDateString();
             // close any open edit form on the same row so the panes don't stack
             const edit = document.getElementById('editForm-' + taskId);
@@ -676,8 +666,7 @@
 
             // Collect every checked task checkbox (including the locked
             // originating task). Disabled inputs aren't submitted via
-            // FormData natively, so we read .checked directly. The
-            // originating task is always force-included as a safety net.
+            // FormData natively.
             const checkBoxes = form.querySelectorAll('input[name="taskId"]');
             const taskIds = new Set([taskId]);
             checkBoxes.forEach(cb => { if (cb.checked) taskIds.add(Number(cb.value)); });
@@ -691,8 +680,7 @@
             };
 
             // Remember whether the task was blocked by an incomplete dependency
-            // at the moment of submission, so we can show a soft notice after
-            // the session has been logged successfully.
+            // at the moment of submission.
             const tasks = tasksByModule[selectedModuleId] || [];
             const thisTask = tasks.find(t => t.id === taskId);
             const deps = thisTask
@@ -716,13 +704,12 @@
                     throw new Error(err.message || 'Could not log session');
                 }
                 // The form (and its parent row) gets blown away by renderTasks
-                // below — no need to manually reset fields here. Just hide it
-                // so a brief visual flash doesn't show the stale values.
+                // below.
                 form.classList.add('hidden');
                 await loadSessions(selectedModuleId);
                 renderTasks();
 
-                // Heads-up after the fact: this task is on a dependency chain.
+              
                 if (wasBlocked && typeof uiAlert === 'function') {
                     await uiAlert({
                         title: 'Session logged — heads up',

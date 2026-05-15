@@ -85,8 +85,7 @@ const login = async (req, res) => {
       [cleanUsername]
     );
 
-    // Always run bcrypt.compare to equalise timing. If the user doesn't
-    // exist, compare against a fixed dummy hash so the response time is
+    //If the user doesn't exist, compare against a fixed dummy hash so the response time is
     // indistinguishable from "user exists, wrong password".
     const hashToCompare = result.rows.length > 0
       ? result.rows[0].password_hash

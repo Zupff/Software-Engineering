@@ -1,8 +1,7 @@
 const pool = require('../db');
 
 // Log a new study session. The brief allows an activity to contribute to
-// multiple tasks at once, so the API accepts task_ids (array). Each
-// linked task receives full credit for duration_hours (not a split).
+// multiple tasks at once, so the API accepts task_ids. 
 const logSession = async (req, res) => {
   try {
     const { module_id, task_ids, duration_hours, date_logged, notes } = req.body;
@@ -29,8 +28,7 @@ const logSession = async (req, res) => {
     }
 
     // Normalise task_ids: must be a non-empty array of task ids belonging
-    // to this module. Brief requires every activity to be linked to at
-    // least one task.
+    // to this module. 
     const ids = Array.isArray(task_ids)
       ? Array.from(new Set(task_ids.map(n => Number(n)).filter(Number.isFinite)))
       : [];
@@ -57,7 +55,7 @@ const logSession = async (req, res) => {
       );
       const session = insertSession.rows[0];
 
-      // insert junction rows; ON CONFLICT DO NOTHING in case dedupe misses anything
+    
       for (const tid of ids) {
         await client.query(
           'INSERT INTO session_tasks (session_id, task_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',

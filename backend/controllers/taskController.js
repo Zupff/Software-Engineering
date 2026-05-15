@@ -12,7 +12,7 @@ function normaliseDependencyIds(body) {
   return Array.from(new Set(raw.map(n => Number(n)).filter(Number.isFinite)));
 }
 
-// helper: returns a normalised ISO date string if `value` is a valid date,
+// returns a normalised ISO date string if value`is a valid date,
 // or null if the value is missing/empty, or undefined to signal an error
 function parseDate(value) {
   if (value === undefined || value === null || value === '') return null;
@@ -57,9 +57,7 @@ async function validateDependencies(ids, moduleId, taskId) {
 
   if (taskId) {
     for (const dependencyId of ids) {
-      // Walk the chain: starting from each proposed dependency, follow its
-      // own dependencies. If we ever land back on the task being updated,
-      // it's a cycle - reject. Cap at 50 hops just in case.
+     
       if (await dependencyChainContains(dependencyId, Number(taskId))) {
         return { status: 400, message: 'this dependency would create a circular chain' };
       }
@@ -146,7 +144,7 @@ const createTask = async (req, res) => {
       return res.status(400).json({ message: 'required_hours must be a positive number' });
     }
 
-    // validate start_date / end_date if provided, and that start <= end
+    // validate start_date / end_date if provided.
     const startISO = parseDate(start_date);
     const endISO = parseDate(end_date);
     if (startISO === undefined) return res.status(400).json({ message: 'start_date is not a valid date' });
@@ -242,8 +240,7 @@ const updateTask = async (req, res) => {
     }
 
     // if new dependencies are provided, validate them: must not be self,
-    // must exist, must belong to the same module, AND must not introduce
-    // a transitive cycle.
+    // must exist, must belong to the same module.
     if (dependencyIdsProvided) {
       const dependencyError = await validateDependencies(dependencyIds, current.module_id, id);
       if (dependencyError) {

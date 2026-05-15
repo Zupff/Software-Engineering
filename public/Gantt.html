@@ -142,7 +142,7 @@
             return new Date(s);
         }
 
-        // floor a date to midnight (date-only comparisons)
+        // floor a date to midnight, date-only comparisons
         function startOfDay(d) {
             const c = parseLocalDate(d);
             c.setHours(0, 0, 0, 0);
@@ -290,7 +290,7 @@
                     return new Date(a.start_date) - new Date(b.start_date);
                 });
 
-                // ── label-pane block ──
+                // label pane block
                 const labelBlock = document.createElement('div');
                 labelBlock.className = 'gantt-module-label';
                 let labelHtml =
@@ -306,7 +306,7 @@
                 // header row in label pane occupies same height as timeline header
                 const labelHeaderHeight = labelBlock.offsetHeight;
 
-                // ── timeline-pane band for this module ──
+                // pane band for this module
                 const band = document.createElement('div');
                 band.className = 'gantt-module-band';
 
@@ -315,9 +315,7 @@
                 bandHeader.className = 'gantt-module-header-row';
                 band.appendChild(bandHeader);
 
-                // The Gantt is a time-based view — only tasks WITH dates make
-                // sense to show here. Undated tasks were producing orphaned
-                // ghost labels on the left with no matching bar on the right.
+                // The Gantt is a time based view 
                 const datedTasks = moduleTasks.filter(taskHasDates);
 
                 if (datedTasks.length === 0) {
@@ -345,7 +343,7 @@
                     });
                 }
 
-                // scoped deadline marker — only spans this module's band
+                // scoped deadline marker, only spans this module's band
                 if (m.deadline) {
                     const dlOffset = daysBetween(range.start, m.deadline);
                     if (dlOffset >= 0 && dlOffset <= range.totalDays) {
@@ -358,7 +356,7 @@
                     }
                 }
 
-                // milestone markers for THIS module — small navy diamonds
+                // milestone markers for this module, small navy diamonds
                 // sitting at the milestone's deadline date inside the band.
                 const moduleMilestones = milestones.filter(ms => ms.module_id === m.id);
                 const moduleDeadlineISO = m.deadline ? String(m.deadline).slice(0, 10) : null;
@@ -394,9 +392,7 @@
             syncScroll();
         }
 
-        // Vivid mids — saturated enough that white labels read well on top,
-        // dark enough that the darker progress-fill variant still differs.
-        // Keep keys aligned with the Tasks page <select> options.
+        
         function typeColor(type) {
             switch ((type || '').toLowerCase()) {
                 case 'studying':    return '#3b82f6';  // bright blue
@@ -408,7 +404,7 @@
                 default:            return '#64748b';  // slate fallback
             }
         }
-        // Darker variant of the same hue, used for the "logged hours" portion.
+        // Darker variant of the same hue, used for the logged hours portion. Dark blue to show completion
         function typeColorDark(type) {
             switch ((type || '').toLowerCase()) {
                 case 'studying':    return '#1d4ed8';
@@ -433,7 +429,7 @@
                     requestAnimationFrame(() => { syncing = false; });
                 });
             }
-            // bind once — guard so we don't double-bind on re-render
+            // bind once guard so we don't have to double-bind on re-rendering
             if (!labels.dataset.bound) {
                 bind(labels, scroll);
                 bind(scroll, labels);
@@ -463,17 +459,14 @@
             bar.style.left  = (clippedStart * range.dayPx) + 'px';
             const barWidth = Math.max(4, visibleSpan * range.dayPx - 2);
             bar.style.width = barWidth + 'px';
-            // bars too narrow to read text on — show only the colour, no
-            // truncated single character. The hover tooltip still works.
+            // bars too narrow to read text on show only the colour, 
             if (barWidth < 50) bar.classList.add('gantt-bar-compact');
-            // Solid vivid base — the "remaining" portion of the work.
+            // Solid base to show the remaining portion of the work.
             bar.style.background = base;
             bar.style.borderColor = dark;
             bar.style.color = '#ffffff'; // label inherits
 
-            // "Logged hours" overlay — a darker shade of the same hue on the
-            // left, sized by percentage complete. Both light and dark
-            // sections take white text comfortably.
+       
             const fill = document.createElement('div');
             fill.className = 'gantt-bar-fill';
             fill.style.width = (task.percentage || 0) + '%';
@@ -494,7 +487,7 @@
             return row;
         }
 
-        // ── Custom hover tooltip ───────────────────────────────────────────
+        // Custom hover tooltip
         function buildTaskTooltip(task, dep) {
             const days = Math.max(1, daysBetween(task.start_date, task.end_date) + 1);
             const pct = task.percentage || 0;
@@ -632,7 +625,6 @@
             let y = e.clientY + pad;
             if (x + rect.width  > window.innerWidth  - edge) x = e.clientX - rect.width  - pad;
             if (y + rect.height > window.innerHeight - edge) y = e.clientY - rect.height - pad;
-            // hard-clamp so even a too-wide tooltip near a narrow viewport
             // can't slip off the visible area
             x = Math.max(edge, Math.min(x, window.innerWidth  - rect.width  - edge));
             y = Math.max(edge, Math.min(y, window.innerHeight - rect.height - edge));
@@ -672,7 +664,7 @@
         wireToolbar();
         loadGantt();
 
-        // re-render on resize so the timeline always fits the viewport
+        // rerender on resize so the timeline always fits the viewport
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);

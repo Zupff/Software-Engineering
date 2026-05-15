@@ -43,9 +43,7 @@ const getGantt = async (req, res) => {
       [moduleIds]
     );
 
-    // Hours logged per task in one query — sessions now link to tasks
-    // via the session_tasks junction, and each linked task receives full
-    // credit for the session's duration.
+   
     const sessionsResult = await pool.query(
       `SELECT st.task_id,
               COALESCE(SUM(s.duration_hours), 0) AS hours_logged
@@ -82,9 +80,7 @@ const getGantt = async (req, res) => {
     });
 
     // Milestones with their linked task ids — rendered on the Gantt at
-    // their deadline within the owning module's band. Brief: "Visualise
-    // activities, dependencies, intermediate milestones and deadlines in
-    // a Gantt chart representation".
+    // their deadline within the owning module's band. 
     const milestonesResult = await pool.query(
       `SELECT mi.id, mi.module_id, mi.title, mi.deadline,
               COALESCE(

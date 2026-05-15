@@ -1,6 +1,6 @@
 const pool = require('../db');
 
-// helper: confirm a module belongs to the authenticated user. Returns the
+// Confirm a module belongs to the authenticated user. Returns the
 // module id on success, throws an error string otherwise so callers can
 // short-circuit with a 404.
 async function assertModuleOwnership(client, moduleId, userId) {
@@ -16,7 +16,7 @@ async function assertModuleOwnership(client, moduleId, userId) {
   return moduleId;
 }
 
-// helper: of the given task ids, keep only the ones that actually belong
+// If the given task ids, keep only the ones that actually belong
 // to the supplied module. Used to filter out cross-module attempts before
 // inserting into milestone_tasks.
 async function filterTasksInModule(client, taskIds, moduleId) {
@@ -28,8 +28,7 @@ async function filterTasksInModule(client, taskIds, moduleId) {
   return result.rows.map(r => r.id);
 }
 
-// list milestones for a module (or, if no module_id, for every module the
-// user owns). Each row includes its linked task ids so the frontend can
+// list milestones for a module.  Each row includes its linked task ids so the frontend can
 // resolve them locally.
 const listMilestones = async (req, res) => {
   try {
@@ -114,8 +113,8 @@ const createMilestone = async (req, res) => {
   }
 };
 
-// update a milestone. title / deadline are optional individually; if
-// task_ids is provided, the whole link set is replaced (simplest semantics).
+// update a milestone. if
+// task_ids is provided, the whole link set is replaced.
 const updateMilestone = async (req, res) => {
   const client = await pool.connect();
   try {

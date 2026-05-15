@@ -1,7 +1,7 @@
 const pool = require('../db');
 
 // helper function to calculate module progress and status. 
-// semesterId is optional; when provided, only that semester's modules are returned.
+
 const calculateProgress = async (userId, semesterId) => {
   const modulesResult = semesterId
     ? await pool.query(

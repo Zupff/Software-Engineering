@@ -1,15 +1,14 @@
 const pool = require('../db');
 
 // the avatar set the frontend offers. validated server-side so a malicious
-// or buggy client can't insert arbitrary strings. keep in sync with the
-// avatar grid in auth.js.
+// or buggy client can't insert arbitrary strings.
 const ALLOWED_AVATARS = ['cap', 'book', 'atom', 'code', 'pencil', 'rocket'];
 
-// preset colour palette (theme-friendly). same constraint applies.
+// preset colour palette. same constraint applies.
 const ALLOWED_COLORS = ['navy', 'slate', 'teal', 'amber', 'rose', 'plum'];
 
-// curated UEA-school course list. accepted as-is when the user picks one;
-// "Other" lets them type free text which we trim and length-cap.
+// curated UEA-school course list. accepted as-is when the user picks one.
+
 const KNOWN_COURSES = require('./courseList');
 
 const getProfile = async (req, res) => {
@@ -72,7 +71,7 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    // build a partial update — only touch columns the caller actually sent
+    // build a partial update
     const sets = [];
     const params = [];
     let i = 1;
@@ -98,9 +97,7 @@ const listCourses = (_req, res) => {
   return res.status(200).json(KNOWN_COURSES);
 };
 
-// Delete the current user and every row owned by them. The cascade chain
-// (users → semesters → modules → tasks → study_sessions, and milestones)
-// is handled by the existing FK ON DELETE CASCADE clauses in the schema.
+// Delete the current user and every row owned by them. 
 const deleteAccount = async (req, res) => {
   try {
     const userId = req.user.id;

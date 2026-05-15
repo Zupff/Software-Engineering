@@ -16,9 +16,7 @@ const importCSV = async (req, res) => {
 
     const userId = req.user.id;
     // semester metadata is sent alongside the file via multipart fields.
-    // both are optional from the client's perspective: if the user didn't
-    // pick a semester (older clients), we fall back to a default name so
-    // imported modules still have a valid foreign key.
+    // both are optional from the client's perspective.
     const semesterName = (req.body.semester_name || '').toString().trim() || 'Imported semester';
     const academicYear = (req.body.academic_year || '').toString().trim() || null;
     const rows = [];
@@ -52,8 +50,7 @@ const importCSV = async (req, res) => {
     });
 
     // validate every row before touching the database. row indices in
-    // error messages are 1-based and refer to data rows (excluding the
-    // header), matching how a user would count rows in their CSV.
+    // error messages are 1-based and refer to data rows  matching how a user would count rows in their CSV.
     const errors = [];
     const cleanRows = [];
     rows.forEach((row, i) => {
@@ -102,7 +99,7 @@ const importCSV = async (req, res) => {
 
       // Semester names must be unique per user. Re-importing the same CSV
       // into an existing semester is rejected — the user has to pick a new
-      // name (or delete the existing semester first) so they don't
+      // name so they don't
       // accidentally overwrite data.
       const existing = await client.query(
         'SELECT id FROM semesters WHERE user_id = $1 AND name = $2',
@@ -110,8 +107,7 @@ const importCSV = async (req, res) => {
       );
       if (existing.rows.length > 0) {
         await client.query('ROLLBACK');
-        // NOTE: don't release here — the outer `finally` does it. Calling
-        // release() twice throws and surfaces as a generic 500.
+       
         return res.status(409).json({
           message: `A semester named "${semesterName}" already exists. ` +
                    'Pick a different name, or delete the existing semester from the sidebar switcher first.',
@@ -146,9 +142,7 @@ const importCSV = async (req, res) => {
       // commit transaction
       await client.query('COMMIT');
 
-      // return 201 with the new semester id so the frontend can mark it as
-      // active — otherwise the user lands on the dashboard with their old
-      // semester still selected and the freshly imported modules look missing.
+  
       return res.status(201).json({
         message: `imported ${rows.length} modules`,
         count: rows.length,

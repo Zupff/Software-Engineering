@@ -2,10 +2,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 
 // middleware to verify jwt token from authorization header AND that the
-// user it references still exists. Without the existence check, a stale
-// JWT (e.g. after wiping the demo account and re-seeding it with a new
-// row id) would pass signature verification and let every request through,
-// only to crash on FK lookups deeper in the controller layer.
+// user it references still exists. Without the existence check.
 const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -18,9 +15,7 @@ const authMiddleware = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Verify the user row still exists. If the user has been deleted, the
-    // JWT is stale and we want the client to log out cleanly (401 → the
-    // frontend's authenticatedFetch wrapper clears localStorage and
-    // redirects to login).
+    // JWT is stale and we want the client to log out cleanly.
     const userResult = await pool.query(
       'SELECT id FROM users WHERE id = $1',
       [decoded.id]
