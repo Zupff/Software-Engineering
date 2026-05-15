@@ -1,8 +1,7 @@
 // Curated list of UEA undergraduate subject areas, grouped roughly by
 // faculty. Sourced from public UEA degree listings. Intentionally a flat
-// array (not a tree) because the frontend renders it as a single dropdown.
-// Add or rename freely — order shown to the user is alphabetical.
-
+// array because the frontend renders it as a single dropdown.
+// Add or rename freely 
 module.exports = [
   // Sciences
   'Biological Sciences',
