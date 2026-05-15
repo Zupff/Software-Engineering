@@ -7,11 +7,11 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // JWT lifetime: 1 day instead of 7. Shorter window = smaller blast radius
 // if a token leaks. authenticatedFetch on the client logs the user out
-// cleanly on 401 once the token expires.
+
 const TOKEN_EXPIRY = '1d';
 
 // Pre-computed dummy bcrypt hash. Used to equalise login response time
-// when the username doesn't exist — without this an attacker can probe
+// when the username doesn't exist
 // for valid usernames by timing the response.
 const DUMMY_HASH = bcrypt.hashSync('this-is-not-a-real-password', 10);
 
@@ -24,7 +24,7 @@ const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // validate that all fields are present and well-formed
+    // validate that all fields are present 
     if (typeof username !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
       return res.status(400).json({ message: 'Could not create account' });
     }
@@ -41,7 +41,7 @@ const register = async (req, res) => {
     const cleanUsername = normUsername(username);
     const cleanEmail    = normEmail(email);
 
-    // check if username/email already exists — return generic message to avoid enumeration
+    // check if username/email already exists 
     const userExists = await pool.query(
       'SELECT id FROM users WHERE LOWER(username) = $1 OR LOWER(email) = $2',
       [cleanUsername, cleanEmail]
@@ -79,7 +79,7 @@ const login = async (req, res) => {
     }
     const cleanUsername = normUsername(username);
 
-    // Case-insensitive lookup. Existing data with mixed case still works.
+    // Case-insensitive lookup
     const result = await pool.query(
       'SELECT id, username, password_hash FROM users WHERE LOWER(username) = $1',
       [cleanUsername]
